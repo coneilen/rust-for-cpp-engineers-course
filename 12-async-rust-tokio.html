@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Async Rust &amp; Tokio — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html" class="active"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 12 · 30 minutes</span>
+      <h1>Async Rust and the Tokio Runtime</h1>
+      <p class="lesson-subtitle">Move Pulsewatch's scheduler onto Tokio so hundreds of probes run concurrently on a handful of threads, while Lesson 11's blocking protocol code keeps working unchanged behind <code>spawn_blocking</code>.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can explain what <code>async fn</code> and <code>.await</code> really compile to, why a future must be <code>Send</code> and often <code>'static</code> to be spawned, how to bridge blocking code into an async runtime with <code>spawn_blocking</code>, and how to bound concurrency and cancel slow probes safely with Tokio's channels, <code>select!</code>, and timeouts.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="5"><td>5 min</td><td>A future is a paused state machine; <code>async fn</code> and <code>.await</code> build one</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Start the Tokio runtime and spawn tasks; <code>Send</code> and <code>'static</code> bounds</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Bridge blocking probe code across the sync/async boundary with <code>spawn_blocking</code></td></tr>
+          <tr data-minutes="4"><td>4 min</td><td><code>select!</code>, timeouts, and cancellation safety</td></tr>
+          <tr data-minutes="9"><td>9 min</td><td>Exercise: bound Pulsewatch's concurrency with a semaphore and an <code>mpsc</code> collector</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">🗂️</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p>This lesson continues the same <code>pulsewatch</code> Cargo workspace as Lesson 11, including the <code>crates/pulsewatch-cli/src/lib.rs</code> and <code>crates/pulsewatch-cli/src/tcp_probe.rs</code> files that lesson created. Change into that workspace before doing anything else in this lesson:</p>
+          <pre class="large-code"><code>cd path/to/pulsewatch</code></pre>
+          <p><code>path/to/pulsewatch</code> is a placeholder for wherever that workspace already sits on your machine — replace it with your actual path. Every command in this lesson runs from that workspace root unless a step states otherwise.</p>
+        </div>
+      </div>
+
+      <h2>Part 1: an <code>async fn</code> builds a paused state machine, it does not run one</h2>
+      <p>Lesson 11's <code>probe_once</code> blocks the calling thread for the whole round trip. Calling it once per target, one thread per target, is exactly the thread-per-connection ceiling Lesson 11 warned about. Async Rust exists to run many waiting-on-I/O operations on a small, fixed pool of OS threads.</p>
+      <p>This lesson's async code builds toward one new file, <code>crates/pulsewatch-cli/src/async_probe.rs</code>, alongside Lesson 11's <code>tcp_probe.rs</code> in the same <code>pulsewatch-cli</code> package. Parts 1 through 4 below are excerpts that explain one function at a time; the exercise in Part 5 gives that file's complete, exact contents to create, plus a new dependency line and a new binary.</p>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/async_probe.rs</code></strong> (illustrates the shape of an async probe function; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>async fn probe_once_async(
+    host: String,
+    port: u16,
+    timeout: std::time::Duration,
+) -&gt; std::io::Result&lt;pulsewatch_core::ProbeOutcome&gt; {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
+    use tokio::net::TcpStream;
+    use tokio::time::Instant;
+
+    let target = format!("{host}:{port}");
+    let started = Instant::now();
+
+    let stream = tokio::time::timeout(timeout, TcpStream::connect(&amp;target)).await??;
+    let (reader, mut writer) = stream.into_split();
+    let mut reader = BufReader::new(reader);
+
+    writer.write_all(b"PING pulsewatch-v1\n").await?;
+
+    let mut line = String::new();
+    tokio::time::timeout(
+        timeout,
+        tokio::io::AsyncBufReadExt::read_line(&amp;mut reader, &amp;mut line),
+    )
+    .await??;
+
+    let latency_ms = started.elapsed().as_millis();
+    Ok(pulsewatch_core::ProbeOutcome {
+        target,
+        success: line.trim_end().starts_with("PONG"),
+        latency_ms,
+        message: line.trim_end().to_string(),
+    })
+}</code></pre>
+      <p>Calling <code>probe_once_async(...)</code> does not connect to anything yet. It returns a value implementing <code>Future</code>: a paused state machine capturing <code>host</code>, <code>port</code>, and <code>timeout</code>, with one variant per suspension point. Only <code>.await</code>, driven by a runtime, advances that state machine toward a result.</p>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>async fn f(...) -&gt; T</code></td><td>Compiles to a function returning <code>impl Future&lt;Output = T&gt;</code>: an anonymous state-machine type, not a thread and not immediate execution.</td><td>Structurally closest to a hand-written <code>std::coroutine</code> or a resumable-function transform; more distant from <code>std::future</code>, which represents an already-scheduled asynchronous result.</td></tr>
+          <tr><td><code>.await</code></td><td>A suspension point: if the inner future is not ready, control returns to the runtime, which polls other tasks; when ready, execution resumes right here.</td><td>Similar in intent to <code>co_await</code> on a C++20 awaitable, including that the compiler transforms the function into a state machine around each suspension point.</td></tr>
+          <tr><td><code>tokio::time::timeout(dur, fut).await</code></td><td>Races <code>fut</code> against a timer; returns <code>Ok(fut's output)</code> or <code>Err(Elapsed)</code>, and drops <code>fut</code> if the timer wins.</td><td>No direct equivalent; closest to combining a deadline-based cancellation token with a wait on a future/promise pair.</td></tr>
+          <tr><td><code>stream.into_split()</code></td><td>Splits an owned, connected socket into an owned read half and an owned write half that can live in different tasks.</td><td>The async analogue of Lesson 11's <code>try_clone</code>, but returning two distinct owned types instead of two handles to the same duplicated descriptor.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 2: the runtime, tasks, and why futures must be <code>Send</code></h2>
+      <p>A future by itself never runs. Tokio's runtime is the executor: it owns a thread pool, polls spawned futures when they are woken, and drives timers and I/O readiness.</p>
+      <p><strong>Excerpt only</strong> (a standalone <code>main</code> shown to explain <code>#[tokio::main]</code> and <code>tokio::spawn</code>; the exercise's <code>async_probe.rs</code> does not include a <code>main</code> function, since it is a library module, not a binary):</p>
+      <pre class="large-code"><code>#[tokio::main]
+async fn main() {
+    let handle = tokio::spawn(probe_once_async(
+        "127.0.0.1".to_string(),
+        7878,
+        std::time::Duration::from_secs(2),
+    ));
+
+    match handle.await {
+        Ok(Ok(outcome)) =&gt; println!("{} -&gt; success={} ({} ms)", outcome.target, outcome.success, outcome.latency_ms),
+        Ok(Err(io_err)) =&gt; eprintln!("probe failed: {io_err}"),
+        Err(join_err) =&gt; eprintln!("probe task panicked: {join_err}"),
+    }
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>#[tokio::main]</code></td><td>Macro that wraps <code>main</code> so it builds a multi-threaded Tokio runtime and blocks on the async body until it completes.</td><td>Roughly equivalent to hand-writing <code>runtime.block_on(async_main())</code> with an explicit thread pool created first.</td></tr>
+          <tr><td><code>tokio::spawn(fut)</code></td><td>Hands the future to the runtime as an independent task; it may run concurrently with the caller and other tasks. Returns a <code>JoinHandle</code>.</td><td>Closer to submitting a unit of work to a thread pool's task queue than to creating an OS thread directly.</td></tr>
+          <tr><td><code>handle.await</code></td><td>Waits for the spawned task to finish, yielding <code>Result&lt;T, JoinError&gt;</code> — an outer error only for task panics or cancellation, wrapping the task's own <code>Result</code>.</td><td>Similar to joining a future/promise pair where the join itself can fail independently of the computed value.</td></tr>
+          <tr><td><code>fut: Future + Send + 'static</code></td><td><code>tokio::spawn</code> requires the future to be safely movable to another thread (<code>Send</code>) and to own everything it touches with no borrowed lifetime shorter than the task (<code>'static</code>).</td><td>Analogous to requiring a task submitted to a thread pool to not capture references to stack locals that could be destroyed before the task runs — except the compiler enforces it rather than a code reviewer.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong><code>Send</code> and <code>'static</code> are not paperwork</strong>
+          <p>A future that holds a non-<code>Send</code> type (for example, an <code>Rc&lt;T&gt;</code> instead of <code>Arc&lt;T&gt;</code>) across an <code>.await</code> point fails to compile under <code>tokio::spawn</code>. That rejection is the compiler catching, ahead of time, a bug that in C++ would surface as a data race the first time the task actually migrated threads.</p>
+        </div>
+      </div>
+
+      <h2>Part 3: bridging Lesson 11's blocking code with <code>spawn_blocking</code></h2>
+      <p>Pulsewatch does not have to rewrite everything at once. Lesson 11's <code>probe_once</code>, in <code>crates/pulsewatch-cli/src/tcp_probe.rs</code>, is still correct; it simply must never run directly on a Tokio worker thread, because a blocking call there stalls every other task scheduled onto that thread. Because <code>async_probe.rs</code> and <code>tcp_probe.rs</code> are sibling modules in the same <code>pulsewatch-cli</code> crate, the bridge below reaches <code>probe_once</code> through <code>crate::tcp_probe::probe_once</code>, not through a separate crate name.</p>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/async_probe.rs</code></strong> (the blocking-bridge function; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>async fn probe_once_legacy(
+    host: String,
+    port: u16,
+    timeout: std::time::Duration,
+) -&gt; std::io::Result&lt;pulsewatch_core::ProbeOutcome&gt; {
+    tokio::task::spawn_blocking(move || {
+        crate::tcp_probe::probe_once(&amp;host, port, timeout)
+    })
+    .await
+    .expect("blocking probe task panicked")
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>tokio::task::spawn_blocking(closure)</code></td><td>Runs <code>closure</code> on a separate pool of blocking-capable threads instead of the async worker threads, returning a <code>JoinHandle</code> whose output is the closure's return value.</td><td>Comparable to offloading blocking work to a dedicated thread pool distinct from the async reactor's threads, a pattern many C++ event-loop frameworks require by hand.</td></tr>
+          <tr><td><code>move || { probe_once(...) }</code></td><td>The closure owns <code>host</code>, <code>port</code>, and <code>timeout</code> outright, satisfying the same <code>Send + 'static</code> requirement as a spawned future.</td><td>Same discipline as ensuring a task queued to a background thread pool does not capture references to caller-local state.</td></tr>
+          <tr><td><code>.await.expect(...)</code></td><td>Waits for the blocking task and unwraps the <code>JoinHandle</code>'s outer <code>Result</code>, which only reports a panic in the closure, distinct from the inner <code>io::Result</code>.</td><td>Similar to checking a future's exceptional-completion path separately from its normal return value.</td></tr>
+        </tbody>
+      </table>
+      <p>This gives Pulsewatch a deliberate migration seam: new probe kinds are written as native <code>async fn</code>s against <code>tokio::net</code>, while any legacy blocking probe keeps running correctly, quarantined onto the blocking-thread pool, until someone chooses to rewrite it.</p>
+
+      <h2>Part 4: racing work with <code>select!</code>, and what cancellation safety means</h2>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/async_probe.rs</code></strong> (the shutdown-racing function; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>use tokio::sync::mpsc;
+
+async fn probe_with_shutdown(
+    host: String,
+    port: u16,
+    timeout: std::time::Duration,
+    mut shutdown: mpsc::Receiver&lt;()&gt;,
+) -&gt; Option&lt;std::io::Result&lt;pulsewatch_core::ProbeOutcome&gt;&gt; {
+    tokio::select! {
+        outcome = probe_once_async(host, port, timeout) =&gt; Some(outcome),
+        _ = shutdown.recv() =&gt; None,
+    }
+}</code></pre>
+      <p><code>select!</code> polls every listed branch and proceeds with whichever future completes first, immediately dropping the others. That drop is why <strong>cancellation safety</strong> matters: <code>probe_once_async</code> above never partially mutates any state that would be observed later, so being dropped mid-flight (for example, after connecting but before reading a reply) simply discards the in-flight connection cleanly. A future that had, say, already removed an item from a queue before its next <code>.await</code> would lose that item silently if cancelled at the wrong point — a real hazard Tokio's own documentation calls out by name.</p>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>tokio::select! { a =&gt; ..., b =&gt; ... }</code></td><td>Concurrently polls each branch's future; the first to complete wins, and the rest are dropped without further polling.</td><td>Loosely comparable to a manually written <code>select(2)</code>/<code>epoll_wait</code> readiness race, but operating over arbitrary futures rather than raw file descriptors.</td></tr>
+          <tr><td><code>mpsc::Receiver&lt;()&gt;</code></td><td>The receiving half of an async multi-producer, single-consumer channel; <code>()</code> as the payload makes this purely a shutdown signal.</td><td>Similar to a condition-variable-guarded flag used to signal a worker to stop, but delivered as a message a task <code>.await</code>s instead of a variable it polls.</td></tr>
+          <tr><td>Cancellation safety</td><td>A future is cancellation-safe if being dropped at any <code>.await</code> point leaves no half-applied side effect that would corrupt later state.</td><td>Analogous to strong exception safety: an operation interrupted partway through must leave the system in a valid, well-understood state.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 5: exercise — bound Pulsewatch's concurrency and collect results</h2>
+      <p>Probing every target with an unbounded <code>tokio::spawn</code> per target risks opening thousands of sockets at once against a target that cannot handle that load. This exercise creates the complete <code>async_probe.rs</code> file — combining Parts 1 through 4's excerpts with a concurrency-bounding scheduler — plus the dependency and binary needed to run it. Work through the numbered steps in order from the workspace root.</p>
+      <ol class="numbered-steps">
+        <li>
+          <strong>Append to <code>crates/pulsewatch-cli/Cargo.toml</code></strong> under its existing <code>[dependencies]</code> table (do not remove the existing <code>pulsewatch-core</code> path dependency already there from Lesson 7):
+          <pre class="large-code"><code># crates/pulsewatch-cli/Cargo.toml (append under [dependencies])
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync"] }</code></pre>
+          <p>This declares <code>tokio</code> as a direct dependency of <code>pulsewatch-cli</code> because <code>#[tokio::main]</code>, <code>tokio::spawn</code>, and the other <code>tokio::</code> paths below are named directly in this crate's own source, not merely reached transitively through another crate.</p>
+        </li>
+        <li>
+          <strong>Append to <code>crates/pulsewatch-cli/src/lib.rs</code></strong> (this file already exists from Lesson 11 with <code>pub mod tcp_probe;</code>; add one more line below it, do not remove the existing one):
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/lib.rs (append)
+pub mod async_probe;</code></pre>
+        </li>
+        <li>
+          <strong>Create <code>crates/pulsewatch-cli/src/async_probe.rs</code></strong> with exactly this content — it combines the four Part 1–4 excerpts into one file and adds the bounded scheduler and its test:
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/async_probe.rs
+use std::sync::Arc;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::net::TcpStream;
+use tokio::sync::{mpsc, Semaphore};
+use tokio::time::Instant;
+
+pub async fn probe_once_async(
+    host: String,
+    port: u16,
+    timeout: std::time::Duration,
+) -&gt; std::io::Result&lt;pulsewatch_core::ProbeOutcome&gt; {
+    let target = format!("{host}:{port}");
+    let started = Instant::now();
+
+    let stream = tokio::time::timeout(timeout, TcpStream::connect(&amp;target)).await??;
+    let (reader, mut writer) = stream.into_split();
+    let mut reader = BufReader::new(reader);
+
+    writer.write_all(b"PING pulsewatch-v1\n").await?;
+
+    let mut line = String::new();
+    tokio::time::timeout(timeout, reader.read_line(&amp;mut line)).await??;
+
+    let latency_ms = started.elapsed().as_millis();
+    Ok(pulsewatch_core::ProbeOutcome {
+        target,
+        success: line.trim_end().starts_with("PONG"),
+        latency_ms,
+        message: line.trim_end().to_string(),
+    })
+}
+
+pub async fn probe_once_legacy(
+    host: String,
+    port: u16,
+    timeout: std::time::Duration,
+) -&gt; std::io::Result&lt;pulsewatch_core::ProbeOutcome&gt; {
+    tokio::task::spawn_blocking(move || crate::tcp_probe::probe_once(&amp;host, port, timeout))
+        .await
+        .expect("blocking probe task panicked")
+}
+
+pub async fn probe_with_shutdown(
+    host: String,
+    port: u16,
+    timeout: std::time::Duration,
+    mut shutdown: mpsc::Receiver&lt;()&gt;,
+) -&gt; Option&lt;std::io::Result&lt;pulsewatch_core::ProbeOutcome&gt;&gt; {
+    tokio::select! {
+        outcome = probe_once_async(host, port, timeout) =&gt; Some(outcome),
+        _ = shutdown.recv() =&gt; None,
+    }
+}
+
+pub async fn run_scheduler(
+    targets: Vec&lt;(String, u16)&gt;,
+    max_concurrent: usize,
+    timeout: std::time::Duration,
+) -&gt; Vec&lt;std::io::Result&lt;pulsewatch_core::ProbeOutcome&gt;&gt; {
+    let semaphore = Arc::new(Semaphore::new(max_concurrent));
+    let (tx, mut rx) = mpsc::channel(targets.len().max(1));
+
+    for (host, port) in targets {
+        let semaphore = Arc::clone(&amp;semaphore);
+        let tx = tx.clone();
+        tokio::spawn(async move {
+            let _permit = semaphore
+                .acquire()
+                .await
+                .expect("semaphore is never closed while tasks run");
+            let result = probe_once_async(host, port, timeout).await;
+            let _ = tx.send(result).await;
+        });
+    }
+    drop(tx);
+
+    let mut results = Vec::new();
+    while let Some(result) = rx.recv().await {
+        results.push(result);
+    }
+    results
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn scheduler_bounds_concurrency_and_collects_all_results() {
+        let targets = vec![
+            ("127.0.0.1".to_string(), 7878),
+            ("127.0.0.1".to_string(), 7879),
+            ("127.0.0.1".to_string(), 7880),
+        ];
+        let results = run_scheduler(targets, 2, std::time::Duration::from_millis(500)).await;
+        assert_eq!(results.len(), 3);
+    }
+}</code></pre>
+          <p><code>Semaphore::new(max_concurrent)</code> caps the number of probes in flight at once regardless of how many targets exist, preventing a socket or file-descriptor storm; the permit is released automatically when <code>_permit</code> is dropped at the end of the async block. <code>mpsc::channel(targets.len().max(1))</code> gives every spawned task its own cloned sender, and <code>drop(tx)</code> drops the scheduler's own sender so <code>rx.recv()</code> returns <code>None</code>, ending the collection loop, once every cloned sender has also been dropped.</p>
+        </li>
+        <li>
+          <strong>Create <code>crates/pulsewatch-cli/src/bin/pulsewatch-scheduler.rs</code></strong> (new file; parses <code>--max-concurrent N</code> and <code>--targets PATH</code>, where <code>PATH</code> names a text file with one <code>host:port</code> pair per line):
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/bin/pulsewatch-scheduler.rs
+#[tokio::main]
+async fn main() {
+    let args: Vec&lt;String&gt; = std::env::args().collect();
+    let max_concurrent: usize = flag_value(&amp;args, "--max-concurrent")
+        .unwrap_or_else(|| "10".to_string())
+        .parse()
+        .expect("--max-concurrent must be a positive integer");
+    let targets_path = flag_value(&amp;args, "--targets").expect("--targets PATH is required");
+
+    let contents = std::fs::read_to_string(&amp;targets_path).expect("read targets file");
+    let targets: Vec&lt;(String, u16)&gt; = contents
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            let (host, port) = line.trim().split_once(':').expect("expected host:port");
+            (host.to_string(), port.parse().expect("port must be a u16"))
+        })
+        .collect();
+
+    let results = pulsewatch_cli::async_probe::run_scheduler(
+        targets,
+        max_concurrent,
+        std::time::Duration::from_secs(2),
+    )
+    .await;
+
+    for result in results {
+        match result {
+            Ok(outcome) =&gt; println!("{outcome:?}"),
+            Err(io_err) =&gt; eprintln!("probe failed: {io_err}"),
+        }
+    }
+}
+
+fn flag_value(args: &amp;[String], name: &amp;str) -&gt; Option&lt;String&gt; {
+    args.iter().position(|a| a == name).and_then(|i| args.get(i + 1)).cloned()
+}</code></pre>
+        </li>
+        <li>
+          Run, from the workspace root: <code>cargo fmt --check</code><br>
+          <strong>Expected evidence:</strong> the command exits with status 0 and prints nothing.
+        </li>
+        <li>
+          Run, from the workspace root: <code>cargo test -p pulsewatch-cli scheduler_bounds_concurrency_and_collects_all_results</code><br>
+          <strong>Expected evidence:</strong> output includes <code>test async_probe::tests::scheduler_bounds_concurrency_and_collects_all_results ... ok</code>; the test asserts exactly one result per target (3) regardless of the concurrency cap of 2.
+        </li>
+        <li>
+          Create a targets file at the workspace root named <code>targets.txt</code> with one line per Lesson 11 loopback server you have running, for example <code>127.0.0.1:7878</code>, then start one or more <code>pulsewatch-probe-server</code> instances from Lesson 11 against those addresses in separate terminals.
+        </li>
+        <li>
+          Run, from the workspace root: <code>cargo run --bin pulsewatch-scheduler -- --max-concurrent 20 --targets targets.txt</code><br>
+          <strong>Expected evidence:</strong> one <code>ProbeOutcome</code> line prints per line in <code>targets.txt</code>, each with <code>success: true</code>, without opening more than 20 connections at once (observable at this target count only in that the cap is never exceeded, not in visibly different timing).
+        </li>
+      </ol>
+
+      <div class="callout note">
+        <span class="callout-icon">🧩</span>
+        <div class="callout-content">
+          <strong>What actually changed, and what did not</strong>
+          <p>The Pulsewatch probe protocol from Lesson 11 — the <code>PING</code>/<code>PONG</code> framing, the timeout discipline, the loopback test strategy — is unchanged, and <code>tcp_probe.rs</code> itself is not modified in this lesson. What changed is the scheduler: instead of one OS thread per target, a small pool of Tokio worker threads cooperatively multiplexes hundreds of in-flight probes, each suspended on <code>.await</code> rather than blocked on a syscall.</p>
+        </div>
+      </div>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://media.ccc.de/v/rustfest18-10-a_quic_future_in_rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">30 min · CONFERENCE TALK</span><h3>A QUIC future in Rust</h3><p>Dirkjan Ochtman, RustFest 2018 Paris (media.ccc.de). QUIC's stream multiplexing is designed around cooperative, non-blocking I/O — the same motivation behind moving Pulsewatch's scheduler onto an async runtime.</p></div>
+        </a>
+        <a class="video-card" href="https://media.ccc.de/v/rustfest18-8-building_reliable_infrastructure_in_rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">32 min · CONFERENCE TALK</span><h3>Building Reliable Infrastructure in Rust</h3><p>Tyler Neely, RustFest 2018 Paris (media.ccc.de). On finding bugs in concurrent systems that touch sockets and files before they reach production, directly relevant to testing cancellation-sensitive async schedulers like Pulsewatch's.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the QUIC talk, read the Tokio tutorial's <a href="https://tokio.rs/tokio/tutorial/spawning">spawning</a> chapter for how a multiplexed async server accepts and handles many connections concurrently.</li>
+        <li>Instead of the reliability talk, review the cancellation-safety notes in the <a href="https://docs.rs/tokio/latest/tokio/macro.select.html">tokio::select!</a> documentation alongside Part 4 above.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. What does calling an <code>async fn</code> actually produce, and when does its body start running?</summary><p><strong>Answer:</strong> It produces a value implementing <code>Future</code> — a paused state machine capturing its arguments and locals. No code in the body runs until that future is polled, which happens when it is <code>.await</code>ed inside a running task or spawned onto a runtime.</p></details>
+      <details class="quiz"><summary>2. Why must a future passed to <code>tokio::spawn</code> be <code>Send + 'static</code>?</summary><p><strong>Answer:</strong> Tokio's multi-threaded runtime may move a spawned task between worker threads while it runs, so anything the future holds must be safe to send across threads (<code>Send</code>) and must not borrow data that could be dropped before the task finishes (<code>'static</code>). The compiler rejects a future that violates either bound at the <code>spawn</code> call site.</p></details>
+      <details class="quiz"><summary>3. Why does Lesson 11's <code>probe_once</code> need <code>spawn_blocking</code> rather than being called directly inside an <code>async fn</code>?</summary><p><strong>Answer:</strong> <code>probe_once</code> blocks its calling thread for the whole round trip using OS-level blocking I/O. Calling it directly on a Tokio worker thread would stall every other task scheduled onto that same thread. <code>spawn_blocking</code> moves it onto a separate pool of threads dedicated to blocking work.</p></details>
+      <details class="quiz"><summary>4. What does it mean for <code>probe_once_async</code> to be cancellation-safe inside a <code>select!</code> branch?</summary><p><strong>Answer:</strong> If the branch is dropped mid-flight because another branch of the <code>select!</code> completed first, no partially applied state is left behind: the in-flight connection is simply closed, and nothing has been recorded as succeeded or consumed that should not have been.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Waiting on I/O, want to scale past a thread per target?  Use async fn / .await and a runtime
+Need to run a future concurrently with others?             tokio::spawn(fut) -&gt; JoinHandle
+Have existing blocking code that still works?               tokio::task::spawn_blocking(closure)
+Racing two operations, first one wins?                      tokio::select! { ... }
+Need a deadline on an operation?                             tokio::time::timeout(dur, fut)
+Fan-out with a concurrency cap?                              Arc&lt;Semaphore&gt; + acquire().await
+Collecting results from many spawned tasks?                  tokio::sync::mpsc channel, drain the receiver
+Future captures non-Send state across .await?                Compiler rejects spawn; fix ownership, don't fight it</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://rust-lang.github.io/async-book/06_multiple_futures/01_chapter.html">Executing Multiple Futures at a Time</a>, <em>Asynchronous Programming in Rust</em>, Rust Project. Concurrent futures, joining, and racing. Accessed September 17, 2026.</li>
+        <li><a href="https://tokio.rs/tokio/tutorial/spawning">Spawning</a>, Tokio tutorial, Tokio Project. Runtime tasks, <code>Send</code>/<code>'static</code> requirements, and accepting connections concurrently. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html">spawn_blocking</a>, Tokio API documentation, Tokio Project. Bridging blocking code into an async runtime. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tokio/latest/tokio/macro.select.html">select!</a>, Tokio API documentation, Tokio Project. Racing branches and cancellation of the losing futures. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tokio/latest/tokio/time/fn.timeout.html">timeout</a>, Tokio API documentation, Tokio Project. Bounding a future's completion time. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tokio/latest/tokio/sync/struct.Semaphore.html">Semaphore</a>, Tokio API documentation, Tokio Project. Bounding concurrent access to a shared resource. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tokio/latest/tokio/sync/mpsc/index.html">mpsc</a>, Tokio API documentation, Tokio Project. Bounded and unbounded asynchronous channels. Accessed September 17, 2026.</li>
+        <li><a href="https://media.ccc.de/v/rustfest18-10-a_quic_future_in_rust">A QUIC future in Rust</a>, Dirkjan Ochtman, RustFest 2018 Paris (media.ccc.de), 30 min. Accessed September 17, 2026.</li>
+        <li><a href="https://media.ccc.de/v/rustfest18-8-building_reliable_infrastructure_in_rust">Building Reliable Infrastructure in Rust</a>, Tyler Neely, RustFest 2018 Paris (media.ccc.de), 32 min. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="11-blocking-tcp-networking.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 11: Blocking TCP Networking</span></a>
+        <a href="13-http-client-axum-service.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 13: HTTP Client &amp; Axum</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

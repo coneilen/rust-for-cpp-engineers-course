@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migration Playbook &amp; Raw C ABI — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html" class="active"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 19 · 30 minutes</span>
+      <h1>Migration Playbook &amp; Raw C ABI Foundation</h1>
+      <p class="lesson-subtitle">Turn Pulsewatch's 230-line legacy <code>AlertScorer</code> C++ engine into a characterized, staged migration onto a safe Rust core, exposed to its existing C++ caller through a minimal, versioned raw C ABI.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can plan a C++-to-Rust migration with reconnaissance and characterization tests, choose a stable seam, translate ownership/error/panic rules into a raw <code>#[repr(C)]</code> ABI with opaque handles, and stage a reversible rollout with differential testing.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="5"><td>5 min</td><td>Reconnaissance: map <code>AlertScorer</code>'s public surface, invariants, and callers</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Write characterization tests that pin current behavior</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Choose the seam and translate ownership/error rules into Rust</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Build the raw C ABI: <code>#[repr(C)]</code>, <code>unsafe extern "C"</code>, opaque handles, panic safety</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Exercise: build a Rust-backed scorer and differential-check it against the legacy C++ engine</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Differential testing and a reversible staged rollout</td></tr>
+          <tr data-minutes="1"><td>1 min</td><td>Knowledge check and recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Follow-along setup</h2>
+      <div class="callout note">
+        <span class="callout-icon">🗂️</span>
+        <div class="callout-content">
+          <strong>Starting point: the existing Pulsewatch workspace from Lessons 7-18</strong>
+          <p>Throughout Lessons 19-22, <code>path/to/pulsewatch</code> stands for wherever you cloned the Pulsewatch repository on your own machine — replace every occurrence with your actual checkout path; it is never a literal directory named <code>path</code>. This lesson continues that exact same checkout: Lesson 7 already made <code>path/to/pulsewatch/</code> a Cargo <strong>workspace root</strong> (root <code>Cargo.toml</code> with a <code>[workspace]</code> table and an explicit <code>members</code> list), and Lesson 15 already extended that same <code>members</code> list once. This lesson does not create a new workspace or a new root manifest — it adds one more member, <code>crates/pulsewatch-scoring/</code>, to the <code>members</code> list that already exists. Every command below still runs from the workspace root, <code>path/to/pulsewatch/</code>, unless a step says otherwise — Cargo shares one <code>target/</code> directory across a whole workspace, so <code>-p pulsewatch-scoring</code> reaches the crate without ever needing to <code>cd</code> into its subdirectory.</p>
+          <ul>
+            <li><strong>Already exists:</strong> the root <code>path/to/pulsewatch/Cargo.toml</code> workspace manifest from Lesson 7, last edited in Lesson 15, whose <code>members</code> list currently reads <code>["crates/pulsewatch-core", "crates/pulsewatch-cli", "crates/pulsewatch-service"]</code>.</li>
+            <li><strong>Created in this lesson:</strong> the complete course-sized legacy module at <code>legacy-cpp/alert_scoring.h</code> and <code>alert_scoring.cpp</code>; <code>crates/pulsewatch-scoring/</code>, the new Rust workspace member reused by Lessons 20-22; the characterization fixture and executable; and a <code>RustBackedScorer</code> differential smoke executable. The course supplies every file it compiles—no external starter repository is assumed.</li>
+            <li><strong>Prerequisites:</strong> a Rust toolchain new enough for Edition 2024 (<code>rustc</code> 1.85 or later — check with <code>rustc --version</code>), Cargo, a C++17 compiler on your <code>PATH</code> (<code>c++</code>, <code>g++</code>, or <code>clang++</code> — check with <code>c++ --version</code>; this lesson's C++ steps compile directly with that compiler and do not use the project's existing CMake build), and a shell to run the commands below — every command in this lesson is <code>cargo</code>, a direct C++ compiler invocation, or <code>cbindgen</code>; no third-party scripts are required.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Create the legacy C++ baseline used by this lesson</h2>
+      <p>Run <code>mkdir -p legacy-cpp/testdata</code> from <code>path/to/pulsewatch/</code>. Then create the following two complete files. Together they are a production-shaped, stateful module rather than a toy one-function converter: it owns a sliding window, validates construction and samples, has cold-start behavior, and exposes reset and scoring operations.</p>
+      <p><strong>File:</strong> create <code>path/to/pulsewatch/legacy-cpp/alert_scoring.h</code> (new file, complete):</p>
+      <pre class="large-code"><code>// legacy-cpp/alert_scoring.h
+#pragma once
+
+#include &lt;cstdint&gt;
+#include &lt;memory&gt;
+#include &lt;stdexcept&gt;
+
+struct MetricSample {
+    double value;
+    std::int64_t timestamp_unix_ms;
+};
+
+class ScoringError : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
+
+class AlertScorer {
+public:
+    // baselineWindowSeconds must be finite and positive.
+    // sensitivity must be in (0.0, 1.0].
+    AlertScorer(double baselineWindowSeconds, double sensitivity);
+    ~AlertScorer();
+
+    AlertScorer(const AlertScorer&amp;) = delete;
+    AlertScorer&amp; operator=(const AlertScorer&amp;) = delete;
+    AlertScorer(AlertScorer&amp;&amp;) noexcept;
+    AlertScorer&amp; operator=(AlertScorer&amp;&amp;) noexcept;
+
+    // The first valid sample seeds the baseline and throws ScoringError.
+    // Later calls return a severity score in [0.0, 1.0].
+    double Score(const MetricSample&amp; sample);
+    void Reset();
+
+private:
+    class Impl;
+    std::unique_ptr&lt;Impl&gt; impl_;
+};</code></pre>
+      <p><strong>File:</strong> create <code>path/to/pulsewatch/legacy-cpp/alert_scoring.cpp</code> (new file, complete):</p>
+      <pre class="large-code"><code>// legacy-cpp/alert_scoring.cpp
+#include "alert_scoring.h"
+
+#include &lt;algorithm&gt;
+#include &lt;cmath&gt;
+#include &lt;deque&gt;
+#include &lt;utility&gt;
+
+class AlertScorer::Impl {
+public:
+    Impl(double baselineWindowSeconds, double sensitivity)
+        : baseline_window_ms_(static_cast&lt;std::int64_t&gt;(
+              baselineWindowSeconds * 1000.0)),
+          sensitivity_(sensitivity) {}
+
+    double Score(const MetricSample&amp; sample) {
+        if (!std::isfinite(sample.value)) {
+            throw ScoringError("sample value must be finite");
+        }
+
+        while (!window_.empty() &amp;&amp;
+               sample.timestamp_unix_ms -
+                       window_.front().timestamp_unix_ms &gt;
+                   baseline_window_ms_) {
+            window_.pop_front();
+        }
+
+        if (window_.empty()) {
+            window_.push_back(sample);
+            throw ScoringError("baseline window is empty");
+        }
+
+        double sum = 0.0;
+        for (const MetricSample&amp; item : window_) {
+            sum += item.value;
+        }
+        const double mean = sum / static_cast&lt;double&gt;(window_.size());
+
+        double squared_error = 0.0;
+        for (const MetricSample&amp; item : window_) {
+            const double delta = item.value - mean;
+            squared_error += delta * delta;
+        }
+        const double variance =
+            squared_error / static_cast&lt;double&gt;(window_.size());
+        const double standard_deviation =
+            std::max(std::sqrt(variance), 1e-6);
+        const double z_score =
+            std::abs((sample.value - mean) / standard_deviation);
+        const double score =
+            std::clamp(z_score * sensitivity_, 0.0, 1.0);
+
+        window_.push_back(sample);
+        return score;
+    }
+
+    void Reset() { window_.clear(); }
+
+private:
+    std::deque&lt;MetricSample&gt; window_;
+    std::int64_t baseline_window_ms_;
+    double sensitivity_;
+};
+
+AlertScorer::AlertScorer(
+    double baselineWindowSeconds,
+    double sensitivity) {
+    if (!std::isfinite(baselineWindowSeconds) ||
+        baselineWindowSeconds &lt;= 0.0) {
+        throw std::invalid_argument(
+            "baseline window must be finite and positive");
+    }
+    if (!std::isfinite(sensitivity) ||
+        sensitivity &lt;= 0.0 || sensitivity &gt; 1.0) {
+        throw std::invalid_argument(
+            "sensitivity must be in (0.0, 1.0]");
+    }
+    impl_ = std::make_unique&lt;Impl&gt;(
+        baselineWindowSeconds, sensitivity);
+}
+
+AlertScorer::~AlertScorer() = default;
+AlertScorer::AlertScorer(AlertScorer&amp;&amp;) noexcept = default;
+AlertScorer&amp; AlertScorer::operator=(
+    AlertScorer&amp;&amp;) noexcept = default;
+
+double AlertScorer::Score(const MetricSample&amp; sample) {
+    return impl_-&gt;Score(sample);
+}
+
+void AlertScorer::Reset() {
+    impl_-&gt;Reset();
+}</code></pre>
+      <p>Before continuing, compile only the module: <code>c++ -std=c++17 -I legacy-cpp -c legacy-cpp/alert_scoring.cpp -o legacy-cpp/alert_scoring.o</code>. <strong>Expected evidence:</strong> the command exits successfully and creates <code>legacy-cpp/alert_scoring.o</code>. The characterization executable in Part 2 then links the same source directly, so this object file is only an early syntax check.</p>
+
+      <h2>Part 1: reconnaissance before you touch a line</h2>
+      <p>Assume Pulsewatch's ingestion service still scores incoming metric anomalies with the legacy <code>AlertScorer</code> module you just created. It keeps a bounded sliding window of recent samples, computes a severity score in <code>[0.0, 1.0]</code>, and throws on invalid input. This excerpt is from <code>path/to/pulsewatch/legacy-cpp/alert_scoring.h</code>:</p>
+      <pre class="large-code"><code>// legacy-cpp/alert_scoring.h (excerpt of an existing file)
+class AlertScorer {
+public:
+    // sensitivity must be in (0.0, 1.0]; throws std::invalid_argument otherwise.
+    AlertScorer(double baselineWindowSeconds, double sensitivity);
+    ~AlertScorer();
+
+    // Not copyable: owns a pimpl with a bounded sample deque.
+    AlertScorer(const AlertScorer&) = delete;
+    AlertScorer& operator=(const AlertScorer&) = delete;
+
+    // Throws ScoringError if the window is empty or the sample is malformed.
+    double Score(const MetricSample&amp; sample);
+    void Reset();
+
+private:
+    std::unique_ptr&lt;Impl&gt; impl_;  // holds std::deque&lt;MetricSample&gt; and sensitivity
+};</code></pre>
+      <p>Before changing anything, map what actually matters to callers, not what the code happens to do internally:</p>
+      <table class="comparison-table">
+        <thead><tr><th>Question</th><th>Answer from reading the code and its callers</th></tr></thead>
+        <tbody>
+          <tr><td>Public surface</td><td>Constructor, <code>Score</code>, <code>Reset</code>, destructor. Everything else is private.</td></tr>
+          <tr><td>Ownership</td><td>Single owner via <code>std::unique_ptr</code>; not copyable; one call site per instance.</td></tr>
+          <tr><td>Concurrency</td><td>Not thread-safe today; the ingestion service already serializes calls behind one mutex per shard.</td></tr>
+          <tr><td>Error signaling</td><td>Exceptions (<code>std::invalid_argument</code>, a custom <code>ScoringError</code>) for both construction and scoring failures.</td></tr>
+          <tr><td>Callers</td><td>Exactly one production call site plus two unit-test binaries; a small, well-bounded seam.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout note">
+        <span class="callout-icon">🔍</span>
+        <div class="callout-content">
+          <strong>A small, stable, well-called seam is the best first slice</strong>
+          <p><code>AlertScorer</code> is a good first migration target precisely because it has one caller family, a narrow public surface, and no shared mutable state to untangle. Save the tangled, widely-called modules for later, once the playbook has proven itself.</p>
+        </div>
+      </div>
+
+      <h2>Part 2: characterization tests pin behavior before you refactor anything</h2>
+      <p>Legacy code's real specification is whatever it actually does, documented or not. A <strong>characterization test</strong> records that behavior over a corpus before any Rust exists, so later Rust work is checked against reality instead of assumptions. This course ships a compact, seven-row fixture that you can actually run, not the fleet's full production corpus — a real migration replays tens of thousands of recorded production samples the same way, but that scale of corpus cannot be shipped inside a lesson, so every command below is sized to the small fixture this lesson gives you.</p>
+      <p><strong>File:</strong> create <code>path/to/pulsewatch/legacy-cpp/testdata/course_fixture.csv</code> (new file, complete — a comment header line plus seven data rows of <code>value,timestamp_unix_ms,expected_score</code>, all recorded with a baseline window of 300 seconds and a sensitivity of 0.62, after one warm-up sample not shown here has already seeded the window):</p>
+      <pre class="large-code"><code># legacy-cpp/testdata/course_fixture.csv (new file)
+# value,timestamp_unix_ms,expected_score
+100.0,1758067200000,0.000000000
+101.0,1758067201000,1.000000000
+99.0,1758067202000,1.000000000
+100.5,1758067203000,0.438406204
+99.5,1758067204000,0.560811101
+180.0,1758067205000,1.000000000
+101.0,1758067206000,0.230913859</code></pre>
+      <p><strong>File:</strong> create <code>path/to/pulsewatch/legacy-cpp/alert_scoring_characterization.cc</code> (new file, complete — a standalone executable, not a GoogleTest case, so this exercise never depends on the exact target name your existing <code>legacy-cpp/CMakeLists.txt</code> happens to use for the production library). <code>LoadFixtureRows</code> is a minimal, fixed-column reader for this course's own three-field fixture format — not a general CSV or JSON parser — so this file pulls in no new third-party dependency for seven lines of data:</p>
+      <pre class="large-code"><code>// legacy-cpp/alert_scoring_characterization.cc (new file, complete)
+#include "alert_scoring.h"
+
+#include &lt;cmath&gt;
+#include &lt;cstdint&gt;
+#include &lt;cstdio&gt;
+#include &lt;fstream&gt;
+#include &lt;sstream&gt;
+#include &lt;stdexcept&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+
+namespace {
+struct FixtureRow {
+    double value;
+    std::int64_t timestamp_unix_ms;
+    double expected_score;
+};
+
+std::vector&lt;FixtureRow&gt; LoadFixtureRows(const std::string&amp; path) {
+    std::ifstream in(path);
+    if (!in) {
+        throw std::runtime_error("failed to open fixture file: " + path);
+    }
+    std::vector&lt;FixtureRow&gt; rows;
+    std::string line;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        std::stringstream ss(line);
+        std::string value_str, ts_str, score_str;
+        std::getline(ss, value_str, ',');
+        std::getline(ss, ts_str, ',');
+        std::getline(ss, score_str, ',');
+        rows.push_back(FixtureRow{std::stod(value_str), std::stoll(ts_str), std::stod(score_str)});
+    }
+    return rows;
+}
+}  // namespace
+
+int main() {
+    AlertScorer scorer(/*baselineWindowSeconds=*/300.0, /*sensitivity=*/0.62);
+
+    // One untracked warm-up sample seeds the baseline window: a fresh
+    // scorer's very first call always throws ScoringError (cold-start
+    // EmptyWindow), matching Part 3's Rust translation, so the fixture
+    // below only records the seven rows scored *after* this warm-up.
+    try {
+        scorer.Score(MetricSample{100.0, 1758067199000});
+        std::fprintf(stderr, "expected the warm-up sample to throw, but it did not\n");
+        return 1;
+    } catch (const std::exception&amp;) {
+        // Expected exactly once, for this warm-up sample only.
+    }
+
+    auto rows = LoadFixtureRows("legacy-cpp/testdata/course_fixture.csv");
+    for (std::size_t i = 0; i &lt; rows.size(); ++i) {
+        double score = scorer.Score(MetricSample{rows[i].value, rows[i].timestamp_unix_ms});
+        double diff = std::fabs(score - rows[i].expected_score);
+        if (diff &gt;= 1e-6) {
+            std::fprintf(stderr, "row %zu: got %.9f, expected %.9f\n", i, score, rows[i].expected_score);
+            return 1;
+        }
+    }
+    std::printf("characterization parity ok: %zu/%zu rows matched\n", rows.size(), rows.size());
+    return 0;
+}</code></pre>
+      <p>This program does not assert anything about <em>correctness</em>; it asserts <em>parity</em> with today's production behavior, including any quirks. The warm-up call stands in for an already-running production shard mid-stream — a real fleet capture is already past its own cold start, so the scorer's <code>EmptyWindow</code> case never appears among the recorded rows either way. The Rust replacement must reproduce this same seven-row fixture before it earns any confidence in Part 5. This file includes the existing, already-present <code>alert_scoring.h</code> directly and links against the existing <code>alert_scoring.cpp</code> at compile time, so it needs no CMake target name, no GoogleTest dependency, and no build-system changes at all. Confirm the baseline passes before writing any Rust:</p>
+      <ol>
+        <li><strong>Working directory:</strong> <code>path/to/pulsewatch/</code> (repo root).</li>
+        <li>Compile it directly against the existing engine source: <code>c++ -std=c++17 -I legacy-cpp -o legacy-cpp/alert_scoring_characterization legacy-cpp/alert_scoring_characterization.cc legacy-cpp/alert_scoring.cpp</code>.</li>
+        <li>Run it: <code>./legacy-cpp/alert_scoring_characterization</code>.</li>
+        <li><strong>Expected evidence:</strong> the program prints <code>characterization parity ok: 7/7 rows matched</code> and exits with status <code>0</code>, confirming every one of the seven rows in <code>legacy-cpp/testdata/course_fixture.csv</code> matches its expected score within <code>1e-6</code> — this is the parity baseline Part 5's Rust build must reproduce. Any mismatched row prints its computed and expected score to stderr and exits <code>1</code> instead.</li>
+      </ol>
+
+      <h2>Part 3: choose the seam, translate the invariants into Rust</h2>
+      <p>The seam is the public surface identified in Part 1. Each C++ invariant needs an explicit, idiomatic Rust equivalent — not a literal transliteration:</p>
+      <table class="comparison-table">
+        <thead><tr><th>C++ rule</th><th>Rust translation</th></tr></thead>
+        <tbody>
+          <tr><td>Throws on invalid construction input</td><td><code>Result&lt;Self, ScoringError&gt;</code> instead of a thrown exception</td></tr>
+          <tr><td>Throws on malformed/non-finite sample</td><td>Explicit <code>value.is_finite()</code> guard, returns <code>Err(ScoringError::NonFiniteValue)</code> instead of throwing</td></tr>
+          <tr><td>Throws <code>ScoringError</code> if the baseline window is empty</td><td>New sample is scored against the <em>existing</em> baseline before joining it; an empty baseline returns <code>Err(ScoringError::EmptyWindow)</code> instead of throwing</td></tr>
+          <tr><td>Single owner via <code>unique_ptr&lt;Impl&gt;</code></td><td>An ordinary owned struct; Rust's default ownership already gives single ownership</td></tr>
+          <tr><td>Not copyable</td><td>Simply don't derive <code>Clone</code>; Rust types are non-copyable by default</td></tr>
+          <tr><td>Not thread-safe, caller already serializes</td><td>Methods take <code>&amp;mut self</code>, which the compiler enforces as exclusive access — no implicit sharing is even possible</td></tr>
+        </tbody>
+      </table>
+      <p>Rather than making the crate double as the repository root, this crate lives in its own workspace member directory so Lessons 20-22 (and any future crate) can sit alongside it without reshuffling paths later.</p>
+      <ol>
+        <li><strong>Working directory:</strong> <code>path/to/pulsewatch/</code> (repo root, already the workspace root since Lesson 7). Scaffold the crate: <code>cargo new --lib crates/pulsewatch-scoring</code>. <strong>Expected evidence:</strong> <code>crates/pulsewatch-scoring/Cargo.toml</code> and <code>crates/pulsewatch-scoring/src/lib.rs</code> now exist with Cargo's own placeholder content.</li>
+        <li><strong>File:</strong> <code>path/to/pulsewatch/Cargo.toml</code> (workspace root — replace the existing <code>members</code> line last edited in Lesson 15, the same way Lesson 15 replaced Lesson 7's original line; <code>resolver = "3"</code> from Lesson 7 is untouched):
+        <pre class="large-code"><code># Cargo.toml (workspace root — replace the existing members line from Lesson 15)
+members = ["crates/pulsewatch-core", "crates/pulsewatch-cli", "crates/pulsewatch-service", "crates/pulsewatch-scoring"]</code></pre></li>
+      </ol>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/Cargo.toml</code> (replace the entire file <code>cargo new</code> generated, so <code>edition = "2024"</code> is set before Part 4's <code>#[unsafe(no_mangle)]</code> needs it; Part 5's integration test uses only the standard library, so no <code>[dev-dependencies]</code> are needed yet):</p>
+      <pre class="large-code"><code># crates/pulsewatch-scoring/Cargo.toml (replace, complete)
+[package]
+name = "pulsewatch-scoring"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]</code></pre>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/lib.rs</code> (replace the placeholder <code>cargo new</code> generated; this is the complete starting content of the module, not an excerpt):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/lib.rs (replace, complete)
+use std::collections::VecDeque;
+use std::time::Duration;
+
+pub struct Sample {
+    pub value: f64,
+    pub timestamp_unix_ms: i64,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum ScoringError {
+    SensitivityOutOfRange,
+    InvalidBaselineWindow,
+    EmptyWindow,
+    NonFiniteValue,
+}
+
+pub struct AlertScorer {
+    window: VecDeque&lt;Sample&gt;,
+    baseline_window: Duration,
+    sensitivity: f32,
+}
+
+impl AlertScorer {
+    pub fn new(baseline_window: Duration, sensitivity: f32) -&gt; Result&lt;Self, ScoringError&gt; {
+        if baseline_window.is_zero() {
+            return Err(ScoringError::InvalidBaselineWindow);
+        }
+        if !(0.0..=1.0).contains(&amp;sensitivity) || sensitivity == 0.0 {
+            return Err(ScoringError::SensitivityOutOfRange);
+        }
+        Ok(Self { window: VecDeque::new(), baseline_window, sensitivity })
+    }
+
+    pub fn score(&amp;mut self, sample: Sample) -&gt; Result&lt;f32, ScoringError&gt; {
+        if !sample.value.is_finite() {
+            return Err(ScoringError::NonFiniteValue);
+        }
+        self.evict_outside_baseline_window(sample.timestamp_unix_ms);
+        if self.window.is_empty() {
+            // Nothing to compare against yet: seed the baseline with this
+            // sample and report EmptyWindow, matching the C++ contract
+            // ("Throws ScoringError if the window is empty") instead of
+            // scoring a sample against itself.
+            self.window.push_back(sample);
+            return Err(ScoringError::EmptyWindow);
+        }
+        let score = self.compute_deviation_score(&amp;sample);
+        self.window.push_back(sample);
+        Ok(score)
+    }
+
+    pub fn reset(&amp;mut self) {
+        self.window.clear();
+    }
+
+    // Drops baseline entries older than the incoming sample's timestamp by
+    // more than baseline_window, matching the legacy C++ deque-trim
+    // behavior exactly. Runs before the incoming sample joins the baseline.
+    fn evict_outside_baseline_window(&amp;mut self, newest_ms: i64) {
+        let window_ms = self.baseline_window.as_millis() as i64;
+        while let Some(oldest) = self.window.front() {
+            if newest_ms - oldest.timestamp_unix_ms &gt; window_ms {
+                self.window.pop_front();
+            } else {
+                break;
+            }
+        }
+    }
+
+    // Z-score of the incoming sample against the *existing* baseline
+    // window's mean and standard deviation (the sample itself is not yet
+    // part of the window), scaled by sensitivity and clamped to [0.0, 1.0]
+    // to match the legacy engine's documented output range.
+    fn compute_deviation_score(&amp;self, sample: &amp;Sample) -&gt; f32 {
+        let n = self.window.len() as f64;
+        let mean: f64 = self.window.iter().map(|s| s.value).sum::&lt;f64&gt;() / n;
+        let variance: f64 = self
+            .window
+            .iter()
+            .map(|s| (s.value - mean).powi(2))
+            .sum::&lt;f64&gt;()
+            / n;
+        let stddev = variance.sqrt().max(1e-6); // avoid divide-by-zero on a flat window
+        let z = ((sample.value - mean) / stddev).abs();
+        (z * self.sensitivity as f64).clamp(0.0, 1.0) as f32
+    }
+}</code></pre>
+
+      <h2>Part 4: a raw C ABI so the C++ caller can reach the Rust core</h2>
+      <p>The C++ ingestion service still owns the call site during the migration, so Pulsewatch needs a boundary the existing code can call across today. The simplest, most defensible boundary is a hand-written raw C ABI: <code>#[repr(C)]</code> status codes, <code>unsafe extern "C"</code> functions, and an <strong>opaque handle</strong> that never exposes the Rust struct's field layout to C++. Every one of these functions dereferences a raw pointer whose validity only the caller can guarantee, so each is declared <code>pub unsafe extern "C" fn</code> — the internal null checks make misuse easier to diagnose, but they do not turn raw-pointer FFI into a safe Rust API. <strong>File:</strong> append this block to the end of the same <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/lib.rs</code> from Part 3 (it extends, not replaces, what you already wrote):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/lib.rs (append — continues the file from Part 3)
+#[repr(C)]
+pub enum PwStatus {
+    Ok = 0,
+    InvalidSensitivity = 1,
+    NullHandle = 2,
+    Panicked = 3,
+    EmptyWindow = 4,
+    NonFiniteValue = 5,
+    InvalidBaselineWindow = 6,
+}
+
+/// Maps every `ScoringError` variant to its wire status code explicitly, so
+/// adding a new error variant is a compile error here until it is handled.
+fn map_scoring_error(err: ScoringError) -&gt; PwStatus {
+    match err {
+        ScoringError::SensitivityOutOfRange =&gt; PwStatus::InvalidSensitivity,
+        ScoringError::InvalidBaselineWindow =&gt; PwStatus::InvalidBaselineWindow,
+        ScoringError::EmptyWindow =&gt; PwStatus::EmptyWindow,
+        ScoringError::NonFiniteValue =&gt; PwStatus::NonFiniteValue,
+    }
+}
+
+/// Opaque to C++: only ever seen and passed around as a pointer.
+pub struct PwScorer(AlertScorer);
+
+/// # Safety
+/// Callers must satisfy every invariant below; the compiler cannot check
+/// any of them for an exported symbol like this one:
+/// - `out_handle` must be non-null and point to writable memory for one
+///   `*mut PwScorer`.
+/// - On `PwStatus::Ok` it is set to a freshly allocated handle that must
+///   later be passed to exactly one `pw_scorer_free` call.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn pw_scorer_new(
+    baseline_window_secs: f64,
+    sensitivity: f32,
+    out_handle: *mut *mut PwScorer,
+) -&gt; PwStatus {
+    if out_handle.is_null() {
+        return PwStatus::NullHandle;
+    }
+    // Fallible conversion rejects negative, non-finite, and overflowing
+    // values. Reject zero after rounding as well.
+    let baseline_window = match Duration::try_from_secs_f64(baseline_window_secs) {
+        Ok(duration) if !duration.is_zero() =&gt; duration,
+        _ =&gt; return map_scoring_error(ScoringError::InvalidBaselineWindow),
+    };
+    let built =
+        std::panic::catch_unwind(|| AlertScorer::new(baseline_window, sensitivity));
+    match built {
+        Ok(Ok(scorer)) =&gt; {
+            unsafe { *out_handle = Box::into_raw(Box::new(PwScorer(scorer))); }
+            PwStatus::Ok
+        }
+        Ok(Err(e)) =&gt; map_scoring_error(e),
+        Err(_) =&gt; PwStatus::Panicked,
+    }
+}
+
+/// # Safety
+/// Callers must satisfy every invariant below; the compiler cannot check
+/// any of them for an exported symbol like this one:
+/// - `handle` must be a live pointer previously returned by `pw_scorer_new`
+///   that has not yet been passed to `pw_scorer_free`.
+/// - `out_score` must be non-null and point to writable memory for one `f32`.
+/// - Callers must serialize calls per handle: `AlertScorer::score` takes
+///   `&amp;mut self`, so invoking this concurrently on the same handle from two
+///   threads is undefined behavior — matching the "not thread-safe"
+///   invariant from Part 1, now enforced by the borrow rather than by
+///   caller convention alone.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn pw_scorer_score(
+    handle: *mut PwScorer,
+    value: f64,
+    timestamp_unix_ms: i64,
+    out_score: *mut f32,
+) -&gt; PwStatus {
+    if handle.is_null() || out_score.is_null() {
+        return PwStatus::NullHandle;
+    }
+    let scorer = unsafe { &amp;mut *handle };
+    let scored = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        scorer.0.score(Sample { value, timestamp_unix_ms })
+    }));
+    match scored {
+        Ok(Ok(score)) =&gt; { unsafe { *out_score = score; } PwStatus::Ok }
+        Ok(Err(e)) =&gt; map_scoring_error(e),
+        Err(_) =&gt; PwStatus::Panicked,
+    }
+}
+
+/// # Safety
+/// `handle` must be null, or a pointer previously returned by
+/// `pw_scorer_new` that has not already been freed. Freeing the same
+/// handle twice, or a pointer this crate did not allocate, is undefined
+/// behavior the compiler cannot check for an exported symbol.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn pw_scorer_free(handle: *mut PwScorer) {
+    if handle.is_null() {
+        return;
+    }
+    unsafe { drop(Box::from_raw(handle)); }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>New syntax</th><th>Why it exists</th></tr></thead>
+        <tbody>
+          <tr><td><code>#[repr(C)]</code> on <code>PwStatus</code></td><td>Guarantees the C-compatible layout only for this explicitly marked enum, so C++ can read it as a plain <code>int</code>-backed status code.</td></tr>
+          <tr><td><code>#[unsafe(no_mangle)]</code> + <code>extern "C"</code></td><td>Keeps the symbol name stable and gives the function the platform C calling convention. Edition 2024 requires the unsafe attribute form because exporting a globally named symbol creates obligations the compiler cannot verify, including avoiding symbol-name collisions.</td></tr>
+          <tr><td><code>pub unsafe extern "C" fn</code></td><td>Every one of these functions dereferences or writes through a raw pointer whose validity only the caller can guarantee — that makes them <code>unsafe fn</code> by Rust's own rule (a function is only safe to mark non-<code>unsafe</code> if it is safe to call for <em>any</em> argument values the type system allows). The internal null checks reduce, but do not eliminate, what a misbehaving caller can still get wrong (dangling pointers, wrong handle type, use-after-free), so these stay unsafe entry points, not safe Rust APIs with a safe facade.</td></tr>
+          <tr><td>Null checks on every raw pointer (<code>out_handle</code>, <code>handle</code>, <code>out_score</code>)</td><td>Each pointer is validated before it is ever dereferenced. A null value returns <code>PwStatus::NullHandle</code> instead of the undefined behavior a stray dereference would cause — this narrows, but does not remove, the <code>unsafe fn</code> contract above.</td></tr>
+          <tr><td><code>/// # Safety</code> doc comments</td><td>Documents the caller obligations the compiler cannot check for an exported <code>unsafe fn</code> — pointer provenance, freeing exactly once, and not calling concurrently on the same handle — matching the convention <code>rustc</code>'s own lints expect on public <code>unsafe fn</code>s.</td></tr>
+          <tr><td><code>PwScorer(AlertScorer)</code> as an opaque handle</td><td>C++ only ever holds a pointer; it never sees or relies on <code>AlertScorer</code>'s internal fields or layout.</td></tr>
+          <tr><td><code>Box::into_raw</code> / <code>Box::from_raw</code></td><td>Hands ownership to C++ as a raw pointer, then reclaims and drops it exactly once in <code>pw_scorer_free</code> — never call C's <code>free()</code> on this pointer.</td></tr>
+          <tr><td><code>catch_unwind</code> / <code>AssertUnwindSafe</code></td><td>Catches ordinary unwinding Rust panics before they reach the non-unwinding <code>extern "C"</code> boundary, where Rust would otherwise abort the process, and converts them into <code>PwStatus::Panicked</code>. This only works if the crate keeps the default <code>panic = "unwind"</code> strategy; a crate built with <code>panic = "abort"</code> aborts immediately and <code>catch_unwind</code> never runs.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong>Rust's ABI and struct layout are not a stable, foreign-facing contract</strong>
+          <p>Default (<code>repr(Rust)</code>) layout is unspecified and can change between compiler versions or even between builds. Only types explicitly marked <code>#[repr(C)]</code> get a defined, C-compatible layout, and only for the fields you mark. The opaque-handle pattern above sidesteps needing a stable Rust ABI at all: C++ never sees <code>AlertScorer</code>'s fields, only an opaque pointer, so both sides must simply be rebuilt together, not independently versioned like a real stable ABI.</p>
+        </div>
+      </div>
+
+      <p>A hand-written header must match these declarations exactly. For anything beyond a handful of functions, generate it instead of transcribing it by hand — <a href="https://github.com/mozilla/cbindgen">cbindgen</a> reads the Rust source and emits a matching C or C++ header automatically, so the header can never silently drift from the real signatures.</p>
+
+      <h2>Part 5: exercise — a self-contained differential smoke test against the Rust-backed scorer</h2>
+      <p>This exercise builds a real Rust-backed scorer behind the raw C ABI from Part 4, then proves it produces the same scores as the legacy <code>AlertScorer</code> on the course fixture — a small, fully self-contained stand-in for the production differential check Part 6 describes at fleet scale. Wiring a <code>RustBackedScorer</code> behind Pulsewatch's actual ingestion service, guarded by a runtime <code>use_rust_scorer</code> flag, is the production rollout work Part 6 discusses conceptually; that needs the real ingestion call site, which is production infrastructure outside what a lesson fixture can supply, so this exercise stops at a standalone, fully-supplied smoke executable instead — every command below runs only against files this lesson gives you. All commands below run from <code>path/to/pulsewatch/</code> (the workspace root). <strong>File:</strong> copy the same fixture from Part 2 to <code>path/to/pulsewatch/crates/pulsewatch-scoring/testdata/course_fixture.csv</code> (new file, identical contents — kept as a second copy next to the Rust crate rather than shared by a fragile relative path across the C++/Rust boundary; keep both copies identical if you ever edit one):</p>
+      <pre class="large-code"><code># crates/pulsewatch-scoring/testdata/course_fixture.csv (new file, identical to Part 2's copy)
+# value,timestamp_unix_ms,expected_score
+100.0,1758067200000,0.000000000
+101.0,1758067201000,1.000000000
+99.0,1758067202000,1.000000000
+100.5,1758067203000,0.438406204
+99.5,1758067204000,0.560811101
+180.0,1758067205000,1.000000000
+101.0,1758067206000,0.230913859</code></pre>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/tests/characterization_parity.rs</code> (new file — a complete, minimal integration test, not an excerpt):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/tests/characterization_parity.rs (new file)
+use pulsewatch_scoring::{AlertScorer, Sample};
+use std::time::Duration;
+
+struct FixtureRow {
+    value: f64,
+    timestamp_unix_ms: i64,
+    expected_score: f32,
+}
+
+// Minimal fixed-column reader for this course's own three-field fixture
+// format (value,timestamp_unix_ms,expected_score) -- not a general CSV
+// parser, deliberately, so this test pulls in no new dependency.
+fn load_fixture_rows(path: &amp;std::path::Path) -&gt; Vec&lt;FixtureRow&gt; {
+    let text = std::fs::read_to_string(path)
+        .unwrap_or_else(|e| panic!("failed to read {}: {e}", path.display()));
+    text.lines()
+        .filter(|line| !line.trim().is_empty() &amp;&amp; !line.starts_with('#'))
+        .map(|line| {
+            let mut fields = line.split(',');
+            let value: f64 = fields.next().unwrap().trim().parse().unwrap();
+            let timestamp_unix_ms: i64 = fields.next().unwrap().trim().parse().unwrap();
+            let expected_score: f32 = fields.next().unwrap().trim().parse().unwrap();
+            FixtureRow { value, timestamp_unix_ms, expected_score }
+        })
+        .collect()
+}
+
+#[test]
+fn characterization_parity_matches_course_fixture() {
+    // Anchored at compile time to this crate's own manifest directory, so
+    // the fixture resolves the same way regardless of cargo's test-runner
+    // working directory.
+    let fixture_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("testdata")
+        .join("course_fixture.csv");
+    let rows = load_fixture_rows(&amp;fixture_path);
+
+    let mut scorer = AlertScorer::new(Duration::from_secs_f64(300.0), 0.62)
+        .expect("baseline_window and sensitivity are known-valid constants");
+
+    // Same untracked warm-up sample as the C++ characterization test in
+    // Part 2, so both sides compare the same seven post-warm-up rows.
+    let _ = scorer.score(Sample { value: 100.0, timestamp_unix_ms: 1_758_067_199_000 });
+
+    for (i, row) in rows.iter().enumerate() {
+        let score = scorer
+            .score(Sample { value: row.value, timestamp_unix_ms: row.timestamp_unix_ms })
+            .unwrap_or_else(|e| panic!("row {i} unexpectedly rejected: {e:?}"));
+        assert!(
+            (score - row.expected_score).abs() &lt; 1e-6,
+            "row {i}: got {score}, expected {expected}",
+            expected = row.expected_score
+        );
+    }
+}</code></pre>
+      <ol>
+        <li>Build the release artifacts: <code>cargo build --release -p pulsewatch-scoring</code>. <strong>Expected evidence:</strong> <code>target/release/libpulsewatch_scoring.a</code> and <code>target/release/libpulsewatch_scoring.so</code> (or <code>.dylib</code> on macOS) now exist, matching the <code>staticlib</code>/<code>cdylib</code> crate types from Part 3's <code>crates/pulsewatch-scoring/Cargo.toml</code>.</li>
+        <li>Install cbindgen once, if it isn't already on your <code>PATH</code>: <code>cargo install cbindgen --locked</code>. <strong>Expected evidence:</strong> <code>cbindgen --version</code> prints a version number.</li>
+        <li>Create the directory cbindgen will write into — its <code>--output</code> flag does not create missing parent directories: <code>mkdir -p crates/pulsewatch-scoring/include</code>.</li>
+        <li>cbindgen needs a config file, even an empty one, so create it next: <code>touch crates/pulsewatch-scoring/cbindgen.toml</code> (or add settings later; an empty file is a valid starting point per cbindgen's own quick start).</li>
+        <li>Generate the matching C++ header instead of transcribing it by hand, passing the crate's directory as cbindgen's input so the command still runs from the workspace root: <code>cbindgen --config crates/pulsewatch-scoring/cbindgen.toml --crate pulsewatch-scoring --output crates/pulsewatch-scoring/include/pulsewatch_scoring.h crates/pulsewatch-scoring</code>. <strong>Expected evidence:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/include/pulsewatch_scoring.h</code> is created (or overwritten) with declarations for <code>PwStatus</code>, <code>PwScorer</code>, and all three <code>pw_scorer_*</code> functions, matching Part 4's Rust signatures exactly. cbindgen's default output language is C++, so <code>PwStatus</code> is emitted as a scoped enum reachable as <code>PwStatus::Ok</code>, <code>PwStatus::EmptyWindow</code>, and so on — the same names used below.</li>
+        <li>Add the fixture file and the test file above at the paths shown, then run it: <code>cargo test -p pulsewatch-scoring characterization_parity</code>. <strong>Expected evidence:</strong> the test passes, replaying all seven rows of <code>crates/pulsewatch-scoring/testdata/course_fixture.csv</code> through the Rust <code>AlertScorer</code> within <code>1e-6</code> — the same tolerance and the same seven expected scores Part 2's C++ program used.</li>
+      </ol>
+      <p><strong>File:</strong> create <code>path/to/pulsewatch/legacy-cpp/rust_backed_scorer.h</code> (new file, complete — a thin C++ wrapper around the raw <code>pw_scorer_*</code> C ABI from Part 4):</p>
+      <pre class="large-code"><code>// legacy-cpp/rust_backed_scorer.h (new file, complete)
+#pragma once
+
+#include &lt;cstdint&gt;
+
+#include "pulsewatch_scoring.h"  // generated by cbindgen, above
+
+// A thin C++ wrapper around the raw pw_scorer_* C ABI from Part 4, giving
+// the Rust-backed scorer a constructor/Score/destructor shape comparable to
+// the legacy AlertScorer, for this course's differential smoke check only.
+// Wiring this behind Pulsewatch's real ingestion service and its runtime
+// `use_rust_scorer` flag is production work this lesson does not perform.
+class RustBackedScorer {
+public:
+    RustBackedScorer(double baselineWindowSeconds, double sensitivity);
+    ~RustBackedScorer();
+
+    RustBackedScorer(const RustBackedScorer&amp;) = delete;
+    RustBackedScorer&amp; operator=(const RustBackedScorer&amp;) = delete;
+
+    // Throws std::runtime_error on any non-Ok PwStatus, including
+    // EmptyWindow and NonFiniteValue, matching AlertScorer::Score's
+    // throw-on-invalid-input contract.
+    double Score(double value, std::int64_t timestamp_unix_ms);
+
+private:
+    PwScorer* handle_ = nullptr;
+};</code></pre>
+      <p><strong>File:</strong> create <code>path/to/pulsewatch/legacy-cpp/rust_backed_scorer.cc</code> (new file, complete):</p>
+      <pre class="large-code"><code>// legacy-cpp/rust_backed_scorer.cc (new file, complete)
+#include "rust_backed_scorer.h"
+
+#include &lt;stdexcept&gt;
+
+namespace {
+[[noreturn]] void ThrowForStatus(PwStatus status) {
+    switch (status) {
+        case PwStatus::EmptyWindow:
+            throw std::runtime_error("RustBackedScorer: EmptyWindow");
+        case PwStatus::NonFiniteValue:
+            throw std::runtime_error("RustBackedScorer: NonFiniteValue");
+        case PwStatus::InvalidSensitivity:
+            throw std::runtime_error("RustBackedScorer: InvalidSensitivity");
+        case PwStatus::InvalidBaselineWindow:
+            throw std::runtime_error("RustBackedScorer: InvalidBaselineWindow");
+        case PwStatus::NullHandle:
+            throw std::runtime_error("RustBackedScorer: NullHandle");
+        case PwStatus::Panicked:
+            throw std::runtime_error("RustBackedScorer: the Rust scorer panicked");
+        default:
+            throw std::runtime_error("RustBackedScorer: unrecognized PwStatus");
+    }
+}
+}  // namespace
+
+RustBackedScorer::RustBackedScorer(double baselineWindowSeconds, double sensitivity) {
+    PwStatus status = pw_scorer_new(baselineWindowSeconds, static_cast&lt;float&gt;(sensitivity), &amp;handle_);
+    if (status != PwStatus::Ok) {
+        ThrowForStatus(status);
+    }
+}
+
+RustBackedScorer::~RustBackedScorer() {
+    pw_scorer_free(handle_);
+}
+
+double RustBackedScorer::Score(double value, std::int64_t timestamp_unix_ms) {
+    float score = 0.0f;
+    PwStatus status = pw_scorer_score(handle_, value, timestamp_unix_ms, &amp;score);
+    if (status != PwStatus::Ok) {
+        ThrowForStatus(status);
+    }
+    return score;
+}</code></pre>
+      <p><strong>File:</strong> create <code>path/to/pulsewatch/legacy-cpp/rust_backed_scorer_smoke.cc</code> (new file, complete — the named, self-contained differential executable for this exercise):</p>
+      <pre class="large-code"><code>// legacy-cpp/rust_backed_scorer_smoke.cc (new file, complete)
+#include "alert_scoring.h"
+#include "rust_backed_scorer.h"
+
+#include &lt;cmath&gt;
+#include &lt;cstdint&gt;
+#include &lt;cstdio&gt;
+#include &lt;fstream&gt;
+#include &lt;sstream&gt;
+#include &lt;stdexcept&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+
+namespace {
+struct FixtureRow {
+    double value;
+    std::int64_t timestamp_unix_ms;
+};
+
+std::vector&lt;FixtureRow&gt; LoadFixtureRows(const std::string&amp; path) {
+    std::ifstream in(path);
+    if (!in) {
+        throw std::runtime_error("failed to open fixture file: " + path);
+    }
+    std::vector&lt;FixtureRow&gt; rows;
+    std::string line;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        std::stringstream ss(line);
+        std::string value_str, ts_str, score_str;  // score_str is unused: this is a live differential check, not a replay against a recorded value
+        std::getline(ss, value_str, ',');
+        std::getline(ss, ts_str, ',');
+        std::getline(ss, score_str, ',');
+        rows.push_back(FixtureRow{std::stod(value_str), std::stoll(ts_str)});
+    }
+    return rows;
+}
+}  // namespace
+
+int main() {
+    AlertScorer legacy(/*baselineWindowSeconds=*/300.0, /*sensitivity=*/0.62);
+    RustBackedScorer rust_backed(/*baselineWindowSeconds=*/300.0, /*sensitivity=*/0.62);
+
+    // Same untracked warm-up sample fed to both implementations so their
+    // baseline windows start in the same state.
+    try { legacy.Score(MetricSample{100.0, 1758067199000}); } catch (const std::exception&amp;) {}
+    try { rust_backed.Score(100.0, 1758067199000); } catch (const std::exception&amp;) {}
+
+    auto rows = LoadFixtureRows("legacy-cpp/testdata/course_fixture.csv");
+    for (std::size_t i = 0; i &lt; rows.size(); ++i) {
+        double legacy_score = legacy.Score(MetricSample{rows[i].value, rows[i].timestamp_unix_ms});
+        double rust_score = rust_backed.Score(rows[i].value, rows[i].timestamp_unix_ms);
+        double diff = std::fabs(legacy_score - rust_score);
+        if (diff &gt;= 1e-6) {
+            std::fprintf(stderr, "row %zu: legacy=%.9f rust=%.9f diff=%.9f\n", i, legacy_score, rust_score, diff);
+            return 1;
+        }
+    }
+    std::printf("differential parity ok: %zu/%zu rows matched between AlertScorer and RustBackedScorer\n", rows.size(), rows.size());
+    return 0;
+}</code></pre>
+      <ol>
+        <li><strong>Working directory:</strong> <code>path/to/pulsewatch/</code> (repo root). Compile the smoke executable against the existing C++ engine, the new wrapper, and the header from cbindgen: <code>c++ -std=c++17 -I legacy-cpp -I crates/pulsewatch-scoring/include -o legacy-cpp/rust_backed_scorer_smoke legacy-cpp/rust_backed_scorer_smoke.cc legacy-cpp/rust_backed_scorer.cc legacy-cpp/alert_scoring.cpp -L target/release -lpulsewatch_scoring</code>.</li>
+        <li>Run it, pointing the dynamic linker at the freshly built <code>target/release/</code> so it finds <code>libpulsewatch_scoring</code> at load time (it is not installed to a system library directory): on macOS, <code>DYLD_LIBRARY_PATH=target/release ./legacy-cpp/rust_backed_scorer_smoke</code>; on Linux, <code>LD_LIBRARY_PATH=target/release ./legacy-cpp/rust_backed_scorer_smoke</code>.</li>
+        <li><strong>Expected evidence:</strong> the program prints <code>differential parity ok: 7/7 rows matched between AlertScorer and RustBackedScorer</code> and exits with status <code>0</code> — the legacy C++ engine and the Rust core reached through the raw C ABI produce identical scores, within <code>1e-6</code>, for every row. Any mismatched row prints both scores and their difference to stderr and exits <code>1</code> instead.</li>
+        <li><strong>This is the differential check for this fixture:</strong> Part 2's standalone executable, this smoke executable, and Part 5's <code>cargo test</code> all replay the identical seven rows, so a passing run of all three already shows the C++ original, the Rust core directly, and the Rust core through the C ABI agree for this fixture — no separate script is required. A production rollout scales the same idea up to tens of thousands of recorded samples compared live before <code>use_rust_scorer</code> is ever flipped (Part 6); that scale of comparison is beyond what a seven-row lesson fixture can demonstrate directly, but the mechanism — replay the same inputs through every implementation, compare outputs — is identical.</li>
+      </ol>
+
+      <h2>Part 6: differential testing and a reversible rollout</h2>
+      <p>With both implementations compiled in side by side, roll out gradually and keep an explicit rollback path:</p>
+      <ol>
+        <li>Enable <code>use_rust_scorer</code> for a single canary shard while both paths run and their scores are compared live; alert on any divergence beyond the recorded tolerance.</li>
+        <li>Ramp shard-by-shard over days, watching score-distribution dashboards, not just crash-free operation.</li>
+        <li>Rollback is a configuration change — flip the flag back to <code>false</code> — not a code revert, because the legacy C++ implementation stays compiled in until parity is fully proven.</li>
+        <li>Only delete <code>AlertScorer</code>'s C++ implementation after a full soak period with zero unresolved mismatches in production.</li>
+      </ol>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=LLAUzghhNHg">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">55:40 · INTERMEDIATE</span><h3>From Rust to C and Back Again: an introduction to "foreign functions"</h3><p>Jack O'Connor. A grounded walkthrough of calling between Rust and C, including ownership and string conventions.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=_LtgHxuysUo">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">1:11:44 · INTERMEDIATE</span><h3>How do you rewrite C/C++ projects to Rust?</h3><p>JetBrains. Discusses practical migration strategy for existing C/C++ codebases moving to Rust.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the foreign-functions video, read the Rustonomicon's <a href="https://doc.rust-lang.org/nomicon/ffi.html">FFI chapter</a>, which covers the same ownership and string-boundary rules used in Part 4.</li>
+        <li>Instead of the migration-strategy video, work through the reconnaissance, characterization-test, and staged-rollout steps in Parts 1, 2, and 6 above using <code>AlertScorer</code> as the worked case study.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why write characterization tests before refactoring <code>AlertScorer</code> at all?</summary><p><strong>Answer:</strong> Legacy code's actual, possibly-undocumented behavior is the real specification. Characterization tests pin that behavior over recorded traffic so the Rust migration is checked against reality, not assumptions about what the code was supposed to do.</p></details>
+      <details class="quiz"><summary>2. Why does <code>pw_scorer_score</code> return a <code>PwStatus</code> code instead of letting a panic or a Rust <code>Result</code> cross the boundary directly?</summary><p><strong>Answer:</strong> C++ has no ABI representation for Rust's <code>Result</code>, and a Rust panic reaching a non-unwinding <code>extern "C"</code> boundary aborts the process. Catching ordinary unwinding panics before the boundary and returning a plain status gives C++ a defined, checkable outcome. This only works when the crate keeps the default <code>panic = "unwind"</code> strategy — a crate built with <code>panic = "abort"</code> aborts immediately and <code>catch_unwind</code> never runs.</p></details>
+      <details class="quiz"><summary>3. Does marking <code>PwStatus</code> as <code>#[repr(C)]</code> make <code>AlertScorer</code>'s internal fields part of a stable ABI?</summary><p><strong>Answer:</strong> No. Only <code>PwStatus</code> itself gets a defined C-compatible layout. <code>AlertScorer</code> stays entirely behind the opaque <code>PwScorer</code> pointer, so its internal layout can change freely as long as both sides are rebuilt together.</p></details>
+      <details class="quiz"><summary>4. Why is <code>pw_scorer_score</code> declared <code>pub unsafe extern "C" fn</code> instead of plain <code>pub extern "C" fn</code>, given that it already checks its pointers for null?</summary><p><strong>Answer:</strong> A function is only safe to mark non-<code>unsafe</code> if it is sound for every input the type system allows. Null checks rule out one failure mode, but the compiler still cannot verify pointer provenance, that <code>handle</code> came from <code>pw_scorer_new</code>, or that no other thread is calling it concurrently — those remain caller obligations, so the function stays <code>unsafe fn</code> with a documented <code>/// # Safety</code> contract rather than a safe API with a safe-looking facade.</p></details>
+      <details class="quiz"><summary>5. What makes the staged rollout reversible without a redeploy?</summary><p><strong>Answer:</strong> Both the legacy C++ path and the new Rust path stay compiled into the running binary during the transition. Rolling back is a runtime configuration flag flip, not a code revert or rebuild.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Legacy behavior undocumented?      Write characterization tests first
+Public surface small and stable?   Good seam for the first migration slice
+Crossing to a non-Rust caller?     Start with #[repr(C)] + opaque handles
+Exported fn takes a raw pointer?   Mark it pub unsafe extern "C" fn, not just extern "C"
+Every raw pointer at the boundary? Validate for null before every dereference
+Need to survive a caller's panic?  Wrap every extern "C" entry point in catch_unwind, keep panic="unwind"
+Comparing implementations?         Run differential tests over recorded production traffic
+Not fully confident yet?           Ship behind a runtime flag with an explicit rollback path</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/nomicon/ffi.html">FFI</a>, <em>The Rustonomicon</em>, Rust Project. Foreign function boundaries, ownership, and string conventions. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/reference/type-layout.html">Type Layout</a>, <em>The Rust Reference</em>, Rust Project. <code>repr(C)</code> and the scope of its layout guarantee. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/edition-guide/rust-2024/unsafe-attributes.html">Unsafe attributes</a>, <em>Rust Edition Guide</em>, Rust Project. Edition 2024 requirements and safety obligations for <code>no_mangle</code>. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/reference/abi.html">Application Binary Interface</a>, <em>The Rust Reference</em>, Rust Project. Confirms Rust's ABI is not a stable, externally-versioned contract. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/panic/fn.catch_unwind.html">catch_unwind</a>, Rust standard library documentation, Rust Project. Panic containment at a foreign boundary. Accessed September 17, 2026.</li>
+        <li><a href="https://github.com/mozilla/cbindgen">cbindgen</a>, Mozilla. Generates a matching C/C++ header from Rust source. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=LLAUzghhNHg">From Rust to C and Back Again: an introduction to "foreign functions"</a>, Jack O'Connor, 55:40. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=_LtgHxuysUo">How do you rewrite C/C++ projects to Rust?</a>, JetBrains, 1:11:44. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="18-performance-profiling-unsafe-verification.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 18: Performance &amp; Unsafe Verification</span></a>
+        <a href="20-advanced-cpp-interop.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 20: Advanced C++ Interop</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

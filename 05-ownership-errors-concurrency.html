@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ownership, Explicit Errors, and Safe Concurrency — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html" class="active"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 5 · 30 minutes</span>
+      <h1>Ownership, Explicit Errors, and Safe Concurrency</h1>
+      <p class="lesson-subtitle">Extend <code>rust-greeter</code> from one owned string to a batch pipeline whose borrows, expected failures, and worker lifetimes are checked at compile time.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can choose between move, shared borrow, and mutable borrow; propagate recoverable failure with <code>Result</code>; transform collections with iterators; and explain why scoped threads cannot outlive the data they borrow.
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">📁</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p><strong>Starting state:</strong> the completed Lesson 4 <code>rust-greeter</code> package — the Lesson 1 CLI (<code>Cargo.toml</code> with the <code>clap</code> dependency; <code>src/main.rs</code> with <code>use clap::Parser</code>, <code>struct Args</code>, <code>fn greeting</code>, <code>fn main</code>, and the <code>tests</code> module) as extended by Lessons 2–4 with additional value types, structs and enums, and control-flow and macro-based helpers. <strong>Working directory:</strong> <code>cd path/to/rust-greeter</code> — replace <code>path/to</code> with the parent folder you used in Lesson 1; every command in this lesson runs from that package root. <strong>Default file:</strong> unqualified code snippets target <code>src/main.rs</code>; each one below states whether it replaces existing code, is inserted at a named location, or is an illustrative excerpt that is not added to the file.</p>
+        </div>
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="6"><td>6 min</td><td>Trace ownership, moves, and borrows through the existing CLI</td></tr>
+          <tr data-minutes="7"><td>7 min</td><td>Decode enums, <code>Result</code>, <code>Box</code>, trait objects, and <code>?</code></td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Build a lazy iterator pipeline for file input</td></tr>
+          <tr data-minutes="9"><td>9 min</td><td>Implement a scoped-thread batch greeter with a line-by-line syntax guide</td></tr>
+          <tr data-minutes="2"><td>2 min</td><td>Knowledge check: diagnose four compiler-guided design choices</td></tr>
+          <tr data-minutes="1"><td>1 min</td><td>Recap with Rust-to-C++ decision rules</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: ownership is RAII plus enforced aliasing</h2>
+      <p>C++ RAII and Rust ownership share deterministic cleanup. Rust adds a static rule: every value has one owner, and assigning or passing an owning value usually <strong>moves</strong> it. A moved value cannot be used. Borrowing temporarily grants access without transferring cleanup responsibility.</p>
+      <p><strong>Illustrative excerpt — not added to <code>rust-greeter</code>.</strong> These lines are a standalone fragment for reading, not a complete file; if you want to run them, paste them inside a scratch <code>fn main() { ... }</code> and revert afterward.</p>
+      <pre class="large-code"><code>let owned = String::from("Ferris");
+let moved = owned;
+// println!("{owned}"); // compile error: value was moved
+
+let len = moved.len();       // short shared borrow
+let view: &amp;str = &amp;moved;    // shared borrow
+println!("{view}: {len}");   // owner remains `moved`</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Sample syntax</th><th>What Rust is doing</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>String::from("Ferris")</code></td><td>Calls an associated function using <code>::</code> and creates an owned, growable UTF-8 string.</td><td>Think <code>std::string{"Ferris"}</code>; Rust's <code>String</code> owns its heap buffer.</td></tr>
+          <tr><td><code>let moved = owned;</code></td><td>Transfers ownership. It normally copies only the small stack representation, not the heap text, and disables later use of <code>owned</code>.</td><td>Similar intent to moving a <code>std::unique_ptr</code>, but enforced for all non-<code>Copy</code> values.</td></tr>
+          <tr><td><code>moved.len()</code></td><td>Calls a method that borrows <code>moved</code> briefly. Method-call syntax inserts the needed reference automatically.</td><td>Comparable to a <code>const</code> member function call.</td></tr>
+          <tr><td><code>&amp;str</code></td><td>A borrowed view containing a pointer and byte length. Its lifetime cannot exceed the string data it views.</td><td>Closest to <code>std::string_view</code>, with compiler-checked lifetime and aliasing rules.</td></tr>
+        </tbody>
+      </table>
+      <table class="comparison-table">
+        <thead><tr><th>Function parameter</th><th>Promise</th><th>Use it when</th></tr></thead>
+        <tbody>
+          <tr><td><code>name: String</code></td><td>The callee takes ownership and decides when it is dropped or moved again.</td><td>The callee must retain, transform, or transfer the allocation.</td></tr>
+          <tr><td><code>name: &amp;str</code></td><td>The callee reads a string view for no longer than the borrow.</td><td>Reading is enough; prefer this flexible API for greeting.</td></tr>
+          <tr><td><code>name: &amp;mut String</code></td><td>The callee has exclusive access for the borrow.</td><td>In-place mutation is part of the function's contract.</td></tr>
+        </tbody>
+      </table>
+
+      <figure class="course-figure">
+        <img src="assets/ownership-concurrency.svg" alt="Diagram showing a vector owning strings, a shared slice borrowed by a scoped thread region, worker threads borrowing individual strings, and owned Result values returning after all workers join.">
+        <figcaption>The scope proves every worker joins before the borrowed <code>Vec&lt;String&gt;</code> can be dropped or mutated.</figcaption>
+      </figure>
+      <p><a href="assets/ownership-concurrency.excalidraw">Download the editable Excalidraw source</a>.</p>
+
+      <h2>Part 2: make expected failure a value</h2>
+      <p>Rust separates unrecoverable bugs, represented by a <strong>panic</strong>, from expected failure, represented by <code>Result&lt;T, E&gt;</code>. Both success and failure are enum variants, so callers must handle or propagate them.</p>
+      <p><strong>File: <code>src/main.rs</code></strong> — add below the existing <code>greeting</code> function from Lesson 1:</p>
+      <pre class="large-code"><code>#[derive(Debug)]
+enum NameError {
+    Empty,
+    TooLong(usize),
+}
+
+fn validate_name(raw: &amp;str) -&gt; Result&lt;&amp;str, NameError&gt; {
+    let name = raw.trim();
+    match name.len() {
+        0 =&gt; Err(NameError::Empty),
+        n if n &gt; 40 =&gt; Err(NameError::TooLong(n)),
+        _ =&gt; Ok(name),
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning for a C++ programmer</th></tr></thead>
+        <tbody>
+          <tr><td><code>enum NameError</code></td><td>A tagged union, closer to <code>std::variant</code> than a C-style integer enum. Each variant can carry different data.</td></tr>
+          <tr><td><code>#[derive(Debug)]</code></td><td>Generates a standard debug-formatting implementation so the error can be printed by tools and assertions.</td></tr>
+          <tr><td><code>TooLong(usize)</code></td><td>A variant carrying the measured length. <code>usize</code> is the platform-sized unsigned integer Rust uses for collection sizes and indices.</td></tr>
+          <tr><td><code>Result&lt;&amp;str, NameError&gt;</code></td><td>A generic enum with exactly two variants: <code>Ok(&amp;str)</code> or <code>Err(NameError)</code>. It serves the role of <code>std::expected&lt;string_view, NameError&gt;</code>.</td></tr>
+          <tr><td><code>match</code></td><td>Pattern-matches and must cover every possible variant or value. Adding an error variant reveals incomplete handlers at compile time.</td></tr>
+          <tr><td><code>n if n &gt; 40</code></td><td>Binds the matched length to <code>n</code>, then applies an extra guard condition.</td></tr>
+          <tr><td><code>_ =&gt; Ok(name)</code></td><td>The underscore is a wildcard for every remaining length; <code>=&gt;</code> separates a pattern from its result expression.</td></tr>
+        </tbody>
+      </table>
+
+      <p>File I/O also returns <code>Result</code>. The <code>?</code> operator returns early only on <code>Err</code>; otherwise it unwraps the success value.</p>
+      <p><strong>File: <code>src/main.rs</code></strong> — add below <code>validate_name</code>. The <code>use std::{...}</code> line is a new, separate import; it does not replace the existing <code>use clap::Parser;</code> line:</p>
+      <pre class="large-code"><code>use std::{error::Error, fs, path::Path};
+
+fn load_names(path: &amp;Path) -&gt; Result&lt;Vec&lt;String&gt;, Box&lt;dyn Error&gt;&gt; {
+    let text = fs::read_to_string(path)?;
+    Ok(text.lines().map(str::trim).map(str::to_owned).collect())
+}</code></pre>
+      <div class="callout note">
+        <span class="callout-icon">📦</span>
+        <div class="callout-content">
+          <strong>Unpack <code>Box&lt;dyn Error&gt;</code> one piece at a time</strong>
+          <p><code>Box&lt;T&gt;</code> is an owning smart pointer: it stores a <code>T</code> on the heap, owns that value exclusively, and destroys it automatically when the box leaves scope. Its closest C++ bridge is <code>std::unique_ptr&lt;T&gt;</code>, although Rust uses <code>Box</code> as a normal value type rather than exposing manual deletion.</p>
+          <p><code>Error</code> is a trait, similar to an abstract interface. <code>dyn Error</code> means “some concrete error type that implements <code>Error</code>, chosen at runtime.” Combining them, <code>Box&lt;dyn Error&gt;</code> owns an error whose exact concrete type the function does not name. Calls are dynamically dispatched through the trait object.</p>
+        </div>
+      </div>
+      <p>Why use it here? <code>fs::read_to_string</code> can produce <code>std::io::Error</code>, while later edits might add other error types. The function still needs one fixed error type in its signature, so the box erases the concrete distinction at this application boundary. It boxes only an error on the failure path; the successful <code>Vec&lt;String&gt;</code> is unaffected.</p>
+
+      <p>The <code>?</code> line is shorthand for the same control flow as this explicit <code>match</code>. <strong>Both sides are illustrative only</strong> — the "Concise propagation" line is the same <code>fs::read_to_string(path)?;</code> statement already inside <code>load_names</code> above; the "Conceptual expansion" is what it desugars to and is not added to the file.</p>
+      <div class="code-compare">
+        <div>
+          <div class="code-label">Concise propagation</div>
+          <pre><code>let text =
+    fs::read_to_string(path)?;</code></pre>
+        </div>
+        <div>
+          <div class="code-label">Conceptual expansion</div>
+          <pre><code>let text = match fs::read_to_string(path) {
+    Ok(value) =&gt; value,
+    Err(error) =&gt; return Err(error.into()),
+};</code></pre>
+        </div>
+      </div>
+      <p><code>error.into()</code> converts the concrete I/O error into the declared boxed error type. In a reusable library, prefer a domain-specific error enum so callers can inspect individual cases without relying on dynamic type erasure.</p>
+
+      <h2>Part 3: iterators describe transformations</h2>
+      <p><code>text.lines()</code> creates a lazy iterator over borrowed <code>&amp;str</code> slices. <code>map</code> composes transformations, and <code>collect</code> chooses the owned destination. Unlike an index loop, there is no unchecked position to advance incorrectly. <strong>The comparison below is illustrative</strong> — it walks through the single <code>collect()</code> expression already inside <code>load_names</code> above; there is nothing new to add to <code>src/main.rs</code>.</p>
+      <div class="code-compare">
+        <div>
+          <div class="code-label">Pipeline</div>
+          <pre><code>text.lines()
+    .map(str::trim)
+    .map(str::to_owned)
+    .collect::&lt;Vec&lt;String&gt;&gt;()</code></pre>
+        </div>
+        <div>
+          <div class="code-label">Ownership at each stage</div>
+          <pre><code>&amp;str input
+  → borrowed line &amp;str
+  → borrowed trimmed &amp;str
+  → owned String
+  → owned Vec&lt;String&gt;</code></pre>
+        </div>
+      </div>
+      <table class="comparison-table">
+        <thead><tr><th>Pipeline step</th><th>What it contributes</th></tr></thead>
+        <tbody>
+          <tr><td><code>text.lines()</code></td><td>Creates an iterator over borrowed lines. No vector is created yet.</td></tr>
+          <tr><td><code>.map(str::trim)</code></td><td>Passes the function <code>str::trim</code> as the transformation. It is equivalent to the closure <code>.map(|line| line.trim())</code>.</td></tr>
+          <tr><td><code>.map(str::to_owned)</code></td><td>Copies each borrowed slice into an owned <code>String</code>. This is necessary because the local <code>text</code> string is dropped when <code>load_names</code> returns.</td></tr>
+          <tr><td><code>.collect::&lt;Vec&lt;String&gt;&gt;()</code></td><td>Runs the lazy pipeline and gathers values into a vector. The <code>::&lt;...&gt;</code> “turbofish” explicitly supplies the generic output type.</td></tr>
+        </tbody>
+      </table>
+      <p>Iterator adapters are zero-cost abstractions in the usual Rust sense: they are generic and optimized with the surrounding code, without requiring a runtime iterator object.</p>
+
+      <h2>Part 4: exercise—parallelize borrowed work safely</h2>
+      <p><strong>File: <code>src/main.rs</code></strong> — replace two existing items with the block below: (1) the <code>use std::{error::Error, fs, path::Path};</code> line added earlier in this lesson, and (2) the current <code>struct Args</code> block (last updated in Lesson 4, which added the <code>style</code> field). The new grouped import folds in the earlier one plus <code>PathBuf</code> and <code>thread</code>; the new <code>Args</code> keeps <code>name</code>, <code>count</code>, and <code>style</code> exactly as Lesson 4 left them and adds one new field, <code>file</code>.</p>
+      <pre class="large-code"><code>use std::{
+    error::Error,
+    fs,
+    path::{Path, PathBuf},
+    thread,
+};
+
+#[derive(Parser)]
+#[command(version, about = "A small Rust greeting CLI")]
+struct Args {
+    #[arg(short, long, default_value = "world")]
+    name: String,
+
+    #[arg(long)]
+    file: Option&lt;PathBuf&gt;,
+
+    #[arg(short, long, default_value_t = 1)]
+    count: u8,
+
+    #[arg(long, value_enum, default_value_t = GreetingStyle::Casual)]
+    style: GreetingStyle,
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>New syntax</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>use std::{...}</code></td><td>A grouped import. The braces avoid repeating the <code>std::</code> prefix; they do not create an object.</td></tr>
+          <tr><td><code>Path</code> / <code>PathBuf</code></td><td><code>Path</code> is a borrowed path view; <code>PathBuf</code> is an owned, growable path. They parallel <code>str</code> / <code>String</code>.</td></tr>
+          <tr><td><code>Option&lt;PathBuf&gt;</code></td><td>An enum that is either <code>Some(path)</code> or <code>None</code>. It represents an optional value without a null pointer.</td></tr>
+          <tr><td><code>#[derive(Parser)]</code></td><td>Unchanged since Lesson 4 — still the same derive introduced in Lesson 1. Only the field list below is edited; <code>style: GreetingStyle</code> keeps its Lesson 4 attribute untouched.</td></tr>
+        </tbody>
+      </table>
+
+      <p>Keep <code>greeting</code>, <code>NameError</code>, <code>validate_name</code>, and <code>load_names</code> from above unchanged, along with <code>GreetingStyle</code> and <code>shout_line</code> from Lesson 4 — <code>render_all</code> below reuses <code>shout_line</code> so the batch path keeps honoring <code>--style</code>.</p>
+      <p><strong>File: <code>src/main.rs</code></strong> — add a new function below <code>load_names</code> that borrows the owned vector through a slice and threads <code>style</code> through to Lesson 4's <code>shout_line</code>:</p>
+      <pre class="large-code"><code>fn render_all(names: &amp;[String], style: GreetingStyle) -&gt; Vec&lt;Result&lt;String, NameError&gt;&gt; {
+    let should_shout = style == GreetingStyle::Formal;
+
+    thread::scope(|scope| {
+        let handles = names
+            .iter()
+            .map(|name| {
+                scope.spawn(move || {
+                    validate_name(name)
+                        .map(greeting)
+                        .map(|text| shout_line(&amp;text, should_shout))
+                })
+            })
+            .collect::&lt;Vec&lt;_&gt;&gt;();
+
+        handles
+            .into_iter()
+            .map(|handle| handle.join().expect("worker panicked"))
+            .collect()
+    })
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Renderer syntax</th><th>How to read it</th></tr></thead>
+        <tbody>
+          <tr><td><code>style: GreetingStyle</code></td><td>A second parameter carrying the Lesson 4 style enum, so a caller decides how every name in the batch is rendered.</td></tr>
+          <tr><td><code>style == GreetingStyle::Formal</code></td><td><code>GreetingStyle</code> derives <code>PartialEq</code> (Lesson 4), so styles compare directly with <code>==</code>; the result is computed once, outside the closures.</td></tr>
+          <tr><td><code>&amp;[String]</code></td><td>A borrowed slice over consecutive <code>String</code> values. The function can read the vector's elements but neither owns nor resizes the vector.</td></tr>
+          <tr><td><code>|scope| { ... }</code></td><td>A closure—Rust's lambda syntax—with one parameter named <code>scope</code>. Closures may borrow or move values from their surrounding environment.</td></tr>
+          <tr><td><code>names.iter()</code></td><td>Yields shared references, <code>&amp;String</code>, so iteration does not consume the input names.</td></tr>
+          <tr><td><code>.map(|name| ...)</code></td><td>Runs the following closure for each borrowed name and produces one new item per input.</td></tr>
+          <tr><td><code>scope.spawn(move || ...)</code></td><td>Starts a scoped thread with a zero-parameter closure. <code>move</code> copies the closure-local <code>name: &amp;String</code> reference and <code>should_shout: bool</code> into that worker; both types are <code>Copy</code>. The referenced string data remains borrowed from <code>names</code>, and <code>thread::scope</code> proves every worker finishes before that slice can disappear.</td></tr>
+          <tr><td><code>validate_name(name).map(greeting).map(|text| shout_line(&amp;text, should_shout))</code></td><td>Calls <code>greeting</code> only for <code>Ok</code>, then reuses Lesson 4's <code>shout_line</code> to upcase the text when <code>style</code> is <code>Formal</code>; an existing <code>Err</code> passes through both <code>map</code> calls unchanged.</td></tr>
+          <tr><td><code>Vec&lt;_&gt;</code></td><td>The underscore asks the compiler to infer the vector's element type—here, scoped join handles.</td></tr>
+          <tr><td><code>join().expect(...)</code></td><td><code>join</code> waits for a worker. <code>expect</code> deliberately panics only if the worker itself panicked, which this example treats as a program bug rather than invalid user input.</td></tr>
+        </tbody>
+      </table>
+
+      <p>Ordinary detached threads require captured borrows to be <code>'static</code>, meaning valid for the program's remaining lifetime. <code>thread::scope</code> instead guarantees all workers join before the scope returns. The type system therefore proves that no worker can access <code>names</code> after its owner is gone.</p>
+
+      <p><strong>File: <code>src/main.rs</code></strong> — replace the current <code>fn main</code> (last replaced in Lesson 4) with the batch-aware version, which now passes <code>args.style</code> into <code>render_all</code> so the flag keeps working end to end:</p>
+      <pre class="large-code"><code>fn main() -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {
+    let args = Args::parse();
+    let names = match &amp;args.file {
+        Some(path) =&gt; load_names(path)?,
+        None =&gt; vec![args.name],
+    };
+
+    for result in render_all(&amp;names, args.style) {
+        match result {
+            Ok(message) =&gt; {
+                for _ in 0..args.count {
+                    println!("{message}");
+                }
+            }
+            Err(NameError::Empty) =&gt; eprintln!("skipped an empty name"),
+            Err(NameError::TooLong(n)) =&gt; {
+                eprintln!("skipped a name with {n} bytes; maximum is 40")
+            }
+        }
+    }
+
+    Ok(())
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Main-function syntax</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>Result&lt;(), Box&lt;dyn Error&gt;&gt;</code></td><td>Success carries <code>()</code>, Rust's zero-size “unit” value meaning no useful payload. Failure carries the boxed error interface explained above.</td></tr>
+          <tr><td><code>match &amp;args.file</code></td><td>Matches a borrow of the option, preserving the <code>Args</code> value for later use.</td></tr>
+          <tr><td><code>Some(path)</code> / <code>None</code></td><td>Destructures the two <code>Option</code> cases. In the first arm, <code>path</code> becomes a borrowed path.</td></tr>
+          <tr><td><code>vec![args.name]</code></td><td>A function-like macro that creates a one-element vector and moves the owned name into it.</td></tr>
+          <tr><td><code>render_all(&amp;names, args.style)</code></td><td><code>GreetingStyle</code> derives <code>Copy</code> (Lesson 4), so passing <code>args.style</code> here copies it instead of moving it — <code>args.count</code> below can still read <code>args</code> freely, unlike <code>args.name</code>, which is moved into <code>names</code> above.</td></tr>
+          <tr><td><code>match result</code></td><td>Handles every <code>Result</code> case and every <code>NameError</code> variant explicitly.</td></tr>
+          <tr><td><code>eprintln!</code></td><td>Formats to standard error, keeping diagnostics separate from successful greeting output.</td></tr>
+          <tr><td><code>Ok(())</code></td><td>Returns successful completion with no payload.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Active exercise: verify the style-aware batch pipeline</h2>
+      <p><strong>File: <code>src/main.rs</code></strong> — add inside the existing <code>#[cfg(test)] mod tests { ... }</code> block, alongside the Lesson 1–4 tests. <code>NameError</code> only derives <code>Debug</code>, not <code>PartialEq</code>, so these tests use <code>matches!</code> instead of <code>assert_eq!</code> to check <code>Result</code> variants:</p>
+      <pre class="large-code"><code>    #[test]
+    fn validate_name_trims_and_rejects_bad_input() {
+        assert!(matches!(validate_name("  Ada  "), Ok("Ada")));
+        assert!(matches!(validate_name("   "), Err(NameError::Empty)));
+        let long = "x".repeat(41);
+        assert!(matches!(validate_name(&amp;long), Err(NameError::TooLong(41))));
+    }
+
+    #[test]
+    fn render_all_applies_style_and_skips_invalid_names() {
+        let names = vec![String::from("Ada"), String::from("   ")];
+
+        let casual = render_all(&amp;names, GreetingStyle::Casual);
+        assert!(matches!(casual[0].as_deref(), Ok("Hello, Ada!")));
+        assert!(matches!(&amp;casual[1], Err(NameError::Empty)));
+
+        let formal = render_all(&amp;names, GreetingStyle::Formal);
+        assert!(matches!(formal[0].as_deref(), Ok("HELLO, ADA!")));
+    }</code></pre>
+      <p>Numbered steps to verify the batch pipeline, run from the <code>rust-greeter</code> package root:</p>
+      <ol>
+        <li>File: <code>names.txt</code> (new, at the package root) — create it with three lines, including one blank line:
+          <pre><code>printf "Ada\n\nBjarne\n" &gt; names.txt   # macOS
+# Windows PowerShell: "Ada`n`nBjarne" | Set-Content names.txt</code></pre>
+        </li>
+        <li>Run <code>cargo fmt --check</code>. Expected evidence: no output (already formatted).</li>
+        <li>Run <code>cargo test</code>. Expected evidence: <code>test result: ok. 15 passed</code> — the 13 tests carried over from Lessons 1–4 plus the two new tests above.</li>
+        <li>Run <code>cargo run -- --file names.txt</code> (default <code>--style casual</code>). Expected evidence: <code>Hello, Ada!</code> and <code>Hello, Bjarne!</code> on stdout plus one <code>skipped an empty name</code> line on stderr.</li>
+        <li>Run <code>cargo run -- --file names.txt --style formal</code>. Expected evidence: the same <code>skipped an empty name</code> line on stderr, but <code>HELLO, ADA!</code> and <code>HELLO, BJARNE!</code> (shouted) on stdout — proof that <code>--style</code>, carried forward from Lesson 4, still reaches every worker in the scoped batch pipeline.</li>
+      </ol>
+      <p>Output order is deterministic here because handles are joined in input order, even though formatting work can overlap.</p>
+
+      <div class="callout note">
+        <span class="callout-icon">🧠</span>
+        <div class="callout-content">
+          <strong>What the compiler is proving</strong>
+          <p>Workers cannot outlive the scope; no worker mutates the shared names; results own their output; every validation error variant is handled. The compiler does not prove that one thread per name is efficient—use a bounded pool for large inputs.</p>
+        </div>
+      </div>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/ownership-25-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">1:48 · BEGINNER</span><h3>Ownership [25 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Introduces ownership and memory safety without a garbage collector.</p></div>
+        </a>
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/borrowing-27-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">3:27 · BEGINNER</span><h3>Borrowing [27 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Reinforces references that access values without taking ownership.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the ownership video, read <a href="https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html">What Is Ownership?</a> in <em>The Rust Programming Language</em>.</li>
+        <li>Instead of the borrowing video, read <a href="https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html">References and Borrowing</a>.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. A function only reads a caller's string. Should it usually accept <code>String</code>, <code>&amp;str</code>, or <code>&amp;mut String</code>?</summary><p><strong>Answer:</strong> <code>&amp;str</code>. It expresses read-only borrowed access, accepts both <code>String</code> slices and string literals, and avoids ownership transfer.</p></details>
+      <details class="quiz"><summary>2. Why use <code>Result</code> for an empty name instead of panicking?</summary><p><strong>Answer:</strong> Invalid input is expected and recoverable. Returning <code>Result</code> lets the caller skip, report, retry, or terminate deliberately.</p></details>
+      <details class="quiz"><summary>3. What does <code>Box&lt;dyn Error&gt;</code> own, and what does it not box here?</summary><p><strong>Answer:</strong> On a failure path it heap-owns one concrete error through the <code>Error</code> trait interface. It does not box the successful <code>Vec&lt;String&gt;</code>.</p></details>
+      <details class="quiz"><summary>4. What safety property does <code>thread::scope</code> add to this exercise?</summary><p><strong>Answer:</strong> Every scoped worker is joined before the scope returns, so a worker may safely borrow local data that outlives the scope without requiring a <code>'static</code> allocation.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Need to retain it?          Take or return ownership: T
+Need only to read it?       Borrow: &amp;T or a slice such as &amp;str
+Need exclusive mutation?   Borrow mutably: &amp;mut T
+Failure is expected?       Return Result&lt;T, E&gt;
+Value may be absent?       Use Option&lt;T&gt;, then handle Some and None
+Several error types meet?  Box&lt;dyn Error&gt; can erase them at an app boundary
+Cases form a closed set?    Use an enum and exhaustive match
+Transform a collection?    Compose iterator adapters
+Threads borrow local data? Bound them with thread::scope</code></pre>
+      <p>You extended the same application rather than learning isolated syntax. Ownership described resource responsibility, enums made failure states explicit, iterators carried borrows through a pipeline, and scoped threads tied concurrency to a lifetime the compiler could verify.</p>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html">Understanding Ownership</a>, <em>The Rust Programming Language</em>, Rust Project. Ownership, moves, references, slices, and borrowing. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch06-02-match.html">The match Control Flow Construct</a>, <em>The Rust Programming Language</em>, Rust Project. Exhaustive pattern matching over enums. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch09-00-error-handling.html">Error Handling</a>, <em>The Rust Programming Language</em>, Rust Project. Panics, <code>Result</code>, and propagation. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/boxed/struct.Box.html">Box</a>, Rust standard library documentation, Rust Project. Heap allocation, ownership, and automatic destruction. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/option/enum.Option.html">Option</a>, Rust standard library documentation, Rust Project. Explicit optional values with <code>Some</code> and <code>None</code>. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/result/enum.Result.html">Result</a>, Rust standard library documentation, Rust Project. Success/failure variants, mapping, and <code>expect</code>. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch13-01-closures.html">Closures</a>, <em>The Rust Programming Language</em>, Rust Project. Lambda syntax and environment capture. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch13-02-iterators.html">Processing a Series of Items with Iterators</a>, <em>The Rust Programming Language</em>, Rust Project. Lazy adapters and consuming collections. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/thread/fn.scope.html">std::thread::scope</a>, Rust standard library documentation, Rust Project. Scoped thread lifetimes and joining guarantees. Accessed September 16, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/ownership-25-of-35--beginners-series-to-rust">Ownership [25 of 35]</a>, Microsoft Developer (Microsoft Learn), 1:48. Accessed September 16, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/borrowing-27-of-35--beginners-series-to-rust">Borrowing [27 of 35]</a>, Microsoft Developer (Microsoft Learn), 3:27. Accessed September 16, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="04-control-flow-functions-closures-macros.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 4: Control Flow, Functions &amp; Macros</span></a>
+        <a href="06-traits-lifetimes-shared-ownership.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 6: Traits to Shared Ownership</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

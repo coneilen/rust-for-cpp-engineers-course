@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced C++ Interop — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html" class="active"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 20 · 30 minutes</span>
+      <h1>Advanced C++ Interop: Choosing a Bridge</h1>
+      <p class="lesson-subtitle">Move beyond Lesson 19's raw C ABI: evaluate <code>bindgen</code>, <code>cxx</code>, autocxx, and Crubit for Pulsewatch's remaining batch-scoring boundary, and bridge exceptions, ownership, and pinning correctly.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can pick the right interop tool for a given C++↔Rust boundary, use <code>cxx</code>'s <code>#[cxx::bridge]</code> to share owned/borrowed types and a C++ callback safely, wire <code>build.rs</code>/<code>cc</code> linking, and explain why autocxx and Crubit are not universal, mechanical converters today.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td>Why the Lesson 19 raw ABI doesn't scale to batches, strings, and callbacks</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td><code>bindgen</code>: importing a remaining C header as low-level unsafe Rust</td></tr>
+          <tr data-minutes="8"><td>8 min</td><td><code>cxx</code>: a curated, bidirectional, type-checked bridge</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td><code>build.rs</code> and <code>cc</code> linking the C++ side into the Rust build</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>autocxx and Crubit status check: what to reach for instead</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Exercise: bridge batch scoring with <code>cxx</code></td></tr>
+          <tr data-minutes="1"><td>1 min</td><td>Knowledge check and recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Follow-along setup</h2>
+      <div class="callout note">
+        <span class="callout-icon">🗂️</span>
+        <div class="callout-content">
+          <strong>Continuing the Lesson 19 checkout</strong>
+          <p>This lesson extends the same crate Lesson 19 created — <code>path/to/pulsewatch/</code> is still the workspace root, and <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/lib.rs</code> from Lesson 19 is unchanged and still compiles on its own. <code>path/to/pulsewatch</code> is still a placeholder for your actual checkout path, not a literal directory name. Every command below still runs from the workspace root unless noted otherwise; every new file this lesson creates lives under <code>crates/pulsewatch-scoring/</code>, alongside Lesson 19's.</p>
+          <ul>
+            <li><strong>Already exists (from Lesson 19):</strong> <code>crates/pulsewatch-scoring/Cargo.toml</code>, <code>crates/pulsewatch-scoring/src/lib.rs</code> (the <code>AlertScorer</code> core), and the <code>legacy-cpp/</code> tree.</li>
+            <li><strong>Created in this lesson:</strong> <code>crates/pulsewatch-scoring/vendor/metrics_shard.h</code> (a small vendored third-party header, Part 2), <code>crates/pulsewatch-scoring/src/ffi.rs</code>, <code>crates/pulsewatch-scoring/include/pulsewatch/alert_notifier.h</code>, <code>crates/pulsewatch-scoring/src/alert_notifier.cc</code>, and <code>crates/pulsewatch-scoring/build.rs</code> (Parts 3-4), and <code>crates/pulsewatch-scoring/tests/batch_bridge_smoke.cc</code> (Part 6).</li>
+            <li><strong>Prerequisites:</strong> everything from Lesson 19, plus the <code>cxx</code> and <code>cxx-build</code> crates (added to <code>Cargo.toml</code> below), the <code>bindgen</code> crate for Part 2, and a C++17 compiler on your <code>PATH</code> (<code>cc</code>/<code>cxx_build</code> shell out to it during <code>cargo build</code>).</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Part 1: why the raw ABI stops being enough</h2>
+      <p>Lesson 19's boundary carries primitives and one opaque handle — enough for a single scalar sample. The remaining C++ ingestion call sites now need three things a hand-rolled <code>extern "C"</code> surface makes painful: submitting a <strong>batch</strong> of samples in one call, passing a <code>std::string</code> shard label for logging, and registering a C++ callback invoked when a score crosses an alert threshold. Hand-writing pointer-plus-length conventions and status-code plumbing for all of that is exactly the kind of repetitive, error-prone glue a curated bridge generator exists to remove.</p>
+
+      <h2>Part 2: <code>bindgen</code> — importing an existing C/C++ header</h2>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/Cargo.toml</code> (replace — add these keys to the file Lesson 19 created; the <code>[package]</code>/<code>[lib]</code> sections from Lesson 19 stay as they were):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/Cargo.toml (replace — excerpt of the added keys)
+[build-dependencies]
+bindgen = "0.70"
+cxx-build = "1"
+
+[dependencies]
+cxx = "1"</code></pre>
+      <p><code>bindgen</code> parses C or C++ headers with libclang and emits raw, <code>unsafe</code> Rust FFI declarations. It is one-directional — importing an existing C/C++ API into Rust — and it does not produce a safe surface; you still wrap the generated items by hand, the same discipline as Lesson 19. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/build.rs</code> (new file — this excerpt shows only the <code>bindgen</code> half; Part 4 appends the <code>cxx_build</code> half to the same <code>fn main()</code>). Cargo always runs a crate's <code>build.rs</code> with its current directory set to that crate's own manifest directory, regardless of where <code>cargo build</code> was invoked from, so the relative paths below resolve against <code>crates/pulsewatch-scoring/</code> even though every command in this lesson runs from the workspace root:</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/build.rs (new file, excerpt — the bindgen half of fn main())
+fn main() {
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    let bindings = bindgen::Builder::default()
+        .header("vendor/metrics_shard.h")
+        .allowlist_function("shard_.*")
+        .generate()
+        .expect("bindgen failed to generate metrics_shard bindings");
+    bindings
+        .write_to_file(std::path::Path::new(&amp;out_dir).join("metrics_shard_sys.rs"))
+        .expect("failed to write bindgen output");
+}</code></pre>
+      <p>Pulsewatch uses this for a small third-party C dependency, <code>metrics_shard.h</code>, so the new scoring crate can call it without hand-transcribing declarations. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/vendor/metrics_shard.h</code> (new file, complete — a compact stand-in for the third-party header a real Pulsewatch checkout would vendor unmodified; this course includes the full text so every command below runs against a real file instead of one you would have to source yourself):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/vendor/metrics_shard.h (new file, complete)
+#pragma once
+#include &lt;stddef.h&gt;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Minimal counter-style API this lesson's bindgen step imports. */
+unsigned long shard_active_count(void);
+void shard_record_sample(double value);
+
+#ifdef __cplusplus
+}
+#endif</code></pre>
+      <p>The output is <code>unsafe extern "C"</code> functions and raw structs — correct, but not idiomatic or safe by itself.</p>
+
+      <h2>Part 3: <code>cxx</code> — a curated, bidirectional bridge</h2>
+      <p><code>cxx</code> defines one shared contract that generates matching Rust and C++ code from a single declaration, checked at build time, rather than trusting a hand-maintained header to stay in sync with hand-maintained Rust declarations. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/ffi.rs</code> (new file — this is the top of the file, the bridge declaration; the implementation below is an excerpt of the rest of the same file):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/ffi.rs (new file, top half — the #[cxx::bridge] declaration)
+#[cxx::bridge(namespace = "pulsewatch")]
+mod ffi {
+    struct TimestampedSample {
+        value: f64,
+        timestamp_unix_ms: i64,
+    }
+
+    struct ScoredSample {
+        timestamp_unix_ms: i64,
+        score: f32,
+    }
+
+    extern "Rust" {
+        type BatchScorer;
+
+        fn new_batch_scorer(baseline_window_secs: f64, sensitivity: f32) -&gt; Result&lt;Box&lt;BatchScorer&gt;&gt;;
+        fn score_batch(
+            scorer: &amp;mut BatchScorer,
+            shard_label: &amp;str,
+            samples: &amp;[TimestampedSample],
+            notifier: Pin&lt;&amp;mut AlertNotifier&gt;,
+        ) -&gt; Result&lt;Vec&lt;ScoredSample&gt;&gt;;
+    }
+
+    unsafe extern "C++" {
+        include!("pulsewatch/alert_notifier.h");
+        type AlertNotifier;
+
+        fn notify_if_over_threshold(self: Pin&lt;&amp;mut AlertNotifier&gt;, sample: &amp;ScoredSample) -&gt; bool;
+    }
+}</code></pre>
+      <p>The declaration alone only sets the contract; the implementation below it backs <code>BatchScorer</code> with the same <code>AlertScorer</code> core from Lesson 19, so the sliding-window scoring logic is not duplicated for the batch path. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/ffi.rs</code> (same file, continued — append this below the bridge declaration above; together the two blocks are the complete file):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/ffi.rs (new file, bottom half — continues directly below the bridge declaration)
+use crate::{AlertScorer, Sample, ScoringError};
+use std::time::Duration;
+
+// cxx converts a returned Err into a thrown C++ exception using this impl.
+impl std::fmt::Display for ScoringError {
+    fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+        match self {
+            ScoringError::SensitivityOutOfRange =&gt; write!(f, "sensitivity out of range"),
+            ScoringError::InvalidBaselineWindow =&gt; write!(f, "baseline window must be finite and positive"),
+            ScoringError::EmptyWindow =&gt; write!(f, "scoring window is empty"),
+            ScoringError::NonFiniteValue =&gt; write!(f, "sample value is not finite"),
+        }
+    }
+}
+
+/// One `BatchScorer` is created per shard and reused across many
+/// `score_batch` calls; it owns a single Lesson 19 `AlertScorer`, so the
+/// sliding window persists between batches exactly as it would for
+/// single-sample calls through `pw_scorer_score`.
+pub struct BatchScorer {
+    inner: AlertScorer,
+}
+
+fn new_batch_scorer(baseline_window_secs: f64, sensitivity: f32) -&gt; Result&lt;Box&lt;BatchScorer&gt;, ScoringError&gt; {
+    // Fallible conversion also rejects finite values too large for Duration.
+    // Reject tiny positive inputs that round to Duration::ZERO.
+    let baseline_window = Duration::try_from_secs_f64(baseline_window_secs)
+        .map_err(|_| ScoringError::InvalidBaselineWindow)?;
+    if baseline_window.is_zero() {
+        return Err(ScoringError::InvalidBaselineWindow);
+    }
+    let inner = AlertScorer::new(baseline_window, sensitivity)?;
+    Ok(Box::new(BatchScorer { inner }))
+}
+
+fn score_batch(
+    scorer: &amp;mut BatchScorer,
+    shard_label: &amp;str,
+    samples: &amp;[ffi::TimestampedSample],
+    mut notifier: std::pin::Pin&lt;&amp;mut ffi::AlertNotifier&gt;,
+) -&gt; Result&lt;Vec&lt;ffi::ScoredSample&gt;, ScoringError&gt; {
+    let mut scored = Vec::with_capacity(samples.len());
+    for sample in samples {
+        // Real per-sample timestamps from the caller, not a synthesized
+        // offset -- this scorer is persistent across calls (Part 2), so
+        // resetting timestamps to zero each batch would corrupt the
+        // sliding window's eviction logic on every call after the first.
+        let score = scorer.inner.score(Sample {
+            value: sample.value,
+            timestamp_unix_ms: sample.timestamp_unix_ms,
+        })?;
+        let scored_sample = ffi::ScoredSample {
+            timestamp_unix_ms: sample.timestamp_unix_ms,
+            score,
+        };
+        // `notifier` is borrowed for exactly this call and reborrowed via
+        // `as_mut()` on each iteration — cxx pins it so Rust can never
+        // stash the reference past score_batch's return, keeping the C++
+        // object's lifetime and ownership entirely with the caller.
+        if notifier.as_mut().notify_if_over_threshold(&amp;scored_sample) {
+            eprintln!("shard {shard_label}: score {} crossed the alert threshold", scored_sample.score);
+        }
+        scored.push(scored_sample);
+    }
+    Ok(scored)
+}</code></pre>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/lib.rs</code> (append) — add <code>mod ffi;</code> near the top so the module above actually compiles as part of the crate; nothing needs to be re-exported from it, since Part 6's C++ smoke test includes the generated <code>pulsewatch-scoring/src/ffi.rs.h</code> directly and Part 3's Kotlin/Swift work in Lessons 21-22 goes through a separate <code>mobile</code> module, not through <code>ffi</code>:</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/lib.rs (append)
+mod ffi;</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>New syntax</th><th>Why it exists</th></tr></thead>
+        <tbody>
+          <tr><td><code>#[cxx::bridge]</code></td><td>One declaration generates both the Rust module and a matching C++ header/source; the two sides cannot silently drift the way a hand-maintained header can.</td></tr>
+          <tr><td><code>struct TimestampedSample { ... }</code> / <code>ScoredSample { ... }</code> (shared)</td><td>Plain-data types with a layout <code>cxx</code> generates identically on both sides, crossing by value in either direction. <code>&amp;[TimestampedSample]</code> maps to C++'s <code>rust::Slice&lt;const TimestampedSample&gt;</code>, carrying the caller's real per-sample timestamp instead of synthesizing one Rust-side.</td></tr>
+          <tr><td><code>extern "Rust" { type BatchScorer; ... }</code></td><td>Exposes a Rust type and its functions to C++, generating the C++-side wrapper class automatically. The real <code>pub struct BatchScorer</code> and its functions live in ordinary Rust below the bridge macro, not inside it.</td></tr>
+          <tr><td><code>unsafe extern "C++" { type AlertNotifier; ... }</code></td><td>Imports an existing C++ type into Rust as an opaque type usable only through the declared methods.</td></tr>
+          <tr><td><code>notifier: Pin&lt;&amp;mut AlertNotifier&gt;</code> as a <code>score_batch</code> parameter</td><td>Passes the caller's C++ notifier into Rust for exactly one call. C++ objects are not guaranteed movable the way Rust values are, so <code>cxx</code> requires <code>Pin</code> for mutable access; because it is a borrowed parameter, not a stored field, its lifetime and ownership stay entirely with the C++ caller.</td></tr>
+          <tr><td><code>notifier.as_mut()</code> inside the loop</td><td>Calling a <code>Pin&lt;&amp;mut T&gt;</code> method through <code>self: Pin&lt;&amp;mut T&gt;</code> consumes that pin by value; reborrowing with <code>as_mut()</code> is what allows calling it again on the next sample in the same batch.</td></tr>
+          <tr><td><code>Result&lt;...&gt;</code> in the bridge signature</td><td><code>cxx</code> converts a thrown C++ exception into a Rust <code>Err</code>, and a returned Rust <code>Err</code> into a thrown C++ exception via the error type's <code>Display</code> impl, instead of hand-rolled status codes.</td></tr>
+        </tbody>
+      </table>
+      <p><code>AlertNotifier</code> is an ordinary, pre-existing C++ class — <code>cxx</code> imports it, it does not generate it. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/include/pulsewatch/alert_notifier.h</code> (new file — a compact but complete header, not an excerpt):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/include/pulsewatch/alert_notifier.h (new file)
+#pragma once
+#include "pulsewatch-scoring/src/ffi.rs.h"  // generated by cxx_build; declares ScoredSample
+
+namespace pulsewatch {
+
+class AlertNotifier {
+public:
+    explicit AlertNotifier(double threshold) : threshold_(threshold) {}
+
+    // Invoked once per scored sample from score_batch (Part 3); returns
+    // true when this sample crossed the threshold and a notification was
+    // sent, so the Rust side can log it.
+    bool NotifyIfOverThreshold(const ScoredSample&amp; sample);
+
+    int NotificationsSent() const { return notifications_sent_; }
+
+private:
+    double threshold_;
+    int notifications_sent_ = 0;
+};
+
+}  // namespace pulsewatch</code></pre>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/alert_notifier.cc</code> (new file — a compact but complete implementation, not an excerpt):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/alert_notifier.cc (new file)
+#include "pulsewatch/alert_notifier.h"
+
+namespace pulsewatch {
+
+bool AlertNotifier::NotifyIfOverThreshold(const ScoredSample&amp; sample) {
+    if (sample.score &lt; threshold_) {
+        return false;
+    }
+    ++notifications_sent_;
+    // The existing alerting pipeline call goes here; the Part 6 smoke test
+    // only checks the return value and NotificationsSent().
+    return true;
+}
+
+}  // namespace pulsewatch</code></pre>
+      <div class="callout note">
+        <span class="callout-icon">🧩</span>
+        <div class="callout-content">
+          <strong>Exception/panic conversion has a limit</strong>
+          <p><code>cxx</code>'s <code>Result</code> conversion only helps for expected, declared C++ exceptions and Rust errors. A genuine Rust panic unwinding across a <code>cxx</code> boundary still aborts, exactly like the raw <code>extern "C"</code> boundary in Lesson 19 — this bridge does not remove the need for panic discipline, it removes the need to hand-roll status codes for expected failures.</p>
+        </div>
+      </div>
+
+      <h2>Part 4: <code>build.rs</code> and <code>cc</code> linking</h2>
+      <p><code>cxx_build::bridge</code> runs the <code>cxxbridge</code> code generator and compiles the resulting C++ shim through the <code>cc</code> crate, so Cargo alone drives the whole cross-language build for this bridge — no separate CMake invocation is required just to compile it. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/build.rs</code> (append inside the same <code>fn main()</code> from Part 2, after the existing <code>bindgen::Builder</code> block; shown here without the surrounding <code>fn main() { }</code> to avoid duplicating it):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/build.rs (add inside the existing fn main(), after Part 2's bindgen block)
+cxx_build::bridge("src/ffi.rs")
+    .file("src/alert_notifier.cc")
+    .include("include") // resolves include!("pulsewatch/alert_notifier.h")
+    .flag_if_supported("-std=c++17")
+    .compile("pulsewatch-batch-bridge");
+
+println!("cargo:rerun-if-changed=src/ffi.rs");
+println!("cargo:rerun-if-changed=src/alert_notifier.cc");
+println!("cargo:rerun-if-changed=include/pulsewatch/alert_notifier.h");</code></pre>
+
+      <h2>Part 5: autocxx and Crubit — check status before you plan around them</h2>
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong>autocxx is not the recommended entry point for new work</strong>
+          <p>autocxx's own README now tells new users to consider <code>cxx</code> or Crubit instead of autocxx. Treat autocxx as retired guidance for new Pulsewatch bridges, not a live third option.</p>
+        </div>
+      </div>
+      <p>Crubit is Google's actively developed, bidirectional C++/Rust interop project — but it documents its own incomplete feature and build-system coverage on a public status page. Check that page for the specific feature and build system a use case needs before depending on it; do not assume general availability.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Tool</th><th>What it actually is today</th></tr></thead>
+        <tbody>
+          <tr><td><code>bindgen</code></td><td>One-directional C/C++-to-Rust import; low-level, unsafe output you wrap by hand.</td></tr>
+          <tr><td><code>cxx</code></td><td>Curated, bidirectional, statically checked bridge; the default choice for a genuinely two-way boundary.</td></tr>
+          <tr><td>autocxx</td><td>Its own maintainers direct new users to <code>cxx</code> or Crubit instead; not a safe default for new deployments.</td></tr>
+          <tr><td>Crubit</td><td>Active and bidirectional, but its status page documents which features and build systems are and are not yet supported — verify per use case.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>None of these tools convert arbitrary C++ mechanically</strong>
+          <p>Templates, multiple inheritance, and complex macros are not automatically translated end to end by any of these generators. Each bridges a deliberately narrow, hand-chosen seam — the same seam-first discipline as Lesson 19, not a universal-coverage promise.</p>
+        </div>
+      </div>
+
+      <h2>Part 6: exercise — bridge batch scoring with <code>cxx</code></h2>
+      <p>Add the <code>#[cxx::bridge]</code> declaration and the <code>BatchScorer</code>/<code>score_batch</code> implementation from Part 3 to <code>pulsewatch-scoring</code>, implement the matching C++ <code>AlertNotifier</code> from earlier in this Part, and wire <code>build.rs</code> from Part 4. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/tests/batch_bridge_smoke.cc</code> (new file — complete, not an excerpt; it warms up the scorer once because, like Lesson 19, the very first sample a fresh scorer ever sees only seeds the baseline window and reports <code>EmptyWindow</code> rather than a score):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/tests/batch_bridge_smoke.cc (new file)
+#include "pulsewatch-scoring/src/ffi.rs.h"
+#include "pulsewatch/alert_notifier.h"
+#include &lt;cassert&gt;
+#include &lt;cstdio&gt;
+#include &lt;vector&gt;
+
+namespace {
+std::vector&lt;pulsewatch::TimestampedSample&gt; BuildFixtureBatch() {
+    std::vector&lt;pulsewatch::TimestampedSample&gt; batch;
+    batch.reserve(128);
+    std::int64_t t = 1758067201000;
+    for (int i = 0; i &lt; 128; ++i) {
+        // A flat baseline of 100.0 with three deliberate spikes to 500.0,
+        // one second apart -- well inside the 300s baseline window, so
+        // nothing is evicted before the batch ends.
+        double value = (i == 40 || i == 80 || i == 120) ? 500.0 : 100.0;
+        batch.push_back({value, t});
+        t += 1000;
+    }
+    return batch;
+}
+}  // namespace
+
+int main() {
+    auto scorer = pulsewatch::new_batch_scorer(/*baseline_window_secs=*/300.0, /*sensitivity=*/0.62);
+    pulsewatch::AlertNotifier notifier(/*threshold=*/0.8);
+
+    // Warm-up: a fresh scorer's very first sample only seeds the baseline
+    // and cannot itself be scored (Lesson 19's EmptyWindow rule), so cxx
+    // converts that one expected condition into a C++ exception here.
+    // This deliberately swallows it before measuring the real batch below.
+    try {
+        std::vector&lt;pulsewatch::TimestampedSample&gt; warm_up{{100.0, 1758067200000}};
+        rust::Slice&lt;const pulsewatch::TimestampedSample&gt; warm_up_slice(warm_up.data(), warm_up.size());
+        pulsewatch::score_batch(*scorer, "fleet-a", warm_up_slice, notifier);
+    } catch (const std::exception&amp;) {
+        // Expected exactly once, for the warm-up sample only.
+    }
+
+    std::vector&lt;pulsewatch::TimestampedSample&gt; batch = BuildFixtureBatch();
+    rust::Slice&lt;const pulsewatch::TimestampedSample&gt; slice(batch.data(), batch.size());
+    auto scored = pulsewatch::score_batch(*scorer, "fleet-a", slice, notifier);
+
+    assert(scored.size() == batch.size());
+    std::printf("scored %zu/%zu samples, %d notifications sent\n",
+                scored.size(), batch.size(), notifier.NotificationsSent());
+    return 0;
+}</code></pre>
+      <p>All commands below run from <code>path/to/pulsewatch/</code> (the workspace root):</p>
+      <ol>
+        <li>Build the crate, which also compiles and links <code>src/alert_notifier.cc</code> and the generated bridge shim via <code>build.rs</code>: <code>cargo build -p pulsewatch-scoring</code>. <strong>Expected evidence:</strong> the build succeeds and <code>target/cxxbridge/pulsewatch-scoring/src/ffi.rs.h</code> now exists alongside <code>target/debug/libpulsewatch_scoring.a</code> (both still directly under the shared workspace <code>target/</code>, even though the crate itself now lives under <code>crates/pulsewatch-scoring/</code>).</li>
+        <li>Compile the smoke test directly against that static library — no separate CMake project is needed for it, consistent with Part 4: <code>c++ -std=c++17 -I target/cxxbridge -I crates/pulsewatch-scoring/include crates/pulsewatch-scoring/tests/batch_bridge_smoke.cc target/debug/libpulsewatch_scoring.a -lpthread -ldl -o target/batch_bridge_smoke</code> (drop <code>-lpthread -ldl</code> on macOS, where they are not needed).</li>
+        <li>Run it: <code>./target/batch_bridge_smoke</code>. <strong>Expected evidence:</strong> it exits <code>0</code> and prints <code>scored 128/128 samples, 3 notifications sent</code>.</li>
+        <li>Confirm the Rust-side tests still pass unchanged: <code>cargo test -p pulsewatch-scoring</code>. <strong>Expected evidence:</strong> this still passes, including Lesson 19's <code>characterization_parity</code> test.</li>
+      </ol>
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=Z5M4NIWoMJQ">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">39:38 · ADVANCED</span><h3>Tyler Mandry &amp; Taylor Cramer: "Fine-Grained C++ Interop"</h3><p>Rust Foundation (RustConf 2025). Explores finer-grained interop boundaries between Rust and C++.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=RccCeMsXW0Q">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">53:04 · INTERMEDIATE</span><h3>C++/Rust Interop: A Practical Guide to Bridging the Gap Between C++ and Rust</h3><p>CppCon (Tyler Weaver). A practitioner's tour of bridging strategies between the two languages.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the RustConf talk, read the <code>cxx</code> book's <a href="https://cxx.rs/concepts.html">core concepts</a> page covering the same shared-type and bridging model used in Part 3.</li>
+        <li>Instead of the CppCon talk, work through the tool-selection matrix in Part 5 alongside the <a href="https://rust-lang.github.io/rust-bindgen/cpp.html">bindgen C++ guidance</a>.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why choose <code>cxx</code> over <code>bindgen</code> for the batch-scoring boundary?</summary><p><strong>Answer:</strong> <code>cxx</code> defines a bidirectional, statically checked shared surface with matching layouts generated on both sides, plus safe exception/<code>Result</code> conversion. <code>bindgen</code> only imports a one-directional, unsafe C-facing surface that you must wrap by hand.</p></details>
+      <details class="quiz"><summary>2. Why does <code>notify_if_over_threshold</code> take <code>self: Pin&lt;&amp;mut AlertNotifier&gt;</code>, and why is it passed into <code>score_batch</code> as a parameter instead of stored on <code>BatchScorer</code>?</summary><p><strong>Answer:</strong> C++ objects are not guaranteed movable/relocatable the way Rust values are, so <code>cxx</code> pins C++-owned types for mutable access. Passing it as a per-call parameter (reborrowed with <code>as_mut()</code> for each sample) keeps its lifetime and ownership entirely with the C++ caller instead of letting <code>BatchScorer</code> stash a reference past the call.</p></details>
+      <details class="quiz"><summary>3. Should Pulsewatch adopt autocxx for this new bridge?</summary><p><strong>Answer:</strong> No. autocxx's own README now points new users to <code>cxx</code> or Crubit; it is not a safe default choice for new deployments.</p></details>
+      <details class="quiz"><summary>4. Is Crubit a ready, mechanical replacement for a hand-chosen interop seam today?</summary><p><strong>Answer:</strong> Not necessarily. It is actively developed, but its own status page documents current feature and build-system coverage; check it for the specific need before depending on it.</p></details>
+      <details class="quiz"><summary>5. Why does <code>new_batch_scorer</code> use <code>Duration::try_from_secs_f64</code> and then reject <code>Duration::ZERO</code>?</summary><p><strong>Answer:</strong> The fallible conversion rejects negative, non-finite, and finite-but-overflowing inputs without panicking across the <code>cxx</code> boundary. The explicit zero check also rejects tiny positive inputs that round below nanosecond precision, turning every invalid window into an ordinary, catchable C++ exception.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Importing an existing C/C++ header only?  bindgen, then hand-wrap the unsafe surface
+Need a two-way, type-checked bridge?       cxx with #[cxx::bridge]
+Only Cargo, no separate CMake step?        cxx_build::bridge from build.rs
+Evaluating autocxx for new work?           Don't -- follow its README to cxx or Crubit
+Considering Crubit today?                  Check crubit.rs status page per feature first
+C++ type may be self-referential?          Import it as Pin&lt;&amp;mut T&gt; in the bridge</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://cxx.rs/concepts.html">Core concepts</a>, <em>Rust ❤️ C++</em>, David Tolnay. The shared-type and bridging model behind <code>#[cxx::bridge]</code>. Accessed September 17, 2026.</li>
+        <li><a href="https://cxx.rs/build/cargo.html">Cargo-based setup</a>, <em>Rust ❤️ C++</em>, David Tolnay. <code>cxx_build</code> and Cargo-driven builds. Accessed September 17, 2026.</li>
+        <li><a href="https://rust-lang.github.io/rust-bindgen/">Introduction</a>, <em>The bindgen User Guide</em>, rust-lang. Scope and one-directional nature of generated bindings. Accessed September 17, 2026.</li>
+        <li><a href="https://rust-lang.github.io/rust-bindgen/cpp.html">Generating Bindings to C++</a>, <em>The bindgen User Guide</em>, rust-lang. Caveats specific to C++ header import. Accessed September 17, 2026.</li>
+        <li><a href="https://github.com/google/autocxx">autocxx</a>, Google. README notice directing new users to <code>cxx</code> or Crubit. Accessed September 17, 2026.</li>
+        <li><a href="https://crubit.rs/overview/status">Are We Crubit Yet?</a>, Crubit Documentation, Google. Current feature and build-system status matrix. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=Z5M4NIWoMJQ">Tyler Mandry &amp; Taylor Cramer: "Fine-Grained C++ Interop"</a>, Rust Foundation, 39:38. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=RccCeMsXW0Q">C++/Rust Interop: A Practical Guide to Bridging the Gap Between C++ and Rust</a>, CppCon, 53:04. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="19-migration-playbook-raw-c-abi.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 19: Migration &amp; Raw C ABI</span></a>
+        <a href="21-kotlin-java-bindings.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 21: Kotlin &amp; Java Bindings</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

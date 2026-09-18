@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performance & Unsafe Verification — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html" class="active"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 18 · 30 minutes</span>
+      <h1>Performance & Unsafe Verification</h1>
+      <p class="lesson-subtitle">Benchmark Pulsewatch's render path against a saved baseline with Criterion, read a flamegraph, and re-verify the Lesson 8 unsafe wrapper with Miri instead of trusting it indefinitely.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> you can benchmark against a saved baseline instead of a single timing, explain why Criterion is preferred over the unstable built-in #[bench] on stable CI, read a flamegraph's frame widths against a baseline, and re-verify unsafe code with Miri while understanding it as dynamic, not exhaustive, evidence.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td>Why a single timing is not evidence, and release profile settings</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Criterion vs the unstable built-in #[bench] harness</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Reading a flamegraph, and heap allocation as a measurable cost</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Miri and sanitizers as dynamic checkers, not proofs</td></tr>
+          <tr data-minutes="7"><td>7 min</td><td>Exercise: benchmark, optimize, flamegraph, and re-verify with Miri</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Follow-along setup</h2>
+      <p>This lesson starts from the Pulsewatch workspace as Lessons 7–17 left it: <code>crates/pulsewatch-core</code> (the <code>Probe</code> trait, <code>Millis</code>, <code>Sample</code>, and the Lesson 8 <code>copy_probe_bytes</code> unsafe wrapper), plus the <code>[profile.release]</code> section Lesson 17 added to the workspace root <code>Cargo.toml</code>. This lesson adds a benchmark, tunes that release profile further, and re-verifies existing unsafe code; it does not remove anything.</p>
+      <pre class="large-code"><code>cd path/to/pulsewatch</code></pre>
+      <p><code>path/to</code> is a placeholder: replace the whole segment with wherever you checked out the Pulsewatch workspace, for example <code>cd ~/dev/pulsewatch</code>. Unless a step says otherwise, run every <code>cargo</code> command below from this workspace root, the directory containing the top-level <code>Cargo.toml</code>. Part 3 additionally requires <code>cargo install flamegraph</code> (run from anywhere; it installs a cargo subcommand, not a project dependency) and, on Linux, a working <code>perf</code> install; Part 5 requires <code>rustup +nightly component add miri</code> (run from anywhere).</p>
+
+      <h2>Part 1: measure before you optimize</h2>
+      <p>A single ad hoc timing (one <code>Instant::now()</code> before and after) is noise: OS scheduling jitter, CPU frequency scaling, and cache state all move a one-shot number around by far more than most real optimizations. Treat performance work as evidence against a baseline, not a one-off measurement, and always benchmark an optimized build:</p>
+      <div class="code-label">Cargo.toml (workspace root) — replace the [profile.release] section Lesson 17 added, with these additional keys</div>
+      <pre class="large-code"><code>[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1   # fewer codegen units, more cross-function optimization, slower to compile
+debug = true        # keep symbols for profiling; does not disable optimizations</code></pre>
+      <p>A debug build's unoptimized code, overflow checks, and <code>debug_assert!</code>s make any timing from it meaningless for judging real performance.</p>
+
+      <h2>Part 2: Criterion vs the unstable built-in bencher</h2>
+      <p>Nightly Rust has an unstable, built-in <code>#[bench]</code> harness behind the <code>test</code> feature. Its bencher repeatedly runs the measured closure and reports a summary such as nanoseconds per iteration, but the API remains nightly-only and offers less regression-analysis support. <strong>Criterion.rs</strong> works on stable Rust, performs statistical analysis across repeated samples, reports confidence intervals and likely outliers, and can save a named baseline to compare future runs against. Register it first:</p>
+      <div class="code-label">crates/pulsewatch-core/Cargo.toml — append to the existing [dev-dependencies] table (the one Lesson 16 added proptest to)</div>
+      <pre class="large-code"><code>criterion = { version = "0.5", features = ["html_reports"] }</code></pre>
+      <div class="code-label">crates/pulsewatch-core/Cargo.toml — append a new [[bench]] table (add after [dev-dependencies])</div>
+      <pre class="large-code"><code>[[bench]]
+name = "render"
+harness = false</code></pre>
+      <div class="code-label">crates/pulsewatch-core/benches/render.rs — create</div>
+      <pre class="large-code"><code>// pulsewatch-core/benches/render.rs
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use pulsewatch_core::{Millis, Sample};
+
+fn naive_render(samples: &amp;[Sample]) -&gt; String {
+    samples.iter().map(|s| format!("{}: {:03}ms\n", s.source, s.latency.get())).collect()
+}
+
+fn buffered_render(samples: &amp;[Sample]) -&gt; String {
+    use std::fmt::Write;
+    let mut out = String::with_capacity(samples.len() * 24);
+    for s in samples {
+        let _ = writeln!(out, "{}: {:03}ms", s.source, s.latency.get());
+    }
+    out
+}
+
+fn bench_render(c: &amp;mut Criterion) {
+    let samples: Vec&lt;Sample&gt; = (0..1_000)
+        .map(|i| Sample { source: format!("probe-{i}"), latency: Millis::new(i as u64) })
+        .collect();
+    c.bench_function("naive_render", |b| b.iter(|| naive_render(black_box(&amp;samples))));
+    c.bench_function("buffered_render", |b| b.iter(|| buffered_render(black_box(&amp;samples))));
+}
+
+criterion_group!(benches, bench_render);
+criterion_main!(benches);</code></pre>
+      <p>Run both benchmark passes from the workspace root:</p>
+      <pre class="large-code"><code>cargo bench -p pulsewatch-core -- --save-baseline main
+# ... apply the buffered_render optimization ...
+cargo bench -p pulsewatch-core -- --baseline main</code></pre>
+      <p>The second run reports the percentage change against the saved <code>main</code> baseline for each function, with a confidence interval, not just a single new number to eyeball against memory.</p>
+
+      <h2>Part 3: reading a flamegraph</h2>
+      <p>A flamegraph turns sampled stack traces into stacked, horizontal frames: each frame's width is the fraction of samples where that function was on the stack, and stacking shows the call chain. A wide frame spent more sampled time; a narrow one did not. It still needs a baseline &mdash; a wide frame in the only profile you have ever taken looks the same whether it is expected or a regression. From the workspace root, with <code>cargo install flamegraph</code> already run once (from anywhere):</p>
+      <pre class="large-code"><code>cargo flamegraph -p pulsewatch-core --bench render -- --bench</code></pre>
+      <p>Read width first, not color; most flamegraph tools color frames only for visual separation between call stacks, not to encode "hot" vs "cold" by hue.</p>
+
+      <h2>Part 4: heap allocation as a cost, not just CPU time</h2>
+      <p><code>naive_render</code>'s <code>format!</code> call allocates a new <code>String</code> per sample; <code>buffered_render</code> allocates once via <code>String::with_capacity</code> and reuses it. A CPU-time benchmark can already surface this difference, but a dedicated allocation counter (for example, wrapping the global allocator to count calls in a test) makes the allocation-count claim itself measurable rather than inferred from timing alone.</p>
+
+      <h2>Part 5: Miri and sanitizers verify exercised paths, not all inputs</h2>
+      <p>Lesson 8's <code>copy_probe_bytes</code> unsafe wrapper needs re-verification whenever its surrounding code changes. <strong>Miri</strong> is an interpreter that catches undefined behavior, out-of-bounds access, use-after-free, invalid pointer arithmetic, for whichever inputs your test actually exercises. From the workspace root, with the <code>miri</code> component already installed on nightly (<code>rustup +nightly component add miri</code>, run from anywhere):</p>
+      <pre class="large-code"><code>cargo +nightly miri test -p pulsewatch-core copy_probe_bytes</code></pre>
+      <p>Sanitizers (address, memory, thread) are a nightly, unstable Cargo flag that instruments a real compiled binary rather than interpreting it, trading Miri's slower, exhaustive-feeling checking for closer-to-native speed. This example targets Linux; substitute your own target triple if different:</p>
+      <pre class="large-code"><code>RUSTFLAGS="-Z sanitizer=address" cargo +nightly test -p pulsewatch-core --target x86_64-unknown-linux-gnu</code></pre>
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong>Dynamic checkers, not proofs</strong>
+          <p>Miri and sanitizers are <em>dynamic</em> checkers: they only see undefined behavior along the code paths and input values your tests actually exercise. A clean Miri run on <code>copy_probe_bytes</code>'s existing tests does not prove the function is safe for every <code>ptr</code>/<code>len</code> pair a caller could someday pass; it proves nothing went wrong for the inputs tested. Treat both as strong evidence, not a formal proof of the absence of undefined behavior.</p>
+        </div>
+      </div>
+
+      <h2>Read the Rust: syntax mapped to C++</h2>
+      <table class="comparison-table">
+        <thead><tr><th>Rust</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>cargo bench -- --save-baseline</code></td><td>Runs Criterion benchmarks and stores results under a named baseline for later comparison.</td><td>Comparable to recording a Google Benchmark result set to diff against later, but built into the crate's own workflow.</td></tr>
+          <tr><td><code>#[bench] (nightly, unstable)</code></td><td>The built-in micro-benchmark harness; its bencher iterates the measured closure, but the API remains unstable and nightly-only.</td><td>Comparable to a basic benchmark harness without Criterion's stable-toolchain workflow and richer regression analysis.</td></tr>
+          <tr><td><code>black_box(x)</code></td><td>Prevents the optimizer from eliding a computation whose result is otherwise unused.</td><td>Similar to volatile or a compiler-specific do-not-optimize hint used in C++ microbenchmarks.</td></tr>
+          <tr><td><code>cargo flamegraph</code></td><td>Samples a running binary's stacks and renders them as a stacked, width-proportional graph.</td><td>Comparable to perf + a flamegraph script, wrapped into one command.</td></tr>
+          <tr><td><code>cargo +nightly miri test</code></td><td>Interprets tests, flagging undefined behavior on the paths they exercise.</td><td>Closer to Valgrind's memcheck than a static analyzer: it only sees what actually runs.</td></tr>
+          <tr><td><code>-Z sanitizer=address</code></td><td>Instruments a compiled binary to catch memory errors at near-native speed.</td><td>Direct analog to AddressSanitizer (ASan) as used from Clang/GCC.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Worked Pulsewatch increment</h2>
+      <p>Pulsewatch's render path now has a Criterion benchmark comparing the original per-row-allocating <code>naive_render</code> against a buffer-reusing <code>buffered_render</code>, a saved <code>main</code> baseline to measure any future change against, a flamegraph confirming which frame the time actually moved from, and a re-run of Miri over the Lesson 8 <code>copy_probe_bytes</code> wrapper now that surrounding code has changed.</p>
+
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Stability and production boundary</strong>
+          <p>A benchmark win on the exact 1,000-sample input generated here does not guarantee a win at every batch size, and a clean Miri run over today's tests does not certify <code>copy_probe_bytes</code> safe for every future caller. Re-benchmark against the saved baseline and re-run Miri whenever the hot path or the unsafe wrapper's surrounding assumptions change, rather than trusting one past result indefinitely.</p>
+        </div>
+      </div>
+
+      <h2>Active exercise</h2>
+      <ol>
+        <li>From the workspace root, run <code>cargo bench -p pulsewatch-core -- --save-baseline main</code> against the unmodified <code>naive_render</code>/<code>buffered_render</code> pair. <strong>Expected evidence:</strong> Criterion prints a report for both functions and writes it under <code>target/criterion/</code>, with no <code>--baseline</code> comparison yet since <code>main</code> was just created.</li>
+        <li>In <code>crates/pulsewatch-core/benches/render.rs</code> (replace the body of <code>buffered_render</code>), pre-size the buffer more precisely, for example replacing <code>samples.len() * 24</code> with a capacity computed from the actual formatted width, then save the file.</li>
+        <li>From the workspace root, run <code>cargo bench -p pulsewatch-core -- --baseline main</code>. <strong>Expected evidence:</strong> a Criterion report showing a percentage change for <code>buffered_render</code> against the <code>main</code> baseline, with a confidence interval, not just a single new number.</li>
+        <li>From the workspace root, run <code>cargo flamegraph -p pulsewatch-core --bench render -- --bench</code>. <strong>Expected evidence:</strong> a <code>flamegraph.svg</code> file is written to the workspace root; open it and identify which frame's width shrank compared to your mental model of step 1's report.</li>
+        <li>From the workspace root, run <code>cargo +nightly miri test -p pulsewatch-core copy_probe_bytes</code>. <strong>Expected evidence:</strong> the command reports the existing <code>copy_probe_bytes</code> tests passing under Miri with no undefined-behavior diagnostics, confirming this lesson's benchmark and profile changes did not introduce any.</li>
+        <li>Write one sentence, as a comment appended to the top of the <code>#[cfg(test)] mod tests</code> block in <code>crates/pulsewatch-core/src/unsafe_probe.rs</code>, describing what that clean Miri run does and does not prove about <code>copy_probe_bytes</code>.</li>
+      </ol>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=hTHp0gjWMLQ">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">26:38 · OPTIONAL</span><h3>RustConf 2017 - Improving Rust Performance Through Profiling and Benchmarking by Steve Jenson</h3><p>Rust Programming Language (RustConf). A conference talk on profiling discipline and reading benchmark evidence, still directly applicable to the baseline-first approach used here.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=Ue0a032ZARA">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">17:36 · OPTIONAL</span><h3>Criterion: A benchmarking tool for Rust</h3><p>cudidotdev. A hands-on Criterion.rs walkthrough covering bench_function, baselines, and reading the generated report.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the RustConf profiling talk, read the Cargo <a href="https://doc.rust-lang.org/cargo/reference/profiles.html">profiles reference</a> and work through Part 1 above.</li>
+        <li>Instead of the Criterion walkthrough video, read the <a href="https://bheisler.github.io/criterion.rs/book/getting_started.html">Criterion.rs Getting Started guide</a> and the Part 2 benchmark above.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why is a single before/after Instant::now() timing not sufficient evidence that an optimization helped?</summary><p><strong>Answer:</strong> Scheduling jitter, CPU frequency scaling, and cache state can move a one-shot timing by more than many real optimizations change; you need repeated samples and a saved baseline to distinguish a real effect from noise.</p></details>
+      <details class="quiz"><summary>2. Why is Criterion generally preferred over the nightly #[bench] harness for a project that runs its CI on stable Rust?</summary><p><strong>Answer:</strong> #[bench] is gated behind the unstable test feature and only available on nightly. Criterion works on stable Rust and adds statistical comparison, confidence intervals, outlier reporting, and saved baselines for regression analysis.</p></details>
+      <details class="quiz"><summary>3. A flamegraph shows one very wide frame. What do you still need before concluding it is a performance problem?</summary><p><strong>Answer:</strong> A baseline: a wide frame just means that function used a large share of sampled time in this one profile; without a prior profile or expectation to compare against, you cannot tell if that is normal or a regression.</p></details>
+      <details class="quiz"><summary>4. A Miri run over copy_probe_bytes's existing tests is clean. What exactly does that prove, and what does it not prove?</summary><p><strong>Answer:</strong> It proves no undefined behavior was detected for the pointer/length inputs the existing tests actually exercised; it does not prove the function is safe for every ptr/len pair a future caller could pass, since Miri and sanitizers are dynamic checkers, not formal proofs.</p></details>
+
+      <h2>Recap and decision rules</h2>
+<pre class="large-code"><code>About to trust a single before/after timing?     Don't; benchmark repeatedly against a saved baseline
+CI must run on stable Rust?                       Use Criterion, not nightly #[bench]
+Flamegraph shows a wide frame?                     Confirm against a baseline before calling it a problem
+Need allocation counts, not just CPU time?         Add a dedicated allocation counter, don't infer from timing alone
+Changed code near an unsafe wrapper?               Re-run Miri (and sanitizers if available) on it
+Miri/sanitizers came back clean?                    Evidence for exercised paths only, not a safety proof for all inputs</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://bheisler.github.io/criterion.rs/book/getting_started.html">Getting Started</a>, Criterion.rs Book, criterion-rs maintainers. Setting up bench_function, baselines, and reading reports. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/unstable-book/library-features/test.html">test</a>, The Unstable Book, Rust Project. The nightly-only built-in #[bench] harness this lesson contrasts with Criterion. Accessed September 17, 2026.</li>
+        <li><a href="https://github.com/flamegraph-rs/flamegraph">flamegraph-rs/flamegraph</a>, GitHub, flamegraph-rs maintainers. cargo flamegraph usage and how sampled stacks become a flamegraph. Accessed September 17, 2026.</li>
+        <li><a href="https://github.com/rust-lang/miri">rust-lang/miri</a>, GitHub, Rust Project. What Miri checks, and its scope as a dynamic interpreter. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/unstable-book/compiler-flags/sanitizer.html">sanitizer</a>, The Unstable Book, Rust Project. The -Z sanitizer= flag and available sanitizer kinds. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/cargo/reference/profiles.html">Profiles</a>, Cargo Book, Rust Project. opt-level, lto, codegen-units, and debug symbol settings for release builds. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/nomicon/">The Rustonomicon</a>, Rust Project. Background on what unsafe code must uphold, relevant to re-verifying copy_probe_bytes. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="17-debugging-observability.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 17: Debugging &amp; Observability</span></a>
+        <a href="19-migration-playbook-raw-c-abi.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 19: Migration &amp; Raw C ABI</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

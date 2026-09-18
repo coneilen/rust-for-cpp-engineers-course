@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Production Workspaces, Modules, and API Design — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html" class="active"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 7 · 30 minutes</span>
+      <h1>Production Workspaces, Modules, and API Design</h1>
+      <p class="lesson-subtitle">Start <strong>Pulsewatch</strong>, a production monitoring system, as a Cargo workspace: a reusable core library, a thin CLI adapter, and a small, deliberate public API behind unit and integration tests.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can create a multi-package Cargo workspace, explain package/crate/module boundaries, expose a stable public API with visibility rules and re-exports, use a newtype and an associated type deliberately, and back the API with unit and integration tests.
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">📁</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p><strong>Starting state:</strong> nothing yet — this lesson creates the Pulsewatch workspace from scratch. <strong>Working directory:</strong> choose any empty parent folder on your machine (for example <code>~/dev</code>) and run Part 1's commands from there; the first command creates <code>pulsewatch/</code>. From then on, later lessons refer to that folder as <code>path/to/pulsewatch</code> — this means “wherever you created it,” not a literal folder named <code>path</code>. Unless a step says otherwise, every command in this lesson runs from inside <code>pulsewatch/</code> itself (the workspace root) once it exists.</p>
+        </div>
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td>Map package, crate, module, and workspace boundaries</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Create the Pulsewatch workspace and module tree</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Design visibility, re-exports, a newtype, and an associated type</td></tr>
+          <tr data-minutes="7"><td>7 min</td><td>Implement the first probe behind a small public API</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Exercise: add a typed latency probe with unit and integration tests</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: from one binary to a product-shaped workspace</h2>
+      <p>Lessons 1–6 built <code>rust-greeter</code> as one package with one binary crate. Pulsewatch starts differently: a reusable library that other tools can depend on, plus a CLI that only wires it up. Four terms matter, and they are not interchangeable:</p>
+      <table class="comparison-table">
+        <thead><tr><th>Rust term</th><th>What it is</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td>Package</td><td>One <code>Cargo.toml</code> manifest describing a name, version, and dependencies.</td><td>Closest to one project/solution file, not one source file.</td></tr>
+          <tr><td>Crate</td><td>One compilation unit: a library crate or a binary crate. A package may contain one library crate and several binary crates.</td><td>Closest to one linked translation-unit graph that produces one artifact.</td></tr>
+          <tr><td>Module</td><td>A namespace and privacy boundary inside a crate, declared with <code>mod</code>. Modules do not have to map one-to-one to files.</td><td>Closer to a C++ namespace than to a header, and it also controls visibility.</td></tr>
+          <tr><td>Workspace</td><td>Several packages sharing one <code>Cargo.lock</code> and one <code>target/</code> build output directory.</td><td>Closest to a multi-project solution with one shared dependency lock.</td></tr>
+        </tbody>
+      </table>
+      <p>Pulsewatch will grow across the rest of this course, so it starts as a workspace with two packages: a library that later lessons extend, and a CLI that stays a thin adapter.</p>
+      <p><strong>Run from:</strong> the empty parent folder you chose in the setup box above.</p>
+      <pre class="large-code"><code>mkdir pulsewatch
+cd pulsewatch
+cargo new --lib crates/pulsewatch-core
+cargo new --bin crates/pulsewatch-cli</code></pre>
+      <p>Each <code>cargo new</code> call writes one manifest and one starter source file: <code>crates/pulsewatch-core/Cargo.toml</code> plus a placeholder <code>crates/pulsewatch-core/src/lib.rs</code>, and <code>crates/pulsewatch-cli/Cargo.toml</code> plus a placeholder <code>crates/pulsewatch-cli/src/main.rs</code> that prints <code>"Hello, world!"</code>. Both placeholders are replaced later in this lesson — the listings below show their final contents.</p>
+      <p>After the four commands above, <code>lib.rs</code> and <code>main.rs</code> still hold Cargo's defaults and <code>probe.rs</code> does not exist yet. This is the target layout once every file in Part 3 is in place:</p>
+      <pre class="large-code"><code>pulsewatch/
+├── Cargo.toml                    # [workspace] — no package of its own
+├── crates/
+│   ├── pulsewatch-core/          # reusable library package
+│   │   ├── Cargo.toml
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       └── probe.rs
+│   └── pulsewatch-cli/           # executable package
+│       ├── Cargo.toml
+│       └── src/
+│           └── main.rs</code></pre>
+      <p><strong>File:</strong> <code>pulsewatch/Cargo.toml</code> — create. <code>cargo new</code> only writes each package's own manifest, so you add this workspace-root manifest by hand.</p>
+      <pre class="large-code"><code>[workspace]
+members = ["crates/pulsewatch-core", "crates/pulsewatch-cli"]
+resolver = "3"</code></pre>
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Why <code>resolver = "3"</code> is written explicitly</strong>
+          <p><code>"3"</code> is the dependency-resolver version that a normal package gets automatically from <code>edition = "2024"</code>. This root <code>Cargo.toml</code> is a <strong>virtual workspace</strong>: it lists members but owns no package of its own, so it has no edition to infer a resolver from. The version is set directly in the <code>[workspace]</code> table instead.</p>
+        </div>
+      </div>
+
+      <h2>Part 2: design the API from the consumer inward</h2>
+      <p>In Rust, everything defaults to private to its module. A struct field, function, or module is visible outside its module only if marked <code>pub</code>, and how far <code>pub</code> reaches can be narrowed further.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Visibility syntax</th><th>Reaches</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>fn helper() { ... }</code></td><td>Private to the current module and its children (the Rust default).</td><td>Similar intent to a function in an anonymous namespace or a private class member, but the boundary is the module, not the class.</td></tr>
+          <tr><td><code>pub(crate) fn helper()</code></td><td>Visible anywhere in this crate, never to a dependent crate.</td><td>No exact match; closer to an internal-linkage symbol shared across one binary's translation units.</td></tr>
+          <tr><td><code>pub fn helper()</code></td><td>Visible to any crate that can reach the containing module.</td><td>Similar intent to a symbol declared in a public header.</td></tr>
+          <tr><td><code>pub use probe::{Probe, Sample};</code></td><td>Re-exports names at a shorter, chosen path without moving the code that defines them.</td><td>Closest to a curated umbrella header, but re-exports are checked paths, not textual inclusion.</td></tr>
+        </tbody>
+      </table>
+      <p>Re-exports matter because internal module names should stay free to change. Callers write <code>pulsewatch_core::Probe</code>; whether that type is actually defined in <code>probe.rs</code>, <code>probe/mod.rs</code>, or a future split file is an internal detail the re-export hides.</p>
+
+      <h3>A newtype stops units from mixing silently</h3>
+      <p>A bare <code>u64</code> milliseconds value and a bare <code>u64</code> sample count look identical to the compiler. A <strong>newtype</strong>, a tuple struct with one field, gives them different types:</p>
+      <p><em>Conceptual excerpt — do not create a separate file for this. The same code becomes part of <code>crates/pulsewatch-core/src/probe.rs</code> in Part 3.</em></p>
+      <pre class="large-code"><code>#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Millis(u64);
+
+impl Millis {
+    pub fn new(value: u64) -&gt; Self {
+        Self(value)
+    }
+
+    pub fn get(self) -&gt; u64 {
+        self.0
+    }
+}</code></pre>
+      <p>Because the inner field stays private, no caller outside this module can construct a <code>Millis</code> from an arbitrary integer or read its value without going through <code>new</code> and <code>get</code>. That is close to a strong C++ typedef built from a class with an explicit constructor, except the Rust compiler always enforces it &mdash; a raw <code>u64</code> can never implicitly convert into a <code>Millis</code>.</p>
+
+      <h3>An associated type lets each implementation pick one output</h3>
+      <p><em>Conceptual excerpt — the complete trait, with its <code>Sample</code> output type, is defined in <code>crates/pulsewatch-core/src/probe.rs</code> in Part 3.</em></p>
+      <pre class="large-code"><code>pub trait Probe {
+    type Output;
+    fn name(&amp;self) -&gt; &amp;str;
+    fn sample(&amp;mut self) -&gt; Self::Output;
+}</code></pre>
+      <p><code>type Output;</code> declares an <strong>associated type</strong>: every implementation of <code>Probe</code> chooses one concrete <code>Output</code>, and callers write <code>P::Output</code> instead of supplying it themselves. This differs from a generic trait parameter such as <code>trait Probe&lt;T&gt;</code>, where one type could implement the trait multiple times for different <code>T</code>. Pulsewatch wants exactly one output shape per probe type, so an associated type states that intent directly.</p>
+
+      <h2>Part 3: the first probe behind a small public API</h2>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/lib.rs</code> — replace the placeholder <code>cargo new</code> wrote.</p>
+      <pre class="large-code"><code>// crates/pulsewatch-core/src/lib.rs
+mod probe;
+
+pub use probe::{FixedProbe, Millis, Probe, Sample};</code></pre>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/probe.rs</code> — create (this file does not exist after <code>cargo new</code>).</p>
+      <pre class="large-code"><code>// crates/pulsewatch-core/src/probe.rs
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Millis(u64);
+
+impl Millis {
+    pub fn new(value: u64) -&gt; Self {
+        Self(value)
+    }
+
+    pub fn get(self) -&gt; u64 {
+        self.0
+    }
+}
+
+pub trait Probe {
+    type Output;
+    fn name(&amp;self) -&gt; &amp;str;
+    fn sample(&amp;mut self) -&gt; Self::Output;
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Sample {
+    pub source: String,
+    pub latency: Millis,
+}
+
+pub struct FixedProbe {
+    name: String,
+    latency: Millis,
+}
+
+impl FixedProbe {
+    pub fn new(name: impl Into&lt;String&gt;, latency: Millis) -&gt; Self {
+        Self { name: name.into(), latency }
+    }
+}
+
+impl Probe for FixedProbe {
+    type Output = Sample;
+
+    fn name(&amp;self) -&gt; &amp;str {
+        &amp;self.name
+    }
+
+    fn sample(&amp;mut self) -&gt; Sample {
+        Sample { source: self.name.clone(), latency: self.latency }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fixed_probe_reports_configured_latency() {
+        let mut probe = FixedProbe::new("cpu", Millis::new(12));
+        let sample = probe.sample();
+        assert_eq!(sample.source, "cpu");
+        assert_eq!(sample.latency.get(), 12);
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>New line</th><th>Why it exists</th></tr></thead>
+        <tbody>
+          <tr><td><code>impl Into&lt;String&gt;</code></td><td>Accepts either an owned <code>String</code> or a <code>&amp;str</code> literal and converts once inside the constructor, instead of forcing every caller to allocate first.</td></tr>
+          <tr><td><code>Self { name: name.into(), latency }</code></td><td><code>Self</code> means “the type this <code>impl</code> block is for,” here <code>FixedProbe</code>. The shorthand field <code>latency</code> means <code>latency: latency</code>.</td></tr>
+          <tr><td><code>#[derive(Debug, Clone, Copy, PartialEq, Eq)]</code></td><td>Generates standard value operations: formatted printing, bitwise duplication for <code>Copy</code> types, and structural equality. Deriving is a request to the compiler, not hand-written boilerplate.</td></tr>
+          <tr><td><code>#[cfg(test)] mod tests</code></td><td>Compiles this module only for test builds. <code>use super::*;</code> reaches into the parent module, so unit tests may use private fields that the public API hides.</td></tr>
+        </tbody>
+      </table>
+      <pre class="large-code"><code>// crates/pulsewatch-cli/src/main.rs
+use pulsewatch_core::{FixedProbe, Millis, Probe};
+
+fn main() {
+    let mut probe = FixedProbe::new("startup", Millis::new(5));
+    let sample = probe.sample();
+    println!("{} reported {} ms", sample.source, sample.latency.get());
+}</code></pre>
+      <p>The CLI never touches <code>probe.rs</code> directly. It only sees the re-exported names <code>pulsewatch_core::{FixedProbe, Millis, Probe}</code>, exactly the vocabulary Part 2 chose to expose.</p>
+      <p><strong>Run from:</strong> <code>pulsewatch/</code> (the workspace root).</p>
+      <pre class="large-code"><code>cargo run -p pulsewatch-cli</code></pre>
+      <p>Expected output: <code>startup reported 5 ms</code>.</p>
+
+      <h2>Part 4: tests are part of the public API surface</h2>
+      <p>The unit test inside <code>probe.rs</code> can reach private fields because it lives in a child module. An <strong>integration test</strong> lives in a separate <code>tests/</code> directory, compiles as its own crate, and can only see what the library actually exports:</p>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/tests/public_api.rs</code> — create (the <code>tests/</code> directory does not exist yet either).</p>
+      <pre class="large-code"><code>// crates/pulsewatch-core/tests/public_api.rs
+use pulsewatch_core::{FixedProbe, Millis, Probe};
+
+#[test]
+fn constructs_probe_through_public_api_only() {
+    let mut probe = FixedProbe::new("network", Millis::new(42));
+    let first = probe.sample();
+    let second = probe.sample();
+
+    assert_eq!(first.latency.get(), 42);
+    assert_eq!(second.latency.get(), 42);
+}</code></pre>
+      <p>If this test could reach <code>probe::Millis(42)</code> directly, or construct <code>Sample</code> with a field the design meant to keep read-only from outside, the re-export boundary would be incomplete. An integration test failing to compile against private internals is itself useful evidence that the boundary holds.</p>
+      <p><strong>Run from:</strong> <code>pulsewatch/</code> (the workspace root).</p>
+      <pre class="large-code"><code>cargo test --workspace</code></pre>
+      <p>Expected output: two passing test binaries — <code>pulsewatch-core</code>'s unit tests report <code>test result: ok. 1 passed</code> (<code>fixed_probe_reports_configured_latency</code>), and the <code>public_api</code> integration test reports <code>test result: ok. 1 passed</code> (<code>constructs_probe_through_public_api_only</code>).</p>
+
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Stability and production boundary</strong>
+          <p>Modules, visibility rules, re-exports, associated types, newtypes, workspaces, and <code>resolver = "3"</code> are all stable Rust and Cargo features. A <code>pub</code> struct field is a compatibility promise to every dependent crate; prefer a private field with a constructor and accessor when the invariant may change later, exactly as <code>Millis</code> does here. As the workspace grows, keep shared dependency versions in one root <code>[workspace.dependencies]</code> table instead of repeating them per package.</p>
+        </div>
+      </div>
+
+      <h2>Active exercise</h2>
+      <ol>
+        <li>From the parent folder you chose in the setup box, run Part 1's four scaffold commands (skip if already done), then create <code>pulsewatch/Cargo.toml</code> with the workspace manifest from Part 1.</li>
+        <li>Replace <code>crates/pulsewatch-core/src/lib.rs</code> and create <code>crates/pulsewatch-core/src/probe.rs</code> with the Part 3 listings (the unit test is already included in <code>probe.rs</code>).</li>
+        <li>Replace <code>crates/pulsewatch-cli/src/main.rs</code> with the Part 3 listing.</li>
+        <li>From <code>pulsewatch/</code>, run <code>cargo run -p pulsewatch-cli</code>. Expected output: <code>startup reported 5 ms</code>.</li>
+        <li>Create <code>crates/pulsewatch-core/tests/public_api.rs</code> with the Part 4 listing.</li>
+        <li>From <code>pulsewatch/</code>, run <code>cargo test --workspace</code>. Expected output: as described at the end of Part 4 — one passing unit test and one passing integration test.</li>
+        <li>In <code>crates/pulsewatch-core/tests/public_api.rs</code>, temporarily add the line <code>let _ = pulsewatch_core::Millis(42);</code> above the existing <code>#[test]</code> function and save the file.</li>
+        <li>From <code>pulsewatch/</code>, run <code>cargo test --workspace</code> again. Expected output: a compile error naming <code>Millis</code>'s tuple field as private — the tuple-constructor syntax bypasses <code>Millis::new</code>, so it cannot compile from outside <code>probe.rs</code>.</li>
+        <li>Delete the line you added in step 7 and re-run <code>cargo test --workspace</code> from <code>pulsewatch/</code>. Expected output: the same two passing tests as step 6.</li>
+      </ol>
+      <p><strong>Expected evidence:</strong> <code>cargo test --workspace</code> passes with one unit test (<code>fixed_probe_reports_configured_latency</code>, asserting a 12&nbsp;ms sample) and one integration test (<code>constructs_probe_through_public_api_only</code>, asserting two consecutive 42&nbsp;ms samples); the direct tuple-construction attempt at <code>pulsewatch_core::Millis(42)</code> fails to compile with a privacy error until it is removed.</p>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=5RPXgDQrjio">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">22:25 · INTERMEDIATE</span><h3>Rust's Module System Explained!</h3><p>Let's Get Rusty. Walks through modules, paths, and visibility with worked examples.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=70_9IIsQfjs">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">11:52 · INTERMEDIATE</span><h3>Cargo Workspaces</h3><p>Let's Get Rusty. Demonstrates creating and building a multi-package Cargo workspace.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=_ccDqRTx-JU">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">14:45 · INTERMEDIATE</span><h3>Improve your Rust APIs with the type state pattern</h3><p>Let's Get Rusty. Shows how API design choices in the type system prevent invalid call sequences.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the module system video, read <a href="https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html">Managing Growing Projects with Packages, Crates, and Modules</a> and trace the visibility table in Part 2 against it.</li>
+        <li>Instead of the workspace video, read <a href="https://doc.rust-lang.org/cargo/reference/workspaces.html">Workspaces</a> in the Cargo Book and compare its example manifest with Part 1's <code>Cargo.toml</code>.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. What is the compilation unit: package, crate, or module?</summary><p><strong>Answer:</strong> A crate. A package describes one or more crates through its manifest; a module organizes names and privacy inside one crate.</p></details>
+      <details class="quiz"><summary>2. Why re-export names instead of making every module public?</summary><p><strong>Answer:</strong> A re-export creates a small, chosen, stable path for consumers while the internal module layout and file structure stay free to change without breaking dependents.</p></details>
+      <details class="quiz"><summary>3. Why does <code>Millis</code> keep its inner <code>u64</code> private?</summary><p><strong>Answer:</strong> A private field forces every value to pass through <code>Millis::new</code>, preventing a plain integer meant for a different unit from being used as milliseconds by mistake.</p></details>
+      <details class="quiz"><summary>4. When should a trait use an associated type instead of a generic parameter?</summary><p><strong>Answer:</strong> When each implementing type should settle on exactly one related output type and callers should not choose or repeat that type themselves, as <code>Probe::Output</code> does for every probe.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Shared lockfile and build output across packages? Workspace
+One compiled library or binary?                    Crate
+Namespace and privacy boundary inside a crate?      Module
+Public path should stay small and stable?           Re-export the chosen names
+Two values share a primitive type but not a unit?   Newtype
+Every implementation needs exactly one output type? Associated type
+Testing private internals?                          Unit test inside the module
+Testing only the exported surface?                  Integration test under tests/</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html">Managing Growing Projects with Packages, Crates, and Modules</a>, <em>The Rust Programming Language</em>, Rust Project. Packages, crates, modules, paths, and visibility. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/reference/visibility-and-privacy.html">Visibility and Privacy</a>, Rust Reference, Rust Project. Precise rules for <code>pub</code>, <code>pub(crate)</code>, and related visibility forms. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/cargo/reference/workspaces.html">Workspaces</a>, Cargo Book, Rust Project. Workspace membership, the virtual manifest, and shared configuration. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/cargo/reference/resolver.html">Dependency Resolution</a>, Cargo Book, Rust Project. Resolver versions and their relationship to package edition. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch20-02-advanced-traits.html">Advanced Traits</a>, <em>The Rust Programming Language</em>, Rust Project. Associated types and the newtype pattern. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/cargo/guide/tests.html">Tests</a>, Cargo Book, Rust Project. Unit-test and integration-test layout and invocation. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=5RPXgDQrjio">Rust's Module System Explained!</a>, Let's Get Rusty, 22:25. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=70_9IIsQfjs">Cargo Workspaces</a>, Let's Get Rusty, 11:52. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=_ccDqRTx-JU">Improve your Rust APIs with the type state pattern</a>, Let's Get Rusty, 14:45. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="06-traits-lifetimes-shared-ownership.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 6: Traits to Shared Ownership</span></a>
+        <a href="08-smart-pointers-interior-mutability-unsafe.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 8: Pointers, Mutability &amp; Unsafe</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+.code-compare > div {
+  background: var(--cp-surface);
+  color: var(--cp-text);
+  border: 1px solid var(--cp-border);
+}
+
+.code-compare > div > ol,
+.code-compare > div > ul {
+  padding: 16px 20px 16px 40px;
+}
+
+.code-compare > div > p {
+  padding: 0 16px 16px;
+}
+
+.code-compare > div > ol + pre,
+.code-compare > div > ul + pre {
+  margin-top: 0;
+}
+
+@media (max-width: 600px) {
+  .comparison-table {
+    table-layout: fixed;
+  }
+
+  .comparison-table th,
+  .comparison-table td,
+  .comparison-table code {
+    overflow-wrap: anywhere;
+  }
+}

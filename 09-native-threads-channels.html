@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Native Threads and Channels — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html" class="active"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 9 · 30 minutes</span>
+      <h1>Native Threads and Channels</h1>
+      <p class="lesson-subtitle">Give Pulsewatch a long-lived worker pool: choose scoped or spawned native threads deliberately, hand off work through <code>mpsc</code> channels instead of shared locked state, and shut every worker down cleanly.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can choose between a scoped thread and a spawned <code>'static</code> thread, read a <code>move</code> closure and a <code>JoinHandle</code>, choose an unbounded channel or a bounded <code>sync_channel</code> for backpressure, and build a worker pool whose workers never hold a lock while doing the actual work.
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">📁</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p><strong>Starting state:</strong> the <code>pulsewatch</code> workspace exactly as Lesson 8's exercise left it, including <code>crates/pulsewatch-core/src/{alert_group,hit_counter,label,unsafe_probe}.rs</code> and the four-module <code>lib.rs</code> from that lesson. <strong>Working directory:</strong> <code>cd path/to/pulsewatch</code> — the folder you created in Lesson 7. Unless a step says otherwise, every command below runs from that <code>pulsewatch/</code> workspace root. This lesson creates one new file, <code>crates/pulsewatch-core/src/worker_pool.rs</code>, and edits <code>lib.rs</code> to declare and re-export it.</p>
+        </div>
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="5"><td>5 min</td><td>Choose <code>thread::scope</code> or <code>thread::spawn</code> for a given lifetime shape</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Read <code>move</code> closures, <code>JoinHandle</code>, and panic propagation</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Choose an unbounded channel or a bounded <code>sync_channel</code> for backpressure</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Build a Pulsewatch worker pool that never holds a lock across a probe's work</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Exercise: run probes through the pool, including one that panics</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: scoped threads and spawned threads solve different lifetime shapes</h2>
+      <p>Lessons 5 and 6 used <code>thread::scope</code> because the workers borrowed data owned by the enclosing function and finished before that function returned. Pulsewatch's monitoring pool is different: it is created once and outlives the function that creates it, so its threads cannot borrow anything local. That calls for <code>thread::spawn</code> instead.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Choice</th><th>What the compiler requires</th><th>C++ bridge</th><th>Use it when</th></tr></thead>
+        <tbody>
+          <tr><td><code>thread::scope(|s| ...)</code></td><td>Every <code>s.spawn(...)</code> closure is joined before <code>scope</code> returns, so it may borrow local, non-<code>'static</code> data.</td><td>Closest to a <code>std::jthread</code> whose destructor always joins, scoped to one block.</td></tr>
+          <tr><td><code>thread::spawn(move || ...)</code></td><td>The closure must be <code>'static</code> and <code>Send</code>: it may only contain owned data or data with no shorter lifetime, such as an <code>Arc</code> clone.</td><td>Closest to a detachable <code>std::thread</code> whose captured state you manage manually.</td></tr>
+        </tbody>
+      </table>
+      <p>A long-lived worker pool must use <code>thread::spawn</code>: nothing guarantees the pool's threads finish before the function that built the pool returns.</p>
+
+      <h2>Part 2: move closures, JoinHandle, and panics</h2>
+      <p><em>Conceptual example — illustrates <code>move</code> closures and <code>JoinHandle</code>; it is not added to the crate.</em></p>
+      <pre class="large-code"><code>use std::sync::Arc;
+use std::thread::{self, JoinHandle};
+
+fn spawn_reporter(label: Arc&lt;str&gt;) -&gt; JoinHandle&lt;u32&gt; {
+    thread::spawn(move || {
+        println!("reporter {label} starting");
+        42
+    })
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Syntax</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>Arc&lt;str&gt;</code></td><td>An atomically reference-counted, immutable string slice; cloning it increments a count instead of copying text, and the clone is <code>'static</code>-safe to move into the thread.</td></tr>
+          <tr><td><code>move ||</code></td><td>Forces the closure to take ownership of every captured variable, here <code>label</code>, instead of borrowing it. Without <code>move</code>, the closure would try to borrow a value that does not outlive the function.</td></tr>
+          <tr><td><code>JoinHandle&lt;u32&gt;</code></td><td>An owned handle to the running thread that, once joined, yields the closure's return value, here <code>u32</code>.</td></tr>
+          <tr><td><code>handle.join()</code></td><td>Blocks until the thread finishes and returns <code>Result&lt;u32, Box&lt;dyn Any + Send&gt;&gt;</code>: <code>Ok</code> with the return value, or <code>Err</code> carrying the panic payload if the thread panicked.</td></tr>
+        </tbody>
+      </table>
+      <p>A panic inside a spawned thread does not crash the process by default; it unwinds that one thread and is reported through <code>join()</code>'s <code>Err</code> variant. Code that calls <code>handle.join().expect("...")</code> chooses to convert that reported panic into its own panic. Pulsewatch's worker pool below chooses differently: it converts a probe's panic into an ordinary value instead of propagating it.</p>
+
+      <h2>Part 3: choose backpressure, not just a queue</h2>
+      <p>The Rust standard library ships one idea, a channel, with two behaviors. Both move ownership of each sent value from producer to consumer:</p>
+      <table class="comparison-table">
+        <thead><tr><th>Channel</th><th>Behavior when full</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>mpsc::channel()</code></td><td>Unbounded. <code>send</code> never blocks; a producer that outruns its consumer grows memory without limit.</td><td>An unbounded thread-safe queue with no flow control.</td></tr>
+          <tr><td><code>mpsc::sync_channel(n)</code></td><td>Bounded to <code>n</code> buffered values. <code>send</code> blocks once the buffer is full until a consumer makes room: built-in backpressure.</td><td>Closest to a fixed-capacity blocking queue guarded by a condition variable.</td></tr>
+        </tbody>
+      </table>
+      <p>The Rust standard library documentation restates a slogan from the Go language documentation for exactly this shape of design: “Do not communicate by sharing memory; instead, share memory by communicating.” Pulsewatch's worker pool follows that: probes and results move between threads as owned values sent through channels, not as fields mutated under a lock held by multiple threads at once.</p>
+
+      <h2>Part 4: a worker pool that never holds a lock across a probe's work</h2>
+      <p>Multiple worker threads must share one queue of incoming work. A channel <code>Receiver</code> cannot be cloned, so the standard pattern wraps it in <code>Arc&lt;Mutex&lt;Receiver&lt;T&gt;&gt;&gt;</code>. The lock only has to protect the single act of pulling the next job; the probe itself runs after the guard is dropped.</p>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/worker_pool.rs</code> — create.</p>
+      <pre class="large-code"><code>use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::sync::mpsc::{self, Receiver, SyncSender};
+use std::sync::{Arc, Mutex};
+use std::thread::{self, JoinHandle};
+
+use crate::{Probe, Sample};
+
+pub type BoxedProbe = Box&lt;dyn Probe&lt;Output = Sample&gt; + Send&gt;;
+
+pub enum WorkerEvent {
+    Sampled(Sample),
+    Panicked { probe_name: String },
+}
+
+pub struct WorkerPool {
+    job_tx: SyncSender&lt;BoxedProbe&gt;,
+    handles: Vec&lt;JoinHandle&lt;()&gt;&gt;,
+}
+
+impl WorkerPool {
+    pub fn new(worker_count: usize, outcomes: mpsc::Sender&lt;WorkerEvent&gt;) -&gt; Self {
+        let (job_tx, job_rx) = mpsc::sync_channel::&lt;BoxedProbe&gt;(worker_count * 2);
+        let job_rx = Arc::new(Mutex::new(job_rx));
+
+        let handles = (0..worker_count)
+            .map(|id| {
+                let job_rx = Arc::clone(&amp;job_rx);
+                let outcomes = outcomes.clone();
+                thread::Builder::new()
+                    .name(format!("pulsewatch-worker-{id}"))
+                    .spawn(move || worker_loop(id, job_rx, outcomes))
+                    .expect("failed to spawn worker thread")
+            })
+            .collect();
+
+        Self { job_tx, handles }
+    }
+
+    pub fn submit(&amp;self, probe: BoxedProbe) {
+        self.job_tx.send(probe).expect("worker pool is shut down");
+    }
+
+    pub fn shutdown(self) {
+        drop(self.job_tx);
+        for handle in self.handles {
+            handle.join().expect("worker thread panicked unexpectedly");
+        }
+    }
+}
+
+fn worker_loop(
+    id: usize,
+    job_rx: Arc&lt;Mutex&lt;Receiver&lt;BoxedProbe&gt;&gt;&gt;,
+    outcomes: mpsc::Sender&lt;WorkerEvent&gt;,
+) {
+    loop {
+        let job = {
+            let rx = job_rx.lock().expect("job queue poisoned");
+            rx.recv()
+        }; // the lock guard is dropped here, before any probe runs
+
+        let mut probe = match job {
+            Ok(probe) =&gt; probe,
+            Err(_) =&gt; break, // every sender dropped: shut down cleanly
+        };
+
+        let probe_name = probe.name().to_string();
+        let outcome = match catch_unwind(AssertUnwindSafe(|| probe.sample())) {
+            Ok(sample) =&gt; WorkerEvent::Sampled(sample),
+            Err(_) =&gt; {
+                eprintln!("worker {id}: probe '{probe_name}' panicked during sample()");
+                WorkerEvent::Panicked { probe_name }
+            }
+        };
+
+        if outcomes.send(outcome).is_err() {
+            break; // the collector has gone away; nothing left to report to
+        }
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>New line</th><th>Why it exists</th></tr></thead>
+        <tbody>
+          <tr><td><code>let job = { let rx = ...lock()...; rx.recv() };</code></td><td>The block expression ends before <code>probe.sample()</code> runs, so the <code>MutexGuard</code> is dropped immediately after <code>recv()</code> returns. No worker holds the queue lock while sampling.</td></tr>
+          <tr><td><code>Err(_) =&gt; break</code></td><td><code>recv()</code> returns <code>Err</code> only once every <code>SyncSender</code> clone has been dropped and the queue is empty. That is the pool's shutdown signal, not an error to report.</td></tr>
+          <tr><td><code>catch_unwind(AssertUnwindSafe(|| probe.sample()))</code></td><td>Converts a panic inside <code>sample()</code> into <code>Err</code> instead of unwinding the whole worker thread. <code>AssertUnwindSafe</code> is required because a <code>&amp;mut</code> borrow is not automatically considered safe to resume after a caught unwind; here it is safe because <code>probe</code> is discarded either way.</td></tr>
+          <tr><td><code>WorkerPool::shutdown(self)</code></td><td>Takes <code>self</code> by value, drops the sender first so workers can observe the closed channel, then joins every handle. The pool cannot be used again after this call, which the type system enforces by consuming it.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Stability and production boundary</strong>
+          <p><code>thread::scope</code>, <code>thread::spawn</code>, <code>mpsc::channel</code>, <code>mpsc::sync_channel</code>, and <code>catch_unwind</code> are all stable. One shared <code>Mutex</code>-guarded <code>Receiver</code> is a common, well-understood pattern, but every worker still contends on that single lock to fetch its next job; at very high job-submission rates a per-worker channel or a work-stealing scheduler can scale better. <code>catch_unwind</code> also only stops unwinding panics from crossing a thread boundary — it does not recover from a process abort, and code compiled with <code>panic = "abort"</code> cannot unwind at all.</p>
+        </div>
+      </div>
+
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/lib.rs</code> — replace with the full file below (adds <code>worker_pool</code> to Lesson 8's file).</p>
+      <pre class="large-code"><code>// crates/pulsewatch-core/src/lib.rs
+mod probe;
+mod alert_group;
+mod hit_counter;
+mod label;
+mod unsafe_probe;
+mod worker_pool;
+
+pub use probe::{FixedProbe, Millis, Probe, Sample};
+pub use alert_group::AlertGroup;
+pub use hit_counter::HitCounter;
+pub use label::normalize_label;
+pub use unsafe_probe::{copy_probe_bytes, BufferError};
+pub use worker_pool::{BoxedProbe, WorkerEvent, WorkerPool};</code></pre>
+
+      <h2>Active exercise</h2>
+      <ol>
+        <li>Create <code>crates/pulsewatch-core/src/worker_pool.rs</code> with the Part 4 listing.</li>
+        <li>Replace <code>crates/pulsewatch-core/src/lib.rs</code> with the listing directly above this exercise.</li>
+        <li>Append this test module to <code>crates/pulsewatch-core/src/worker_pool.rs</code>:
+          <pre class="large-code"><code>#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{FixedProbe, Millis};
+
+    struct PanicProbe;
+
+    impl Probe for PanicProbe {
+        type Output = Sample;
+
+        fn name(&amp;self) -&gt; &amp;str {
+            "panic-probe"
+        }
+
+        fn sample(&amp;mut self) -&gt; Sample {
+            panic!("simulated probe failure")
+        }
+    }
+
+    #[test]
+    fn pool_reports_panicked_probes_without_losing_the_others() {
+        let (outcome_tx, outcome_rx) = mpsc::channel();
+        let pool = WorkerPool::new(2, outcome_tx);
+
+        pool.submit(Box::new(FixedProbe::new("cpu", Millis::new(1))));
+        pool.submit(Box::new(FixedProbe::new("disk", Millis::new(2))));
+        pool.submit(Box::new(FixedProbe::new("net", Millis::new(3))));
+        pool.submit(Box::new(PanicProbe));
+
+        pool.shutdown();
+
+        let mut sampled = 0;
+        let mut panicked = 0;
+        for event in outcome_rx.try_iter() {
+            match event {
+                WorkerEvent::Sampled(_) =&gt; sampled += 1,
+                WorkerEvent::Panicked { .. } =&gt; panicked += 1,
+            }
+        }
+
+        assert_eq!(sampled, 3);
+        assert_eq!(panicked, 1);
+    }
+}</code></pre>
+        </li>
+        <li>From <code>pulsewatch/</code> (the workspace root), run <code>cargo test -p pulsewatch-core</code>. Expected output: the library unit tests pass with <code>test result: ok. 6 passed</code> (Lesson 8's five tests plus <code>pool_reports_panicked_probes_without_losing_the_others</code>), the terminal shows one <code>eprintln!</code> line naming the panicking probe (for example <code>worker 0: probe 'panic-probe' panicked during sample()</code>), and the <code>public_api</code> integration test still passes with <code>test result: ok. 1 passed</code>.</li>
+      </ol>
+      <p><strong>Expected evidence:</strong> <code>cargo test -p pulsewatch-core</code> passes as described in step 4; the panicking probe produces exactly one <code>WorkerEvent::Panicked</code> outcome and the named <code>eprintln!</code> line, while the other three probes still complete normally as <code>WorkerEvent::Sampled</code> outcomes, and <code>shutdown()</code> returns without the test process aborting.</p>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=06WcsNPUNC8">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">10:40 · INTERMEDIATE</span><h3>Concurrency in Rust - Creating Threads</h3><p>Let's Get Rusty. Introduces thread::spawn, move closures, and JoinHandle.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=b4mS5UPHh20">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">1:43:11 · ADVANCED</span><h3>Crust of Rust: Channels</h3><p>Jon Gjengset. A live-coded deep dive into building and reasoning about channel semantics.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the threads video, read <a href="https://doc.rust-lang.org/book/ch16-01-threads.html">Using Threads to Run Code Simultaneously</a> and re-read the scoped-versus-spawned table in Part 1.</li>
+        <li>Instead of the channels video, read <a href="https://doc.rust-lang.org/book/ch21-02-multithreaded.html">From Single-Threaded to Multithreaded Server</a>, which builds the same <code>Arc&lt;Mutex&lt;Receiver&gt;&gt;</code> pattern used in Part 4.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why must <code>WorkerPool::new</code> use <code>thread::spawn</code> rather than <code>thread::scope</code>?</summary><p><strong>Answer:</strong> The pool is meant to outlive the function that creates it. <code>thread::scope</code> requires every spawned worker to be joined before the scope ends, which would defeat a long-lived pool; <code>thread::spawn</code> instead requires <code>'static</code>, owned captures.</p></details>
+      <details class="quiz"><summary>2. What does choosing <code>mpsc::sync_channel(n)</code> over <code>mpsc::channel()</code> change about <code>submit</code>?</summary><p><strong>Answer:</strong> Once <code>n</code> jobs are queued, <code>submit</code>'s <code>send</code> call blocks until a worker consumes one, applying backpressure. With an unbounded channel, <code>submit</code> never blocks and a fast producer can queue unbounded memory.</p></details>
+      <details class="quiz"><summary>3. Why is the <code>MutexGuard</code> from <code>job_rx.lock()</code> dropped before <code>probe.sample()</code> runs?</summary><p><strong>Answer:</strong> The guard is scoped to a block expression that ends right after <code>recv()</code>. Holding the queue lock during the probe's work would force every other worker to wait for one probe to finish, serializing the entire pool.</p></details>
+      <details class="quiz"><summary>4. What does <code>Err(_) =&gt; break</code> in <code>worker_loop</code> actually detect?</summary><p><strong>Answer:</strong> That every <code>SyncSender</code> clone for the job channel has been dropped and no more jobs remain, which is exactly the signal <code>WorkerPool::shutdown</code> produces by dropping <code>job_tx</code> before joining the workers.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Workers finish before this function returns? thread::scope; may borrow local data
+Workers outlive this function?               thread::spawn; captures must be 'static + Send
+Producer must never block?                   mpsc::channel() (unbounded)
+Producer should be slowed by a slow consumer? mpsc::sync_channel(n) (bounded backpressure)
+Sharing one Receiver across workers?          Arc&lt;Mutex&lt;Receiver&lt;T&gt;&gt;&gt;; lock only around recv()
+A job might panic?                            catch_unwind + AssertUnwindSafe; report, don't crash
+Pool should stop accepting and drain cleanly? Drop the sender, then join every handle</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/book/ch16-01-threads.html">Using Threads to Run Code Simultaneously</a>, <em>The Rust Programming Language</em>, Rust Project. thread::spawn, move closures, and JoinHandle. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch16-02-message-passing.html">Using Message Passing to Transfer Data Between Threads</a>, <em>The Rust Programming Language</em>, Rust Project. mpsc channels and the share-by-communicating principle. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch21-02-multithreaded.html">From Single-Threaded to Multithreaded Server</a>, <em>The Rust Programming Language</em>, Rust Project. The Arc&lt;Mutex&lt;Receiver&gt;&gt; worker-pool idiom. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/thread/fn.scope.html">thread::scope</a>, Rust standard library documentation, Rust Project. Guaranteed-join scoped threads. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/thread/struct.JoinHandle.html">JoinHandle</a>, Rust standard library documentation, Rust Project. Joining a spawned thread and observing panics. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/sync/mpsc/fn.sync_channel.html">sync_channel</a>, Rust standard library documentation, Rust Project. Bounded channels and blocking backpressure. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/panic/fn.catch_unwind.html">catch_unwind</a>, Rust standard library documentation, Rust Project. Converting a panic into a Result at a boundary. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=06WcsNPUNC8">Concurrency in Rust - Creating Threads</a>, Let's Get Rusty, 10:40. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=b4mS5UPHh20">Crust of Rust: Channels</a>, Jon Gjengset, 1:43:11. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="08-smart-pointers-interior-mutability-unsafe.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 8: Pointers, Mutability &amp; Unsafe</span></a>
+        <a href="10-locks-atomics-deadlocks-data-parallelism.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 10: Locks, Atomics &amp; Parallelism</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

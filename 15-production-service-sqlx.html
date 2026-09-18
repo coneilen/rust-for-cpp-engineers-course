@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Production Service with SQLx — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html" class="active"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 15 · 30 minutes</span>
+      <h1>Production Service with SQLx</h1>
+      <p class="lesson-subtitle">Migrate Pulsewatch's persistence from a blocking driver to an async SQLx pool with compile-time checked queries, migrations, transactions, bounded concurrency, environment configuration, and graceful shutdown.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> you can open an async SQLx pool, explain what compile-time checked queries require at build time (and the offline-metadata caveat), run embedded migrations, wrap related writes in a transaction, bound concurrent database access, load configuration from the environment, and shut the service down gracefully.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td>Why migrate from blocking <code>rusqlite</code> to an async SQLx pool</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Compile-time checked queries, migrations, and the offline metadata caveat</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Wrap multi-step writes in a transaction</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Bound concurrent database access and load configuration from the environment</td></tr>
+          <tr data-minutes="7"><td>7 min</td><td>Exercise: add a migration, a checked query, a rollback test, and graceful shutdown</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Follow-along setup</h2>
+      <p>This lesson starts from the Pulsewatch workspace exactly as Lessons 7–14 left it: <code>crates/pulsewatch-core</code> (the <code>ProbeOutcome</code> type) and <code>crates/pulsewatch-cli</code>, which by the end of Lesson 14 contains <code>store.rs</code> (the <code>rusqlite</code>-backed <code>targets</code>/<code>probe_results</code> store from Lesson 14), <code>http_probe.rs</code> (the Axum router, <code>AppState { http_client }</code>, and graceful-shutdown logic from Lesson 13), and a thin binary entry point at <code>crates/pulsewatch-cli/src/bin/pulsewatch-service.rs</code> that Lesson 13 ran with <code>cargo run --bin pulsewatch-service</code>. There is no separate <code>crates/pulsewatch-service</code> package yet &mdash; <code>pulsewatch-service</code> so far is only a <em>binary name</em> inside <code>pulsewatch-cli</code>. Before Part 1, this setup promotes that binary into its own package, because the SQLx pool, migrations, and configuration this lesson adds belong to a standalone network service, not bundled into the same package as the CLI probing tool and its <code>rusqlite</code> store.</p>
+      <pre class="large-code"><code>cd path/to/pulsewatch</code></pre>
+      <p><code>path/to</code> is a placeholder: replace the whole segment with wherever you checked out the Pulsewatch workspace on your own machine, for example <code>cd ~/dev/pulsewatch</code> or <code>cd C:\src\pulsewatch</code>. Unless a step below says otherwise, run every <code>cargo</code>, <code>sqlx</code>, and shell command from this workspace root, the same directory that contains the top-level <code>Cargo.toml</code> from Lesson 7 — not from inside a <code>crates/*</code> subdirectory.</p>
+
+      <h3>Migrating the service into its own package</h3>
+      <p>Work through these steps in order, from the workspace root, before continuing to Part 1:</p>
+      <ol class="numbered-steps">
+        <li>Run <code>cargo new --bin crates/pulsewatch-service</code>. <strong>Expected evidence:</strong> Cargo prints <code>Created binary (application) package</code> and the new directory contains <code>crates/pulsewatch-service/Cargo.toml</code> and <code>crates/pulsewatch-service/src/main.rs</code> (the latter holding Cargo's default <code>fn main() { println!("Hello, world!"); }</code>, which the next step replaces).</li>
+        <li>In <code>Cargo.toml</code> (workspace root — replace the existing <code>members</code> line from Lesson 7), add the new package to the workspace, since Lesson 7 listed members explicitly rather than with a glob:
+          <pre class="large-code"><code>members = ["crates/pulsewatch-core", "crates/pulsewatch-cli", "crates/pulsewatch-service"]</code></pre>
+        </li>
+        <li>Run <code>cargo metadata --no-deps --format-version 1</code>. <strong>Expected evidence:</strong> the command succeeds (exit status 0) and its JSON output's <code>workspace_members</code> array now includes an entry for <code>pulsewatch-service</code>, confirming the workspace recognizes the new package before any code is moved into it.</li>
+        <li>In <code>crates/pulsewatch-service/Cargo.toml</code> (append to the <code>[dependencies]</code> table Cargo generated in step 1), add the dependencies <code>http_probe.rs</code> and its binary need &mdash; the same crates Lesson 13 added to <code>pulsewatch-cli/Cargo.toml</code>, now declared directly on the new package instead:
+          <pre class="large-code"><code>pulsewatch-core = { path = "../pulsewatch-core" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "sync", "signal"] }
+axum = "0.8"
+reqwest = "0.13"
+tower = "0.5"
+tower-http = { version = "0.7", features = ["limit", "timeout"] }
+serde = { version = "1", features = ["derive"] }
+anyhow = "1"</code></pre>
+          <p><code>serde</code> is new here: Lesson 13 only added it to <code>pulsewatch-core</code>, but this lesson's <code>StoredResult</code> and <code>HistoryQuery</code> types (Part 2) derive <code>serde::Serialize</code>/<code>Deserialize</code> directly inside the new package, so it needs its own <code>serde</code> dependency. <code>anyhow</code> is also new: <code>AppConfig::from_env</code> (Part 3) returns <code>anyhow::Result&lt;Self&gt;</code> and calls <code>.context(...)</code> on it, and <code>main</code> itself returns <code>anyhow::Result&lt;()&gt;</code> so every fallible startup step can use <code>?</code> without a manual match.</p>
+        </li>
+        <li>In <code>crates/pulsewatch-service/src/main.rs</code> (replace the generated <code>fn main() { println!("Hello, world!"); }</code> entirely), paste in Lesson 13's complete <code>http_probe.rs</code> contents (the <code>build_http_client</code>, <code>probe_http</code>, <code>AppState</code>, <code>health</code>, <code>check_target</code>, <code>build_router</code>, <code>build_router_with_middleware</code>, <code>serve</code>, and <code>shutdown_signal</code> functions, plus its <code>#[cfg(test)] mod tests { healthz_returns_ok }</code> block from Lesson 13's exercise), followed by Lesson 13's <code>crates/pulsewatch-cli/src/bin/pulsewatch-service.rs</code> contents adapted into this same file's <code>#[tokio::main] async fn main()</code>. Two changes from the Lesson 13 originals: drop the now-unneeded <code>pulsewatch_cli::http_probe::</code> path prefix from every call inside that generated <code>main</code> (everything it calls is now defined earlier in this same file), and change <code>pub async fn probe_http(...)</code>'s reference to <code>pulsewatch_core::ProbeOutcome</code> to stay exactly as it was &mdash; that path does not change, since <code>pulsewatch-core</code> is unaffected by this move.</li>
+        <li>Run <code>cargo build -p pulsewatch-service</code>. <strong>Expected evidence:</strong> the build succeeds with no errors; if it reports an unresolved <code>pulsewatch_cli::http_probe</code> path, an old cross-crate prefix from step 5 was not removed.</li>
+        <li>Run <code>cargo test -p pulsewatch-service healthz_returns_ok</code>. <strong>Expected evidence:</strong> output includes <code>test tests::healthz_returns_ok ... ok</code>, matching Lesson 13's original result for the same test, now compiled into the new package instead of <code>pulsewatch-cli</code>.</li>
+        <li>In one terminal, from the workspace root, run <code>cargo run -p pulsewatch-service -- --addr 127.0.0.1:8080</code>; in a second terminal, from anywhere, run <code>curl http://127.0.0.1:8080/healthz</code>. <strong>Expected evidence:</strong> the second terminal prints <code>ok</code>, matching Lesson 13's original behavior from the new package. Stop the server with Ctrl+C in the first terminal before continuing.</li>
+        <li>Only once steps 6 through 8 all succeed, delete the now-duplicated files from <code>pulsewatch-cli</code>: run <code>rm crates/pulsewatch-cli/src/bin/pulsewatch-service.rs crates/pulsewatch-cli/src/http_probe.rs</code>. In <code>crates/pulsewatch-cli/src/lib.rs</code> (remove the line <code>pub mod http_probe;</code> that Lesson 13 added), delete that one line, leaving <code>pub mod tcp_probe;</code>, <code>pub mod async_probe;</code>, and <code>pub mod store;</code> in place. In <code>crates/pulsewatch-cli/Cargo.toml</code>, the <code>axum</code>, <code>tower</code>, and <code>tower-http</code> lines Lesson 13 added may be removed as well since nothing left in <code>pulsewatch-cli</code> uses them; leave <code>reqwest</code> and <code>tokio</code> if any other module in the package still depends on them.</li>
+        <li>Run <code>cargo build --workspace</code>. <strong>Expected evidence:</strong> the whole workspace still builds with <code>pulsewatch-service</code> as its own package and <code>pulsewatch-cli</code> no longer referencing <code>http_probe</code>; if <code>pulsewatch-cli</code> fails to build, a leftover reference to the deleted module remains in <code>lib.rs</code> or one of its other files.</li>
+      </ol>
+      <p>After this migration, <code>pulsewatch-cli</code> goes back to being exactly what Lessons 11, 12, and 14 built: a CLI-focused package holding <code>tcp_probe.rs</code>, <code>async_probe.rs</code>, and the <code>rusqlite</code>-backed <code>store.rs</code>, with its own default <code>src/main.rs</code> binary. It no longer contains the HTTP service or the service's binary. Every code block for the rest of this lesson targets the new <code>crates/pulsewatch-service</code> package.</p>
+
+      <h2>Part 1: why an async pool replaces a blocking connection</h2>
+      <p>Lesson 14 gave <code>pulsewatch-cli</code> a local store for <code>targets</code> and <code>probe_results</code> through <code>rusqlite</code>, a synchronous driver: every worker opened its own <code>Connection</code>, and any query that needed to run alongside async code elsewhere in Pulsewatch had to hop onto a blocking thread with <code>tokio::task::spawn_blocking</code> to avoid stalling a runtime. This lesson keeps that exact schema and the same <code>targets</code>/<code>probe_results</code> history, but moves the store itself to <strong>SQLx</strong>, an async, compile-time-checked SQL toolkit, and adds it to <code>pulsewatch-service</code>, the package this lesson's Follow-along setup just created by migrating Lesson 13's router and binary out of <code>pulsewatch-cli</code>, so its Axum routes can serve target history over HTTP.</p>
+      <p>SQLite has no asynchronous I/O of its own &mdash; every read or write is still a blocking call into the SQLite C library. SQLx's SQLite driver does not avoid that; instead, each <code>SqliteConnection</code> it opens runs on its own dedicated background thread, and your <code>async</code> code communicates with that thread over a channel, awaiting the reply instead of blocking the calling task. That removes the need to call <code>spawn_blocking</code> by hand at every query site, but it is not "non-blocking SQLite I/O": the blocking work still happens, just confined to a worker thread SQLx manages for you.</p>
+      <p>SQLx's other defining feature is compile-time checked queries. Macros such as <code>sqlx::query!</code> and <code>sqlx::query_as!</code> send your SQL text to a real database (or a cached schema snapshot) while the crate compiles, and fail the build if a column name, type, or argument count does not match the schema.</p>
+      <div class="code-label">crates/pulsewatch-service/Cargo.toml — append to the existing [dependencies] table</div>
+      <pre class="large-code"><code>sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "macros", "migrate"] }</code></pre>
+      <div class="code-label">crates/pulsewatch-service/src/db.rs — create</div>
+      <pre class="large-code"><code>use sqlx::sqlite::SqlitePoolOptions;
+use sqlx::SqlitePool;
+use std::time::Duration;
+
+pub async fn connect(database_url: &amp;str) -&gt; Result&lt;SqlitePool, sqlx::Error&gt; {
+    let pool = SqlitePoolOptions::new()
+        .max_connections(5)
+        .acquire_timeout(Duration::from_secs(5))
+        .connect(database_url)
+        .await?;
+    sqlx::migrate!("./migrations").run(&amp;pool).await?;
+    Ok(pool)
+}</code></pre>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — append (one line, near the top of the file, above every function that calls db::connect or db::recent_results)</div>
+      <pre class="large-code"><code>mod db;</code></pre>
+      <p>This one line is what makes <code>db.rs</code> part of the binary at all: without it, <code>db::connect</code> and <code>db::recent_results</code> later in this lesson would not resolve, because a file sitting next to <code>main.rs</code> is not automatically compiled in &mdash; it has to be declared as a module.</p>
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong>The offline-metadata caveat</strong>
+          <p><code>query!</code> and <code>query_as!</code> need either a reachable database at <code>DATABASE_URL</code> during <code>cargo build</code>, or a checked-in <code>.sqlx</code> metadata cache produced by <code>cargo sqlx prepare</code> and consumed when <code>SQLX_OFFLINE=true</code>. A CI job that has neither will fail to build; a stale <code>.sqlx</code> cache that nobody regenerated after a migration can pass a build against a schema the database no longer has. Treat <code>.sqlx</code> as generated, reviewed output, not a file you hand-edit.</p>
+        </div>
+      </div>
+      <p>Keep two differently-scoped environment variables straight here. <code>DATABASE_URL</code> above is read only by the <code>sqlx::query!</code>/<code>query_as!</code> macros and by <code>cargo sqlx prepare</code>, at <code>cargo build</code> time, purely to check queries against a schema; it does not need to point at the database the compiled binary will actually use, and in CI it is often a disposable, empty database used for nothing but compile-time checking. The service's own runtime configuration, read once at startup, is a separate variable, <code>PULSEWATCH_DATABASE_URL</code>, introduced in Part 3. In development the two commonly point at the same file; conflating them in CI or production is a common source of "it built fine but connected to the wrong database" surprises.</p>
+
+      <h2>Part 2: a schema-preserving migration, and transactions</h2>
+      <p>A migration is a versioned, forward-moving SQL file; SQLx embeds them in the binary and applies any that have not yet run. Migration 0001 recreates exactly the <code>targets</code> and <code>probe_results</code> tables Lesson 14 created by hand through <code>PRAGMA user_version = 1</code>, so a database file that already has them, and every row of target and probe history in them, is left untouched. Create the migrations directory first, from the workspace root:</p>
+      <pre class="large-code"><code>mkdir -p crates/pulsewatch-service/migrations</code></pre>
+      <div class="code-label">crates/pulsewatch-service/migrations/0001_targets_probe_results.sql — create</div>
+      <pre class="large-code"><code>-- migrations/0001_targets_probe_results.sql
+CREATE TABLE IF NOT EXISTS targets (
+    id   INTEGER PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    host TEXT NOT NULL,
+    port INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS probe_results (
+    id          INTEGER PRIMARY KEY,
+    target_id   INTEGER NOT NULL REFERENCES targets(id),
+    success     INTEGER NOT NULL,
+    latency_ms  INTEGER NOT NULL,
+    message     TEXT,
+    checked_at  TEXT NOT NULL
+);</code></pre>
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Converting an existing database to SQLx's migration tracking</strong>
+          <p>A <code>pulsewatch.db</code> file Lesson 14 already migrated has these exact tables, but SQLx does not know that: it tracks progress in its own <code>_sqlx_migrations</code> table, entirely separate from SQLite's <code>PRAGMA user_version</code>. <code>IF NOT EXISTS</code> is what makes this safe &mdash; the statements become no-ops against an already-populated file, so <code>sqlx::migrate!</code> can run against it for the first time without touching a single existing row, and only then does it record migration 0001 as applied. A migration that needed to reshape existing data, rather than merely assert the same shape already exists, would instead need an explicit <code>ALTER TABLE</code> and backfill step written into that same migration file, run once and never edited after it has shipped.</p>
+        </div>
+      </div>
+      <p>A batch of related writes should either all land or none do. <code>pool.begin()</code> returns a <code>Transaction</code> that rolls back automatically if it is dropped without an explicit commit:</p>
+      <div class="code-label">crates/pulsewatch-service/src/db.rs — append (continues after the connect function above)</div>
+      <pre class="large-code"><code>#[derive(Debug, serde::Serialize, sqlx::FromRow)]
+pub struct StoredResult {
+    pub success: bool,
+    pub latency_ms: i64,
+    pub message: Option&lt;String&gt;,
+    pub checked_at: String,
+}
+
+pub async fn record_batch(
+    pool: &amp;SqlitePool,
+    target_id: i64,
+    outcomes: &amp;[pulsewatch_core::ProbeOutcome],
+) -&gt; Result&lt;(), sqlx::Error&gt; {
+    let mut tx = pool.begin().await?;
+    for outcome in outcomes {
+        let latency_ms = outcome.latency_ms as i64;
+        sqlx::query!(
+            "INSERT INTO probe_results (target_id, success, latency_ms, message, checked_at)
+             VALUES (?, ?, ?, ?, datetime('now'))",
+            target_id,
+            outcome.success,
+            latency_ms,
+            outcome.message,
+        )
+        .execute(&amp;mut *tx)
+        .await?;
+    }
+    tx.commit().await?;
+    Ok(())
+}
+
+pub async fn recent_results(
+    pool: &amp;SqlitePool,
+    target_name: &amp;str,
+    limit: i64,
+) -&gt; Result&lt;Vec&lt;StoredResult&gt;, sqlx::Error&gt; {
+    sqlx::query_as!(
+        StoredResult,
+        r#"SELECT r.success as "success: bool", r.latency_ms, r.message, r.checked_at
+           FROM probe_results r
+           JOIN targets t ON t.id = r.target_id
+           WHERE t.name = ?
+           ORDER BY r.checked_at DESC
+           LIMIT ?"#,
+        target_name,
+        limit
+    )
+    .fetch_all(pool)
+    .await
+}</code></pre>
+      <p>If any insert in the loop fails, <code>?</code> returns early, <code>tx</code> is dropped without a commit, and SQLite rolls the whole batch back. No target's history is left half-recorded. <code>recent_results</code> reuses Lesson 14's own query almost verbatim, joined against <code>targets</code> by name; the one addition, <code>as "success: bool"</code>, overrides SQLx's compile-time type inference for a column declared <code>INTEGER</code> so it decodes as <code>bool</code> without changing the schema on disk.</p>
+
+      <h2>Part 3: bounded concurrency, configuration, and shutdown</h2>
+      <p>An async pool lets many requests reach the database concurrently, but a single SQLite file still serializes writes and has a connection ceiling. A <code>Semaphore</code> caps how many requests may be mid-query at once, independent of how many HTTP requests Tokio is otherwise juggling. <code>AppState</code> keeps Lesson 13's <code>http_client</code> field and adds the pool and semaphore alongside it:</p>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — replace the existing struct AppState block from Lesson 13</div>
+      <pre class="large-code"><code>#[derive(Clone)]
+pub struct AppState {
+    pub http_client: reqwest::Client,
+    pub pool: SqlitePool,
+    pub db_reads: Arc&lt;Semaphore&gt;,
+}</code></pre>
+      <p>Lesson 13's <code>healthz_returns_ok</code> test, moved into this file by the Follow-along setup, builds an <code>AppState</code> with only <code>http_client</code>; it will not compile against the three-field struct above until it is updated to construct all three:</p>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — replace the existing <code>#[tokio::test] async fn healthz_returns_ok</code> body inside <code>mod tests</code> (moved from Lesson 13)</div>
+      <pre class="large-code"><code>#[tokio::test]
+async fn healthz_returns_ok() {
+    let pool = db::connect("sqlite::memory:").await.expect("connect");
+    let state = Arc::new(AppState {
+        http_client: build_http_client().unwrap(),
+        pool,
+        db_reads: Arc::new(Semaphore::new(4)),
+    });
+    let router = build_router(state);
+
+    let response = router
+        .oneshot(Request::builder().uri("/healthz").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+}</code></pre>
+      <p><code>"sqlite::memory:"</code> gives the test its own private, in-memory database, so <code>db::connect</code>'s embedded migration runs against a fresh schema every time and no test shares state with another or with a real <code>pulsewatch.db</code> file on disk.</p>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — append (place above target_history so the type is in scope)</div>
+      <pre class="large-code"><code>#[derive(Debug)]
+enum AppError {
+    ShuttingDown,
+    Database(sqlx::Error),
+}
+
+impl From&lt;sqlx::Error&gt; for AppError {
+    fn from(err: sqlx::Error) -&gt; Self {
+        AppError::Database(err)
+    }
+}
+
+impl axum::response::IntoResponse for AppError {
+    fn into_response(self) -&gt; axum::response::Response {
+        let status = match &amp;self {
+            AppError::ShuttingDown =&gt; axum::http::StatusCode::SERVICE_UNAVAILABLE,
+            AppError::Database(_) =&gt; axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+        };
+        let message = match self {
+            AppError::ShuttingDown =&gt; "server is shutting down".to_string(),
+            AppError::Database(err) =&gt; err.to_string(),
+        };
+        (status, message).into_response()
+    }
+}</code></pre>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — append, near the existing health and check_target handlers</div>
+      <pre class="large-code"><code>#[derive(serde::Deserialize)]
+struct HistoryQuery {
+    target: String,
+    limit: Option&lt;i64&gt;,
+}
+
+async fn target_history(
+    State(state): State&lt;Arc&lt;AppState&gt;&gt;,
+    Query(params): Query&lt;HistoryQuery&gt;,
+) -&gt; Result&lt;Json&lt;Vec&lt;StoredResult&gt;&gt;, AppError&gt; {
+    let _permit = state.db_reads.acquire().await.map_err(|_| AppError::ShuttingDown)?;
+    let rows = db::recent_results(&amp;state.pool, &amp;params.target, params.limit.unwrap_or(20)).await?;
+    Ok(Json(rows))
+}</code></pre>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — replace the existing build_router function from Lesson 13</div>
+      <pre class="large-code"><code>pub fn build_router(state: Arc&lt;AppState&gt;) -&gt; Router {
+    Router::new()
+        .route("/healthz", get(health))
+        .route("/check/{*url}", get(check_target))
+        .route("/targets/history", get(target_history))
+        .with_state(state)
+}</code></pre>
+      <p>Configuration and secrets come from the environment, never from source &mdash; but keep the two <code>DATABASE_URL</code>-shaped variables from Part 1 separate in your head. <code>DATABASE_URL</code> is a build-time-only concern for the <code>sqlx</code> macros; <code>PULSEWATCH_DATABASE_URL</code> below is this service's own runtime configuration, read once at startup and used to decide which database file the running process actually opens. This replaces Lesson 13's <code>--addr</code> CLI flag with an environment variable read at the same startup point, so the bind address and the database URL are configured the same way:</p>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — create (new AppConfig, loaded at the top of main before build_router is called)</div>
+      <pre class="large-code"><code>struct AppConfig {
+    database_url: String,
+    bind_addr: SocketAddr,
+    max_db_reads: usize,
+}
+
+impl AppConfig {
+    fn from_env() -&gt; anyhow::Result&lt;Self&gt; {
+        Ok(Self {
+            database_url: std::env::var("PULSEWATCH_DATABASE_URL")
+                .context("PULSEWATCH_DATABASE_URL must be set")?,
+            bind_addr: std::env::var("PULSEWATCH_BIND_ADDR")
+                .unwrap_or_else(|_| "127.0.0.1:8080".to_string())
+                .parse()
+                .context("PULSEWATCH_BIND_ADDR must be host:port")?,
+            max_db_reads: 16,
+        })
+    }
+}</code></pre>
+      <p>Lesson 13 already stops <code>pulsewatch-service</code> gracefully: <code>serve</code> calls <code>axum::serve(listener, router).with_graceful_shutdown(shutdown_signal())</code>, which stops accepting new connections on Ctrl+C but lets any in-flight request finish first. No new shutdown code is needed here &mdash; <code>target_history</code> is an ordinary handler, so a request already in that handler when Ctrl+C is pressed keeps its <code>Semaphore</code> permit and finishes its query before the process exits, the same as any other in-flight request.</p>
+
+      <p>The <code>#[tokio::main] async fn main()</code> moved in from Lesson 13's binary parsed <code>--addr</code> from <code>std::env::args()</code> and built an <code>AppState</code> with only an HTTP client. Replace it so it loads <code>AppConfig</code>, opens the pool through <code>db::connect</code>, and builds the three-field <code>AppState</code> defined earlier in this same file before serving:</p>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — replace the existing #[tokio::main] async fn main() moved from Lesson 13</div>
+      <pre class="large-code"><code>#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let config = AppConfig::from_env()?;
+    let pool = db::connect(&amp;config.database_url).await?;
+    let state = Arc::new(AppState {
+        http_client: build_http_client()?,
+        pool,
+        db_reads: Arc::new(Semaphore::new(config.max_db_reads)),
+    });
+    let router = build_router_with_middleware(state);
+    serve(router, config.bind_addr).await?;
+    Ok(())
+}</code></pre>
+      <p><code>AppConfig::from_env()?</code> replaces the old <code>--addr</code> parsing entirely: any missing or malformed environment variable now fails startup immediately with a message from <code>.context(...)</code>, before a socket is ever bound. <code>build_http_client()?</code>, <code>db::connect(...).await?</code>, and <code>serve(...).await?</code> each propagate their own error type through <code>anyhow</code>'s blanket conversion, so <code>main</code> needs no manual <code>match</code> on three different error enums.</p>
+
+      <h3>The complete, assembled service</h3>
+      <p>Every block above is a targeted replace or append against Lesson 13's migrated file; nothing so far has shown the whole file at once. This is the complete, final content of <code>crates/pulsewatch-service/src/main.rs</code> after every edit in Parts 1 through 3 has been applied in order &mdash; it supersedes every fragment shown above and is what should be on disk before you run the exercise below. <code>db.rs</code> (Parts 1 and 2) stays a separate file, brought in by the <code>mod db;</code> line at the top:</p>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — complete file (replaces every earlier fragment in this lesson; final state after Parts 1–3)</div>
+      <pre class="large-code"><code>mod db;
+
+use anyhow::Context;
+use axum::{extract::{Query, State}, routing::get, Json, Router};
+use sqlx::SqlitePool;
+use std::net::SocketAddr;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::Semaphore;
+use tower_http::limit::RequestBodyLimitLayer;
+use tower_http::timeout::TimeoutLayer;
+use db::StoredResult;
+
+pub fn build_http_client() -&gt; reqwest::Result&lt;reqwest::Client&gt; {
+    reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(3))
+        .timeout(Duration::from_secs(5))
+        .pool_max_idle_per_host(8)
+        .build()
+}
+
+pub async fn probe_http(
+    client: &amp;reqwest::Client,
+    url: &amp;str,
+) -&gt; Result&lt;pulsewatch_core::ProbeOutcome, reqwest::Error&gt; {
+    const MAX_BODY_BYTES: usize = 64 * 1024;
+    let started = tokio::time::Instant::now();
+
+    let mut response = client.get(url).send().await?;
+    let status = response.status();
+
+    if let Some(len) = response.content_length() {
+        if len as usize &gt; MAX_BODY_BYTES {
+            return Ok(pulsewatch_core::ProbeOutcome {
+                target: url.to_string(),
+                success: false,
+                latency_ms: started.elapsed().as_millis(),
+                message: format!("body too large: {len} declared bytes"),
+            });
+        }
+    }
+
+    let mut body = Vec::new();
+    while let Some(chunk) = response.chunk().await? {
+        if body.len() + chunk.len() &gt; MAX_BODY_BYTES {
+            return Ok(pulsewatch_core::ProbeOutcome {
+                target: url.to_string(),
+                success: false,
+                latency_ms: started.elapsed().as_millis(),
+                message: format!("body exceeded {MAX_BODY_BYTES} bytes while streaming"),
+            });
+        }
+        body.extend_from_slice(&amp;chunk);
+    }
+
+    let text = String::from_utf8_lossy(&amp;body);
+    Ok(pulsewatch_core::ProbeOutcome {
+        target: url.to_string(),
+        success: status.is_success(),
+        latency_ms: started.elapsed().as_millis(),
+        message: format!("{status}: {text}"),
+    })
+}
+
+#[derive(Clone)]
+pub struct AppState {
+    pub http_client: reqwest::Client,
+    pub pool: SqlitePool,
+    pub db_reads: Arc&lt;Semaphore&gt;,
+}
+
+#[derive(Debug)]
+enum AppError {
+    ShuttingDown,
+    Database(sqlx::Error),
+}
+
+impl From&lt;sqlx::Error&gt; for AppError {
+    fn from(err: sqlx::Error) -&gt; Self {
+        AppError::Database(err)
+    }
+}
+
+impl axum::response::IntoResponse for AppError {
+    fn into_response(self) -&gt; axum::response::Response {
+        let status = match &amp;self {
+            AppError::ShuttingDown =&gt; axum::http::StatusCode::SERVICE_UNAVAILABLE,
+            AppError::Database(_) =&gt; axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+        };
+        let message = match self {
+            AppError::ShuttingDown =&gt; "server is shutting down".to_string(),
+            AppError::Database(err) =&gt; err.to_string(),
+        };
+        (status, message).into_response()
+    }
+}
+
+async fn health() -&gt; &amp;'static str {
+    "ok"
+}
+
+async fn check_target(
+    State(state): State&lt;Arc&lt;AppState&gt;&gt;,
+    axum::extract::Path(url): axum::extract::Path&lt;String&gt;,
+) -&gt; Json&lt;pulsewatch_core::ProbeOutcomeDto&gt; {
+    let outcome = probe_http(&amp;state.http_client, &amp;url)
+        .await
+        .unwrap_or_else(|err| pulsewatch_core::ProbeOutcome {
+            target: url.clone(),
+            success: false,
+            latency_ms: 0,
+            message: err.to_string(),
+        });
+    Json(outcome.into())
+}
+
+#[derive(serde::Deserialize)]
+struct HistoryQuery {
+    target: String,
+    limit: Option&lt;i64&gt;,
+}
+
+async fn target_history(
+    State(state): State&lt;Arc&lt;AppState&gt;&gt;,
+    Query(params): Query&lt;HistoryQuery&gt;,
+) -&gt; Result&lt;Json&lt;Vec&lt;StoredResult&gt;&gt;, AppError&gt; {
+    let _permit = state.db_reads.acquire().await.map_err(|_| AppError::ShuttingDown)?;
+    let rows = db::recent_results(&amp;state.pool, &amp;params.target, params.limit.unwrap_or(20)).await?;
+    Ok(Json(rows))
+}
+
+pub fn build_router(state: Arc&lt;AppState&gt;) -&gt; Router {
+    Router::new()
+        .route("/healthz", get(health))
+        .route("/check/{*url}", get(check_target))
+        .route("/targets/history", get(target_history))
+        .with_state(state)
+}
+
+pub fn build_router_with_middleware(state: Arc&lt;AppState&gt;) -&gt; Router {
+    build_router(state)
+        .layer(RequestBodyLimitLayer::new(64 * 1024))
+        .layer(TimeoutLayer::new(Duration::from_secs(10)))
+}
+
+pub async fn serve(router: Router, addr: SocketAddr) -&gt; std::io::Result&lt;()&gt; {
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, router)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+}
+
+async fn shutdown_signal() {
+    tokio::signal::ctrl_c()
+        .await
+        .expect("failed to install Ctrl+C handler");
+}
+
+struct AppConfig {
+    database_url: String,
+    bind_addr: SocketAddr,
+    max_db_reads: usize,
+}
+
+impl AppConfig {
+    fn from_env() -&gt; anyhow::Result&lt;Self&gt; {
+        Ok(Self {
+            database_url: std::env::var("PULSEWATCH_DATABASE_URL")
+                .context("PULSEWATCH_DATABASE_URL must be set")?,
+            bind_addr: std::env::var("PULSEWATCH_BIND_ADDR")
+                .unwrap_or_else(|_| "127.0.0.1:8080".to_string())
+                .parse()
+                .context("PULSEWATCH_BIND_ADDR must be host:port")?,
+            max_db_reads: 16,
+        })
+    }
+}
+
+#[tokio::main]
+async fn main() -&gt; anyhow::Result&lt;()&gt; {
+    let config = AppConfig::from_env()?;
+    let pool = db::connect(&amp;config.database_url).await?;
+    let state = Arc::new(AppState {
+        http_client: build_http_client()?,
+        pool,
+        db_reads: Arc::new(Semaphore::new(config.max_db_reads)),
+    });
+    let router = build_router_with_middleware(state);
+    serve(router, config.bind_addr).await?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use tower::ServiceExt;
+
+    #[tokio::test]
+    async fn healthz_returns_ok() {
+        let pool = db::connect("sqlite::memory:").await.expect("connect");
+        let state = Arc::new(AppState {
+            http_client: build_http_client().unwrap(),
+            pool,
+            db_reads: Arc::new(Semaphore::new(4)),
+        });
+        let router = build_router(state);
+
+        let response = router
+            .oneshot(Request::builder().uri("/healthz").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+}</code></pre>
+      <p>Cross-check this against <code>db.rs</code>: <code>mod db;</code> at the top brings in <code>connect</code>, <code>StoredResult</code>, <code>record_batch</code>, and <code>recent_results</code> from Part 1 and Part 2, and the exercise below adds one more function, <code>count_failures</code>, to that same file without touching anything shown here.</p>
+
+      <h2>Read the Rust: syntax mapped to C++</h2>
+      <table class="comparison-table">
+        <thead><tr><th>Rust</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>SqlitePool::connect</code></td><td>Opens an async pool; each SQLite connection is driven by SQLx's own background worker thread, so callers await a channel reply instead of manually spawning blocking tasks.</td><td>Closer to an async connection-pool object backed by a worker-thread-per-connection model than a lock-free async socket driver.</td></tr>
+          <tr><td><code>sqlx::query!(...)</code></td><td>Checks SQL text, argument count, and column types against a schema at compile time.</td><td>No direct equivalent; closest is a build-time schema-validated prepared statement.</td></tr>
+          <tr><td><code>as "col: Type"</code></td><td>Overrides SQLx's inferred column type for compile-time checking, e.g. treating an <code>INTEGER</code> column as <code>bool</code>.</td><td>Similar to an explicit cast at the query boundary telling the checker the type you actually want, without changing the schema.</td></tr>
+          <tr><td><code>sqlx::migrate!("./migrations")</code></td><td>Embeds versioned SQL files in the binary and tracks which have run.</td><td>A small, built-in schema-versioning bootstrap step.</td></tr>
+          <tr><td><code>pool.begin().await?</code></td><td>Opens a scoped transaction; dropping without commit rolls back.</td><td>An RAII transaction guard, similar in spirit to a scope-guard-wrapped BEGIN/COMMIT.</td></tr>
+          <tr><td><code>Semaphore::new(n)</code></td><td>Bounds how many tasks may hold a permit concurrently.</td><td>Comparable to std::counting_semaphore, used here to cap concurrent DB access.</td></tr>
+          <tr><td><code>.with_graceful_shutdown(signal)</code></td><td>Stops accepting new connections once the future resolves, then waits for in-flight ones.</td><td>Similar to a manual drain loop wrapped around accept().</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Worked Pulsewatch increment</h2>
+      <p>Together these pieces replace Lesson 14's blocking store with an async one, while keeping the exact same <code>targets</code>/<code>probe_results</code> schema and history: <code>pulsewatch-service</code> now opens one <code>SqlitePool</code> at startup, runs the schema-preserving migration, serves target history through a semaphore-bounded handler alongside its existing Lesson 13 routes, writes probe result batches inside transactions, loads its configuration from <code>PULSEWATCH_DATABASE_URL</code> at runtime (kept separate from the build-time <code>DATABASE_URL</code> the query macros use), and keeps Lesson 13's graceful shutdown, which already drains this new handler along with every other in-flight request.</p>
+
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Stability and production boundary</strong>
+          <p>This lesson makes persistence async and adds compile-time checked queries, migrations, transactions, bounded concurrency, environment-based configuration, and graceful shutdown &mdash; it does not make the service production-ready by itself. There is still no connection-pool observability, no retry/backoff policy for transient database errors, no secrets manager (only environment variables), and no coordination across multiple replicas during shutdown. Each is a real, separate concern.</p>
+        </div>
+      </div>
+
+      <h2>Active exercise</h2>
+      <ol>
+        <li>From the workspace root, create <code>crates/pulsewatch-service/migrations/0002_probe_results_index.sql</code> (create) containing exactly <code>CREATE INDEX IF NOT EXISTS idx_probe_results_target_id ON probe_results(target_id);</code></li>
+        <li>Append a <code>count_failures</code> query to <code>crates/pulsewatch-service/src/db.rs</code> (append):
+          <pre class="large-code"><code>pub async fn count_failures(
+    pool: &amp;SqlitePool,
+    target_name: &amp;str,
+    since: &amp;str,
+) -&gt; Result&lt;i64, sqlx::Error&gt; {
+    sqlx::query_scalar!(
+        r#"SELECT COUNT(*) as "count: i64"
+           FROM probe_results r
+           JOIN targets t ON t.id = r.target_id
+           WHERE t.name = ? AND r.success = 0 AND r.checked_at &gt;= ?"#,
+        target_name,
+        since
+    )
+    .fetch_one(pool)
+    .await
+}</code></pre>
+        </li>
+        <li>From the workspace root, if you do not have a database reachable at build time, install the CLI and prepare offline metadata first: <code>cargo install sqlx-cli --no-default-features --features sqlite</code>, then <code>DATABASE_URL=sqlite://pulsewatch-dev.db cargo sqlx prepare -p pulsewatch-service</code>, and commit the resulting <code>crates/pulsewatch-service/.sqlx</code> directory. Otherwise set <code>DATABASE_URL</code> to a reachable file and skip straight to the next step.</li>
+        <li>From the workspace root, run <code>cargo build -p pulsewatch-service</code>. <strong>Expected evidence:</strong> the build succeeds, confirming <code>count_failures</code> type-checked against the schema from step 1.</li>
+        <li>Append a test module to the bottom of <code>crates/pulsewatch-service/src/db.rs</code> (append):
+          <pre class="large-code"><code>#[cfg(test)]
+mod tests {
+    use super::*;
+    use pulsewatch_core::ProbeOutcome;
+
+    #[tokio::test]
+    async fn batch_insert_with_unknown_target_rolls_back() {
+        let pool = connect("sqlite::memory:").await.expect("connect");
+        sqlx::query!(
+            "INSERT INTO targets (name, host, port) VALUES (?, ?, ?)",
+            "rollback-test",
+            "127.0.0.1",
+            9_i64
+        )
+        .execute(&amp;pool)
+        .await
+        .expect("insert target");
+
+        let outcomes = vec![ProbeOutcome {
+            target: "rollback-test".to_string(),
+            success: true,
+            latency_ms: 4,
+            message: String::new(),
+        }];
+
+        // 999_999 is not a row in targets, so SQLx's default foreign-key
+        // enforcement rejects this insert and the whole transaction rolls back.
+        let result = record_batch(&amp;pool, 999_999, &amp;outcomes).await;
+        assert!(result.is_err());
+
+        let rows = recent_results(&amp;pool, "rollback-test", 10).await.expect("query");
+        assert!(rows.is_empty(), "expected zero rows after rollback, found {}", rows.len());
+    }
+}</code></pre>
+        </li>
+        <li>From the workspace root, run <code>cargo test -p pulsewatch-service batch_insert_with_unknown_target_rolls_back</code>. <strong>Expected evidence:</strong> the test passes, proving a rejected insert leaves <code>probe_results</code> with zero new rows for that target rather than a partial write.</li>
+        <li>From the workspace root, run <code>PULSEWATCH_DATABASE_URL=sqlite://pulsewatch-dev.db PULSEWATCH_BIND_ADDR=127.0.0.1:8080 cargo run -p pulsewatch-service</code> in one terminal &mdash; <code>AppConfig::from_env</code> now reads these two runtime variables instead of Lesson 13's <code>--addr</code> flag, so the flag is gone and both variables are required. In a second terminal run <code>curl "http://127.0.0.1:8080/targets/history?target=rollback-test"</code> and immediately send <code>Ctrl+C</code> to the first terminal. <strong>Expected evidence:</strong> the <code>curl</code> response completes with a JSON array before the server process exits, and the server's terminal shows the process exit only after that response is sent.</li>
+      </ol>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=TCERYbgvbq0">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">9:46 · OPTIONAL</span><h3>SQLx is my favorite PostgreSQL driver to use with Rust.</h3><p>Dreams of Code. Covers SQLx's compile-time checked queries, migrations, and transactions end to end (Postgres-flavored; the same SQLx concepts apply to the SQLite pool used here).</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=bQWvoMwzQN4">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">7:36 · OPTIONAL</span><h3>Rust | sqlx | SQLite | Tutorial</h3><p>Mike Code. A short, SQLite-specific walkthrough of connecting SQLx and running queries against the same database engine Pulsewatch uses.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the SQLx overview video, read the <a href="https://docs.rs/sqlx/latest/sqlx/">sqlx crate documentation</a> and the <code>query!</code>/<code>migrate!</code> sections of Part 1 and Part 2 above.</li>
+        <li>Instead of the SQLite-specific tutorial, work through <code>crates/pulsewatch-service/src/db.rs</code>'s <code>connect</code>, <code>record_batch</code>, and <code>recent_results</code> functions line by line.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. What must be true at <code>cargo build</code> time for <code>sqlx::query!</code> to compile, and what happens in CI if neither option is available?</summary><p><strong>Answer:</strong> Either a live database reachable at <code>DATABASE_URL</code>, or a checked-in <code>.sqlx</code> offline metadata cache consumed with <code>SQLX_OFFLINE=true</code>. Without either, the build fails at the macro. This <code>DATABASE_URL</code> is a build-time-only concern, unrelated to the runtime <code>PULSEWATCH_DATABASE_URL</code> the running service reads at startup.</p></details>
+      <details class="quiz"><summary>2. Why wrap the batch insert in <code>pool.begin()</code> instead of issuing each insert directly against the pool?</summary><p><strong>Answer:</strong> A transaction makes the batch atomic: dropping it without <code>commit()</code> rolls back every insert in it, so a mid-batch failure never leaves a partial write.</p></details>
+      <details class="quiz"><summary>3. What does bounding reads with a <code>Semaphore</code> protect against that an unbounded fan-out of concurrent queries would not?</summary><p><strong>Answer:</strong> It caps how many requests can be mid-query against the single SQLite file at once, preventing connection-pool exhaustion and excessive write/read contention under bursty traffic.</p></details>
+      <details class="quiz"><summary>4. Why does <code>AppConfig::from_env</code> read <code>PULSEWATCH_DATABASE_URL</code> from the environment instead of hardcoding it?</summary><p><strong>Answer:</strong> Credentials and endpoints must not be compiled into the binary or committed to source. <code>PULSEWATCH_DATABASE_URL</code> is also a separate variable from the build-time <code>DATABASE_URL</code> the <code>sqlx</code> macros use, so the database a developer's machine builds against and the database the deployed service actually connects to can safely be two different things.</p></details>
+      <details class="quiz"><summary>5. Why does <code>recent_results</code> need <code>r.success as "success: bool"</code> instead of just declaring the <code>StoredResult.success</code> field as <code>bool</code>?</summary><p><strong>Answer:</strong> SQLx infers each selected column's Rust type from its declared SQL type; <code>probe_results.success</code> is declared <code>INTEGER</code>, not <code>BOOLEAN</code>, so without the override the macro would check the column as an integer type. The <code>as "success: bool"</code> annotation tells the compile-time checker to decode that column as <code>bool</code> without changing the on-disk schema.</p></details>
+      <details class="quiz"><summary>6. A <code>pulsewatch.db</code> file already migrated by Lesson 14's <code>rusqlite</code>-based <code>PRAGMA user_version = 1</code> step is opened by <code>sqlx::migrate!</code> for the first time. Why doesn't migration 0001 destroy its existing <code>targets</code> and <code>probe_results</code> rows?</summary><p><strong>Answer:</strong> <code>CREATE TABLE IF NOT EXISTS</code> is a no-op when the tables are already present, so the migration succeeds without touching any existing table or row. SQLx tracks which migrations have run in its own <code>_sqlx_migrations</code> table, separate from SQLite's <code>user_version</code>, and only records 0001 as applied after this first successful run, leaving all prior target and probe history intact.</p></details>
+
+      <h2>Recap and decision rules</h2>
+<pre class="large-code"><code>Blocking driver stalling the async runtime?   Move to an async pool (SqlitePool)
+SQLite has no async I/O of its own?            SQLx still blocks, just on its own worker thread per connection, via a channel
+Want the compiler to catch a bad column/type?  sqlx::query!/query_as! against a live DB or .sqlx cache
+Schema says INTEGER but you want bool?         Override with as "col: bool" in the query text
+Adopting SQLx migrations on an existing schema? Make migration 0001 idempotent (IF NOT EXISTS); existing rows survive untouched
+Several writes must succeed together?          pool.begin() ... tx.commit()
+Many requests, one contended database file?    Bound concurrent access with a Semaphore
+Build-time vs runtime database URL?            DATABASE_URL is for sqlx macros only; PULSEWATCH_DATABASE_URL is the running service's config
+Need a clean exit under load?                   axum::serve(...).with_graceful_shutdown(signal)</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://docs.rs/sqlx/latest/sqlx/">sqlx</a>, docs.rs, SQLx maintainers. Crate overview, pool types, and query macros. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/sqlx/latest/sqlx/macro.query.html">query!</a>, docs.rs, SQLx maintainers. Compile-time checked query macro and its requirements. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/sqlx/latest/sqlx/sqlite/struct.SqliteConnection.html">SqliteConnection</a>, docs.rs, SQLx maintainers. Describes the background worker thread and channel model used because SQLite has no native async I/O. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/sqlx/latest/sqlx/migrate/index.html">sqlx::migrate</a>, docs.rs, SQLx maintainers. Embedded migration runner and versioning model. Accessed September 17, 2026.</li>
+        <li><a href="https://github.com/launchbadge/sqlx#compile-time-verification">Compile-time verification</a>, SQLx project README, GitHub. Explains the offline mode and <code>cargo sqlx prepare</code> workflow. Accessed September 17, 2026.</li>
+        <li><a href="https://tokio.rs/tokio/topics/shutdown">Graceful Shutdown</a>, Tokio project, tokio.rs. Coordinating shutdown signals with in-flight async work. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tokio/latest/tokio/sync/struct.Semaphore.html">Semaphore</a>, docs.rs, Tokio project. Bounding concurrent access with async permits. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="14-sqlite-rusqlite.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 14: SQLite with rusqlite</span></a>
+        <a href="16-testing-quality-gates.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 16: Testing &amp; Quality Gates</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

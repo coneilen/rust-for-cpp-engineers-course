@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>From Toolchain to Distributable Binary — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html" class="active"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 1 · 30 minutes</span>
+      <h1>From Toolchain to Distributable Binary</h1>
+      <p class="lesson-subtitle">Install stable Rust on Windows or macOS, run the generated Hello World, then grow it into a tested CLI with one managed dependency and a release build.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can create, test, and release a small Rust package, explain what Cargo replaces in a typical C++ toolchain, and identify one memory bug that safe Rust prevents before execution.
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">📁</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p><strong>Starting state:</strong> no project exists yet; Part 2 creates one. <strong>Working directory:</strong> any parent folder you choose, written below as <code>path/to</code> — replace that placeholder with your actual folder (for example <code>~/dev</code>); it is not a literal folder to create. <strong>Default file:</strong> once <code>cargo new rust-greeter</code> runs, every unqualified code snippet in this lesson targets <code>src/main.rs</code> inside the new <code>rust-greeter</code> package, and each pass below states whether it replaces that file's contents or adds to them.</p>
+        </div>
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="5"><td>5 min</td><td>Install and verify Rust on Windows or macOS</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Create and run the generated Hello World turn by turn</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Map C++ instincts to Rust and inspect a rejected dangling borrow</td></tr>
+          <tr data-minutes="10"><td>10 min</td><td>Add a package and build <code>rust-greeter</code> in four explained passes</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Test, release-build, and choose a distribution path</td></tr>
+          <tr data-minutes="2"><td>2 min</td><td>Knowledge check and recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: install the toolchain</h2>
+      <p><strong>rustup</strong> manages Rust toolchains and targets. A default installation includes <code>rustc</code>, the compiler; <code>cargo</code>, the build and package tool; and the standard library. Follow one host path.</p>
+
+      <div class="code-compare">
+        <div>
+          <div class="code-label">Windows 10/11</div>
+          <ol>
+            <li>Open the official <a href="https://rust-lang.org/tools/install/">Install Rust</a> page and download <code>rustup-init.exe</code>.</li>
+            <li>Run it and accept the default stable MSVC toolchain.</li>
+            <li>If prompted, install Visual Studio Build Tools with <strong>Desktop development with C++</strong>; Rust's MSVC target needs the Windows linker and SDK.</li>
+            <li>Close and reopen PowerShell or Windows Terminal.</li>
+          </ol>
+        </div>
+        <div>
+          <div class="code-label">macOS</div>
+          <ol>
+            <li>If needed, install Apple's linker tools: <code>xcode-select --install</code>.</li>
+            <li>Run the official rustup installer in Terminal:</li>
+          </ol>
+          <pre><code>curl --proto '=https' --tlsv1.2 \
+  -sSf https://sh.rustup.rs | sh</code></pre>
+          <p>Accept the default stable toolchain, then open a new Terminal.</p>
+        </div>
+      </div>
+
+      <p>Verify the same three commands on either host:</p>
+      <pre class="large-code"><code>rustc --version
+cargo --version
+rustup show active-toolchain</code></pre>
+      <div class="callout warning">
+        <span class="callout-icon">🛑</span>
+        <div class="callout-content">
+          <strong>If a command is not found</strong>
+          <p>Restart the terminal first. Then confirm that <code>%USERPROFILE%\.cargo\bin</code> on Windows or <code>$HOME/.cargo/bin</code> on macOS is on <code>PATH</code>. Do not install a second copy from an unrelated package manager while diagnosing the first.</p>
+        </div>
+      </div>
+
+      <h2>Part 2: Hello World, one turn at a time</h2>
+      <ol class="trace">
+        <li>
+          <span class="actor user">YOU</span>
+          <div>
+            <h3>Create a binary package</h3>
+            <pre><code>cd path/to
+cargo new rust-greeter
+cd rust-greeter</code></pre>
+            <p><code>path/to</code> is a placeholder for the parent folder you chose; replace it with your actual path (for example <code>~/dev</code>), not a folder named literally <code>path/to</code>. <code>cargo new rust-greeter</code> creates the package: <code>Cargo.toml</code> holds package metadata and dependencies, and <code>src/main.rs</code> is the executable entry point. Every command in the rest of this lesson runs from this <code>rust-greeter</code> package root.</p>
+          </div>
+        </li>
+        <li>
+          <span class="actor tool">CARGO</span>
+          <div>
+            <h3>Inspect the minimal program Cargo generated</h3>
+            <p><strong>File: <code>src/main.rs</code></strong> — <code>cargo new</code> already wrote this content for you; nothing to edit yet.</p>
+            <pre><code>fn main() {
+    println!("Hello, world!");
+}</code></pre>
+            <p><code>fn</code> declares a function, <code>main</code> is the entry point, and the <code>!</code> in <code>println!</code> marks a macro invocation rather than a normal function call.</p>
+          </div>
+        </li>
+        <li>
+          <span class="actor user">YOU</span>
+          <div>
+            <h3>Compile and run</h3>
+            <pre><code>cargo run</code></pre>
+          </div>
+        </li>
+        <li>
+          <span class="actor tool">CARGO</span>
+          <div>
+            <h3>Report the build and program output</h3>
+            <pre><code>Compiling rust-greeter v0.1.0
+Finished `dev` profile
+Running `target/debug/rust-greeter`
+Hello, world!</code></pre>
+            <p>The debug executable is under <code>target/debug/</code>. Cargo reruns only the work invalidated by later changes.</p>
+          </div>
+        </li>
+        <li>
+          <span class="actor user">YOU</span>
+          <div>
+            <h3>Make the first edit</h3>
+            <p><strong>File: <code>src/main.rs</code></strong> — replace the entire generated contents with:</p>
+            <pre><code>fn main() {
+    let audience = "C++ engineer";
+    println!("Hello, {audience}!");
+}</code></pre>
+            <p><code>let</code> introduces an immutable binding by default. The format capture is checked by the compiler.</p>
+          </div>
+        </li>
+        <li>
+          <span class="actor tool">CARGO</span>
+          <div>
+            <h3>Rebuild and run the changed program</h3>
+            <pre><code>cargo run
+# Hello, C++ engineer!</code></pre>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="callout-icon">❗</span>
+        <div class="callout-content">
+          <strong>Why does <code>println!</code> end in <code>!</code>?</strong>
+          <p>A function receives already-formed values through a fixed parameter list. A macro receives Rust syntax tokens and expands them into Rust code before that generated code is type-checked. The <code>!</code> tells you that function-like macro expansion is happening; it is not logical negation and does not mean “dangerous.”</p>
+          <p><code>println!</code> uses this ability to accept a varying number and mix of arguments and to check a literal format string against them during compilation. This would be awkward to express as one ordinary Rust function.</p>
+        </div>
+      </div>
+
+      <table class="comparison-table">
+        <thead><tr><th>Syntax</th><th>What it is</th><th>How to read it</th></tr></thead>
+        <tbody>
+          <tr><td><code>greeting("Ada")</code></td><td>Function call</td><td>Evaluate the argument, then call a function with a declared signature.</td></tr>
+          <tr><td><code>println!("Hi, {name}")</code></td><td>Function-like macro invocation</td><td>Expand the supplied tokens into code, then compile and type-check that code.</td></tr>
+          <tr><td><code>format!</code>, <code>assert_eq!</code>, <code>vec!</code></td><td>Other common function-like macros</td><td>The trailing <code>!</code> is the visual cue that each can generate syntax rather than merely receive values.</td></tr>
+          <tr><td><code>#[derive(Parser)]</code></td><td>Attribute-style procedural macro</td><td>Macros can also use attribute syntax, so not every macro invocation ends in <code>!</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <figure class="course-figure">
+        <img src="assets/rust-toolchain-flow.svg" alt="Flow diagram showing rustup installing a Rust toolchain, Cargo reading source and dependencies, and Cargo producing tests, a debug build, and a target-specific release binary.">
+        <figcaption>Rust's default path integrates toolchain selection, dependency resolution, builds, tests, and release output.</figcaption>
+      </figure>
+      <p><a href="assets/rust-toolchain-flow.excalidraw">Download the editable Excalidraw source</a>.</p>
+
+      <h2>Part 3: translate your C++ mental model</h2>
+      <table class="comparison-table">
+        <thead><tr><th>C++ concept</th><th>Closest Rust concept</th><th>Important difference</th></tr></thead>
+        <tbody>
+          <tr><td><code>const</code> local</td><td><code>let</code></td><td>Bindings are immutable unless declared <code>mut</code>.</td></tr>
+          <tr><td>RAII destructor</td><td><code>Drop</code> at end of ownership scope</td><td>Moves are tracked and moved-from values cannot be reused.</td></tr>
+          <tr><td><code>T&amp;</code> / <code>const T&amp;</code></td><td><code>&amp;mut T</code> / <code>&amp;T</code></td><td>Borrow rules prevent conflicting aliases while a reference is live.</td></tr>
+          <tr><td>Templates plus concepts</td><td>Generics plus trait bounds</td><td>Traits also define shared behavior and support dynamic dispatch.</td></tr>
+          <tr><td>CMake + package manager + test runner</td><td>Cargo</td><td>One project manifest drives the standard workflow.</td></tr>
+        </tbody>
+      </table>
+
+      <p>Consider a realistic view-lifetime bug. C++ can compile a <code>std::string_view</code> that outlives the string it views:</p>
+      <div class="code-compare">
+        <div>
+          <div class="code-label bad">C++: compiles, then dangles</div>
+          <pre><code>std::string_view label() {
+  std::string s = "release";
+  return s; // view survives s
+}</code></pre>
+        </div>
+        <div>
+          <div class="code-label good">Rust: rejected before running</div>
+          <pre><code>fn label() -&gt; &amp;str {
+    let s = String::from("release");
+    &amp;s
+}</code></pre>
+        </div>
+      </div>
+      <p>The Rust compiler rejects the return because the borrowed value is dropped at the end of <code>label</code>. Safe Rust turns this memory-safety review concern into a compile-time obligation. Rust does not eliminate logic bugs, deadlocks, resource exhaustion, or unsafe-code defects.</p>
+
+      <h2>Part 4: add a package and build a useful CLI</h2>
+      <p>A <strong>crate</strong> is a Rust compilation unit; a <strong>package</strong> is the Cargo project described by <code>Cargo.toml</code> and may contain one or more crates. Run this from the <code>rust-greeter</code> package root to add the maintained <code>clap</code> crate for command-line parsing:</p>
+      <pre class="large-code"><code>cargo add clap --features derive</code></pre>
+      <p><strong>File: <code>Cargo.toml</code></strong> — this command edits the <code>[dependencies]</code> section for you; do not hand-edit that section. Cargo writes a compatible dependency requirement to <code>Cargo.toml</code> and resolves exact transitive versions into <code>Cargo.lock</code>. The Cargo guide recommends checking the lockfile into version control for an executable so collaborators resolve the same dependency set.</p>
+
+      <p>Build <code>src/main.rs</code> in four passes rather than treating the finished program as one block of unfamiliar syntax. No further <code>Cargo.toml</code> edits are needed for the rest of this lesson.</p>
+
+      <h3>Pass 1: describe the command line as data</h3>
+      <p><strong>File: <code>src/main.rs</code></strong> — add above <code>fn main</code>:</p>
+      <pre class="large-code"><code>use clap::Parser;
+
+#[derive(Parser)]
+#[command(version, about = "A small Rust greeting CLI")]
+struct Args {
+    #[arg(short, long, default_value = "world")]
+    name: String,
+
+    #[arg(short, long, default_value_t = 1)]
+    count: u8,
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning for a C++ programmer</th></tr></thead>
+        <tbody>
+          <tr><td><code>use clap::Parser;</code></td><td>Brings the <code>Parser</code> name into scope. Unlike <code>#include</code>, it does not paste a header's text into this file.</td></tr>
+          <tr><td><code>#[derive(Parser)]</code></td><td>An attribute asks <code>clap</code> to generate the repetitive argument-parsing implementation for <code>Args</code> at compile time.</td></tr>
+          <tr><td><code>#[command(...)]</code></td><td>Metadata for the whole CLI. <code>version</code> and <code>about</code> become generated <code>--version</code> and <code>--help</code> output.</td></tr>
+          <tr><td><code>#[arg(...)]</code></td><td>Metadata for one field. <code>short</code> creates <code>-n</code> or <code>-c</code>; <code>long</code> creates <code>--name</code> or <code>--count</code>.</td></tr>
+          <tr><td><code>String</code> and <code>u8</code></td><td><code>String</code> owns growable UTF-8 text. <code>u8</code> is an unsigned 8-bit integer, sufficient for this deliberately small repeat count.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">🔧</span>
+        <div class="callout-content">
+          <strong>What <code>derive</code> saves you from writing</strong>
+          <p>The generated parser reads process arguments, validates their shapes, converts <code>--count</code> to <code>u8</code>, applies defaults, and builds an <code>Args</code> value. It also generates help and version output. This is library-generated Rust code, not runtime reflection.</p>
+        </div>
+      </div>
+
+      <h3>Pass 2: write a function with an explicit ownership contract</h3>
+      <p><strong>File: <code>src/main.rs</code></strong> — add below the <code>Args</code> struct, still above <code>fn main</code>:</p>
+      <pre class="large-code"><code>fn greeting(name: &amp;str) -&gt; String {
+    format!("Hello, {name}!")
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>fn greeting</code></td><td>Declares a function. Parameter and return types follow the names rather than preceding them.</td></tr>
+          <tr><td><code>name: &amp;str</code></td><td>A read-only borrowed string slice. The function may inspect the text but does not own or free the caller's allocation.</td></tr>
+          <tr><td><code>-&gt; String</code></td><td>The function returns a new owned string. Ownership of that result moves to the caller.</td></tr>
+          <tr><td><code>format!(...)</code></td><td>A macro, recognizable by <code>!</code>, that builds a <code>String</code>. The final expression has no semicolon, so its value is returned—similar to writing <code>return ...;</code> in C++.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Pass 3: parse, borrow, and loop</h3>
+      <p><strong>File: <code>src/main.rs</code></strong> — replace the existing <code>fn main</code> (from “Make the first edit” above) with:</p>
+      <pre class="large-code"><code>fn main() {
+    let args = Args::parse();
+    for _ in 0..args.count {
+        println!("{}", greeting(&amp;args.name));
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>Args::parse()</code></td><td>An associated function supplied by the generated <code>Parser</code> implementation. It returns a fully typed <code>Args</code> value or exits with a useful CLI error.</td></tr>
+          <tr><td><code>let args</code></td><td>Creates an immutable local binding. Rust infers its type as <code>Args</code>.</td></tr>
+          <tr><td><code>0..args.count</code></td><td>A half-open range: zero through <code>count - 1</code>. The underscore means the loop index is intentionally unused.</td></tr>
+          <tr><td><code>&amp;args.name</code></td><td>Temporarily borrows the owned <code>String</code>. Rust automatically views <code>&amp;String</code> as the <code>&amp;str</code> expected by <code>greeting</code>.</td></tr>
+          <tr><td><code>println!(...)</code></td><td>Another macro. The compiler checks that formatting placeholders and supplied values agree.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Pass 4: keep the smallest behavior under test</h3>
+      <p><strong>File: <code>src/main.rs</code></strong> — add at the end of the file, after <code>fn main</code>:</p>
+      <pre class="large-code"><code>#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn formats_a_borrowed_name() {
+        assert_eq!(greeting("C++ engineer"), "Hello, C++ engineer!");
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>#[cfg(test)]</code></td><td>Compiles this module only for test builds, so test code is absent from the release executable.</td></tr>
+          <tr><td><code>mod tests</code></td><td>Creates a nested module. Braces define the module inline; no separate project or test executable is required.</td></tr>
+          <tr><td><code>use super::*;</code></td><td>Imports names from the parent module, including the private <code>greeting</code> function.</td></tr>
+          <tr><td><code>#[test]</code></td><td>Registers the following zero-argument function with Rust's built-in test harness.</td></tr>
+          <tr><td><code>assert_eq!</code></td><td>Compares two values and reports both sides on failure.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Active exercise: verify the CLI workflow</h2>
+      <p>Run each command from the <code>rust-greeter</code> package root, deliberately change the expected greeting once to observe a test failure, restore it, and inspect what Cargo standardizes:</p>
+      <pre class="large-code"><code>cargo fmt --check
+cargo test
+cargo run -- --name "C++ engineer" --count 2</code></pre>
+      <p>Expected evidence: <code>cargo fmt --check</code> prints nothing (already formatted); <code>cargo test</code> reports <code>test result: ok. 1 passed</code>; <code>cargo run -- ...</code> prints <code>Hello, C++ engineer!</code> twice. The first <code>--</code> belongs to Cargo: it ends Cargo's options. Everything after it is passed to <code>rust-greeter</code>, where <code>clap</code> interprets <code>--name</code> and <code>--count</code>.</p>
+      <div class="callout tip">
+        <span class="callout-icon">💡</span>
+        <div class="callout-content">
+          <strong>Notice the borrowed parameter</strong>
+          <p><code>greeting</code> accepts <code>&amp;str</code>, so it can read a string slice without taking ownership or copying the caller's <code>String</code>. Lesson 5 makes that contract central.</p>
+        </div>
+      </div>
+
+      <h2>Part 5: release and distribute</h2>
+      <p>Run these from the same <code>rust-greeter</code> package root:</p>
+      <pre class="large-code"><code>cargo build --release
+
+# macOS
+./target/release/rust-greeter --name Ferris
+
+# Windows PowerShell
+.\target\release\rust-greeter.exe --name Ferris</code></pre>
+      <p>The optimized, target-specific binary is under <code>target/release/</code>. A recipient does not need the Rust toolchain to run it, but you must build for the recipient's operating system and CPU and account for any linked native libraries.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Audience</th><th>Distribution path</th><th>Use when</th></tr></thead>
+        <tbody>
+          <tr><td>Teammate on the same target</td><td>Copy the release executable plus license/readme.</td><td>You control the target and do not need an installer.</td></tr>
+          <tr><td>Rust developer</td><td><code>cargo install --path .</code></td><td>They have Cargo and want the binary on Cargo's bin path.</td></tr>
+          <tr><td>Public crate users</td><td><a href="https://doc.rust-lang.org/book/ch14-02-publishing-to-crates-io.html">Publish to crates.io</a>, then <code>cargo install rust-greeter</code>.</td><td>The package is public and meets crates.io metadata and ownership requirements.</td></tr>
+          <tr><td>General desktop users</td><td>Platform package, signed installer, or managed software channel.</td><td>You need signing, updates, shortcuts, or policy integration; this is outside the course.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/install-the-tools-to-develop-with-rust-4-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">4:34 · BEGINNER</span><h3>Install the tools to develop with Rust [4 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Reinforces rustup and editor setup.</p></div>
+        </a>
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/create-your-first-application-5-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">4:44 · BEGINNER</span><h3>Create your first application [5 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Demonstrates the first Hello World workflow.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the installation video, read <a href="https://doc.rust-lang.org/book/ch01-01-installation.html">Installation</a> in <em>The Rust Programming Language</em>.</li>
+        <li>Instead of the first-application video, read <a href="https://doc.rust-lang.org/book/ch01-02-hello-world.html">Hello, World!</a> and <a href="https://doc.rust-lang.org/book/ch01-03-hello-cargo.html">Hello, Cargo!</a>.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Which file declares the direct dependency, and which file records the resolved versions?</summary><p><strong>Answer:</strong> <code>Cargo.toml</code> declares the dependency requirement; <code>Cargo.lock</code> records exact resolved versions for a reproducible application build.</p></details>
+      <details class="quiz"><summary>2. Why does <code>greeting</code> take <code>&amp;str</code> instead of <code>String</code>?</summary><p><strong>Answer:</strong> It only needs to read the name. Borrowing accepts string slices without transferring ownership or forcing a copy.</p></details>
+      <details class="quiz"><summary>3. Is <code>target/release/rust-greeter</code> portable to every host?</summary><p><strong>Answer:</strong> No. It is native code for a particular target. Build for each supported OS/architecture and package any required native dependencies.</p></details>
+
+      <h2>Recap</h2>
+      <p>You installed one managed toolchain, generated a conventional package, ran Hello World, added a versioned dependency, wrote a borrowed API and test, and produced a release binary. The key shift from C++ is not syntax: Cargo supplies a common project workflow, while safe Rust asks the compiler to prove ownership and borrowing constraints.</p>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://rust-lang.org/tools/install/">Install Rust</a>, Rust Project. Official rustup installation entry point. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch01-01-installation.html">Installation</a>, <em>The Rust Programming Language</em>, Rust Project. Windows and macOS prerequisites and rustup workflow. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch01-03-hello-cargo.html">Hello, Cargo!</a>, <em>The Rust Programming Language</em>, Rust Project. Package creation, build, run, and release profiles. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch03-03-how-functions-work.html">Functions</a>, <em>The Rust Programming Language</em>, Rust Project. Parameters, return types, expressions, and statements. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/cargo/commands/cargo-add.html">cargo add</a>, The Cargo Book, Rust Project. Dependency updates and feature selection. Accessed September 16, 2026.</li>
+        <li><a href="https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html">clap Derive Tutorial</a>, clap project documentation. Struct and field attributes for declarative argument parsing. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/cargo/guide/cargo-toml-vs-cargo-lock.html">Cargo.toml vs Cargo.lock</a>, The Cargo Book, Rust Project. Manifest and lockfile roles for reproducible application builds. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/cargo/commands/cargo-install.html">cargo install</a>, The Cargo Book, Rust Project. Binary crate installation from a path, Git, or a registry. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch14-02-publishing-to-crates-io.html">Publishing a Crate to Crates.io</a>, <em>The Rust Programming Language</em>, Rust Project. Package metadata and registry publishing. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html">Understanding Ownership</a>, <em>The Rust Programming Language</em>, Rust Project. Moves, borrowing, and compile-time memory safety. Accessed September 16, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch11-01-writing-tests.html">How to Write Tests</a>, <em>The Rust Programming Language</em>, Rust Project. Test attributes, assertions, and the built-in test harness. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch20-05-macros.html">Macros</a>, <em>The Rust Programming Language</em>, Rust Project. Function-like, derive, and attribute-style macros. Accessed September 17, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/install-the-tools-to-develop-with-rust-4-of-35--beginners-series-to-rust">Install the tools to develop with Rust [4 of 35]</a>, Microsoft Developer (Microsoft Learn), 4:34. Accessed September 16, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/create-your-first-application-5-of-35--beginners-series-to-rust">Create your first application [5 of 35]</a>, Microsoft Developer (Microsoft Learn), 4:44. Accessed September 16, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="./" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Course Overview</span></a>
+        <a href="02-values-variables-types-storage-constants.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 2: Values, Variables, Types &amp; Storage</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

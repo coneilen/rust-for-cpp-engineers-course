@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blocking TCP Networking — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html" class="active"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 11 · 30 minutes</span>
+      <h1>Blocking TCP Networking with std::net</h1>
+      <p class="lesson-subtitle">Give Pulsewatch its first real probe: a hand-rolled, newline-framed TCP protocol built on <code>std::net</code>, tested end to end on loopback, with explicit timeouts and an honest boundary around what blocking sockets should never be asked to do.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can open and accept TCP connections with <code>std::net</code>, reason about who owns a <code>TcpStream</code>, split it into a buffered reader and writer, define a tiny line-based framing rule, set read/write timeouts, and explain why this lesson stops before TLS or a real HTTP implementation.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td>Open a <code>TcpListener</code> and accept connections with <code>std::net</code></td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Own a <code>TcpStream</code>: <code>try_clone</code>, <code>BufReader</code>/<code>BufWriter</code>, and framing</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Set read/write timeouts and resolve hosts through <code>ToSocketAddrs</code></td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Handle partial reads, short writes, and the loopback error boundary</td></tr>
+          <tr data-minutes="9"><td>9 min</td><td>Exercise: build and test the Pulsewatch probe protocol on loopback</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">🗂️</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p>This lesson continues the <code>pulsewatch</code> Cargo workspace created in Lesson 7 (<code>crates/pulsewatch-core</code>, a library, and <code>crates/pulsewatch-cli</code>, a binary) and extended through Lessons 8 through 10. Open a terminal and change into that existing workspace before doing anything else in this lesson:</p>
+          <pre class="large-code"><code>cd path/to/pulsewatch</code></pre>
+          <p><code>path/to/pulsewatch</code> is a placeholder for wherever that workspace already sits on your machine — replace it with your actual path. Every command shown for the rest of this lesson assumes it is run from that workspace root (the directory containing the top-level <code>Cargo.toml</code>) unless a step says otherwise. No new Cargo.toml dependency entries are required for this lesson: <code>std::net</code> and <code>std::io</code> ship with the standard library, so nothing needs to be added to either crate's <code>Cargo.toml</code>.</p>
+        </div>
+      </div>
+
+      <h2>Part 1: a listener and a stream are two different ownership stories</h2>
+      <p>Pulsewatch is a small monitoring tool: it holds a list of targets and periodically checks whether each one answers. Every check so far has been conceptual. This lesson gives Pulsewatch its first real network call, built entirely on the standard library, no async runtime yet. Parts 1 through 3 below walk through three pieces of one eventual file, <code>crates/pulsewatch-cli/src/tcp_probe.rs</code>, one concept at a time; each piece shown here is an excerpt to explain the idea, not yet the file's final content — the exercise in Part 4 gives that file's complete, exact contents to create.</p>
+      <p><code>std::net::TcpListener</code> owns a bound, listening socket. Calling <code>.incoming()</code> yields one <code>io::Result&lt;TcpStream&gt;</code> per accepted connection. Each <code>TcpStream</code> is an independent, owned handle to one connected socket — there is no shared listener state once accept succeeds.</p>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/tcp_probe.rs</code></strong> (illustrates <code>TcpListener</code>; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>use std::net::TcpListener;
+
+fn run_server(bind_addr: &amp;str) -&gt; std::io::Result&lt;()&gt; {
+    let listener = TcpListener::bind(bind_addr)?;
+    println!("pulsewatch-probe listening on {}", listener.local_addr()?);
+
+    for incoming in listener.incoming() {
+        let stream = incoming?;
+        std::thread::spawn(move || {
+            if let Err(err) = handle_connection(stream) {
+                eprintln!("connection error: {err}");
+            }
+        });
+    }
+    Ok(())
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>TcpListener::bind(addr)</code></td><td>Resolves <code>addr</code>, then performs socket, bind, and listen in one call, returning <code>io::Result&lt;TcpListener&gt;</code>.</td><td>Roughly <code>getaddrinfo</code> + <code>socket(2)</code> + <code>bind(2)</code> + <code>listen(2)</code>, with errors returned instead of checked via <code>errno</code>.</td></tr>
+          <tr><td><code>listener.incoming()</code></td><td>An iterator of <code>io::Result&lt;TcpStream&gt;</code>; each item is one accepted connection.</td><td>A loop around <code>accept(2)</code> that already wraps the resulting file descriptor in an owning type.</td></tr>
+          <tr><td><code>TcpStream</code></td><td>An owned, moveable handle to one connected socket; dropping it closes the socket.</td><td>Comparable to a raw socket file descriptor wrapped in RAII, similar in spirit to <code>boost::asio::ip::tcp::socket</code>.</td></tr>
+          <tr><td><code>move || { ... }</code></td><td>Moves the accepted <code>stream</code> into a new OS thread; no other owner can touch it afterward.</td><td>Unlike passing a raw fd into <code>std::thread</code> and hoping nobody double-closes it, the compiler enforces single ownership.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong>Thread-per-connection does not scale forever</strong>
+          <p>One OS thread per connection is fine for a loopback probe tool and small fan-out. It stops being fine somewhere in the low thousands of concurrent connections because of per-thread stack memory and context-switch overhead. Lesson 12 keeps this exact protocol but moves the scheduler onto Tokio so Pulsewatch can probe far more targets concurrently without one thread per target.</p>
+        </div>
+      </div>
+
+      <h2>Part 2: splitting one stream into a reader and a writer</h2>
+      <p><code>Read</code> and <code>Write</code> both require <code>&amp;mut self</code>. If Pulsewatch's protocol needs to read a reply while a write is logically still &quot;in flight,&quot; one <code>TcpStream</code> value cannot be borrowed mutably from two places at once. The standard fix is <code>try_clone</code>, which duplicates the underlying socket handle so reads and writes proceed independently against the same OS socket.</p>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/tcp_probe.rs</code></strong> (an early, unbounded draft of <code>handle_connection</code>; Part 4 replaces this with a bounded version — do not create this draft as its own file):</p>
+      <pre class="large-code"><code>use std::io::{BufRead, BufReader, Write};
+use std::net::TcpStream;
+
+fn handle_connection(stream: TcpStream) -&gt; std::io::Result&lt;()&gt; {
+    stream.set_read_timeout(Some(std::time::Duration::from_secs(5)))?;
+
+    let mut writer = stream.try_clone()?;
+    let mut reader = BufReader::new(stream);
+
+    let mut line = String::new();
+    reader.read_line(&amp;mut line)?;
+    let request = line.trim_end();
+
+    match request.strip_prefix("PING ") {
+        Some(token) if !token.is_empty() =&gt; writeln!(writer, "PONG {token}")?,
+        _ =&gt; writeln!(writer, "ERR bad-request")?,
+    }
+    Ok(())
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>stream.try_clone()</code></td><td>Duplicates the socket handle; both values refer to the same underlying connection and can be moved to different owners (here, a <code>BufReader</code> and a plain writer).</td><td>Closest to <code>dup(2)</code> on a socket file descriptor: two independent handles, one underlying resource.</td></tr>
+          <tr><td><code>BufReader::new(stream)</code></td><td>Wraps the stream so repeated small reads pull from an in-process buffer instead of issuing a syscall every time.</td><td>Comparable to wrapping a raw descriptor in a buffered <code>std::istream</code>-like adapter.</td></tr>
+          <tr><td><code>reader.read_line(&amp;mut line)</code></td><td>Reads bytes, appending to <code>line</code>, until it sees <code>\n</code> or the connection ends; loops internally over partial reads.</td><td>Similar to <code>std::getline</code>, but it operates over a socket instead of an in-memory or file stream, and returns a byte count plus an <code>io::Result</code>.</td></tr>
+          <tr><td><code>request.strip_prefix("PING ")</code></td><td>Returns <code>Some(rest)</code> only when the line starts with the literal prefix; otherwise <code>None</code>.</td><td>Roughly <code>rfind</code> at position 0 plus a substring, but returning an <code>Option</code> instead of an index that must be checked against <code>npos</code>.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">🧩</span>
+        <div class="callout-content">
+          <strong>Framing is a rule you invent, not a rule the socket enforces</strong>
+          <p>TCP delivers an ordered byte stream with no message boundaries at all. <code>read_line</code> only works because both sides agree, out of band, that <code>\n</code> ends a message. A malicious or buggy peer that never sends <code>\n</code> would make <code>read_line</code> keep growing <code>line</code> forever without a size cap — one reason production framing code bounds the buffer explicitly, which the exercise below adds.</p>
+        </div>
+      </div>
+
+      <h2>Part 3: the client side, timeouts, and DNS resolution</h2>
+      <p>The client half of the probe protocol connects, writes a request line, and reads exactly one reply line, timing the round trip. Its result needs a stable, shared shape, because Lessons 12 through 14 all return, wrap, and store this same value — so it belongs in <code>pulsewatch-core</code>, the reusable library crate Lesson 7 set up at <code>crates/pulsewatch-core/</code>, not as a type defined privately inside whichever binary happens to call <code>probe_once</code>.</p>
+      <p><strong>Create <code>crates/pulsewatch-core/src/outcome.rs</code></strong> with exactly this content:</p>
+      <pre class="large-code"><code>// crates/pulsewatch-core/src/outcome.rs
+#[derive(Debug)]
+pub struct ProbeOutcome {
+    pub target: String,
+    pub success: bool,
+    pub latency_ms: u128,
+    pub message: String,
+}</code></pre>
+      <p><strong>Append to <code>crates/pulsewatch-core/src/lib.rs</code></strong> (add these four lines after Lesson 7's existing <code>mod probe;</code> / <code>pub use probe::{...};</code> lines; do not remove those existing lines):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-core/src/lib.rs (append)
+mod outcome;
+
+pub use outcome::ProbeOutcome;</code></pre>
+      <p><code>ProbeOutcome</code> lives in its own module, <code>outcome.rs</code>, alongside Lesson 7's <code>probe.rs</code>, and <code>lib.rs</code> re-exports it the same way it already re-exports <code>Probe</code>, <code>Sample</code>, <code>FixedProbe</code>, and <code>Millis</code>. Every caller outside the crate reaches it as <code>pulsewatch_core::ProbeOutcome</code> — one definition, one export path. Lessons 12, 13, and 14 all depend on <code>pulsewatch-core</code> and import this exact type; none of them declares its own <code>ProbeOutcome</code>.</p>
+      <p>The probe protocol logic itself (<code>probe_once</code>, and <code>handle_connection</code> from Part 2) lives in the <em>other</em> workspace crate, <code>pulsewatch-cli</code>, at <code>crates/pulsewatch-cli/src/tcp_probe.rs</code> — not inside <code>pulsewatch-core</code>. Rust only lets code write a crate's own name as a path prefix (<code>pulsewatch_core::ProbeOutcome</code>) from <em>outside</em> that crate; code living inside <code>pulsewatch-core</code> itself would have to write <code>crate::ProbeOutcome</code> instead. Keeping <code>tcp_probe.rs</code> in <code>pulsewatch-cli</code>, which already depends on <code>pulsewatch-core</code> as declared in Lesson 7, is what makes the fully-qualified <code>pulsewatch_core::ProbeOutcome</code> spelling below both valid and the spelling every later lesson reuses.</p>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/tcp_probe.rs</code></strong> (the client half; the exercise gives the complete file, combining this with the bounded server half from Part 4):</p>
+      <pre class="large-code"><code>use std::io::{BufRead, BufReader, Write};
+use std::net::TcpStream;
+use std::time::{Duration, Instant};
+
+pub fn probe_once(
+    host: &amp;str,
+    port: u16,
+    timeout: Duration,
+) -&gt; std::io::Result&lt;pulsewatch_core::ProbeOutcome&gt; {
+    let target = format!("{host}:{port}");
+    let started = Instant::now();
+
+    let stream = TcpStream::connect(&amp;target)?;
+    stream.set_read_timeout(Some(timeout))?;
+    stream.set_write_timeout(Some(timeout))?;
+
+    let mut writer = stream.try_clone()?;
+    let mut reader = BufReader::new(stream);
+
+    writeln!(writer, "PING pulsewatch-v1")?;
+    writer.flush()?;
+
+    let mut line = String::new();
+    reader.read_line(&amp;mut line)?;
+    let latency_ms = started.elapsed().as_millis();
+    let reply = line.trim_end();
+
+    Ok(pulsewatch_core::ProbeOutcome {
+        target,
+        success: reply.starts_with("PONG"),
+        latency_ms,
+        message: reply.to_string(),
+    })
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Question</th><th>Answer in this code</th></tr></thead>
+        <tbody>
+          <tr><td>Why does <code>probe_once</code> return <code>pulsewatch_core::ProbeOutcome</code> instead of a type it declares itself?</td><td>The blocking client here, the Tokio wrapper in Lesson 12, the HTTP probe in Lesson 13, and the SQLite persistence layer in Lesson 14 all need to agree on one result shape. Defining it once in <code>pulsewatch-core</code> and importing it everywhere else means the compiler rejects any lesson that drifts out of sync, instead of four incompatible structs that happen to share a name.</td></tr>
+          <tr><td>Where does DNS resolution happen?</td><td><code>TcpStream::connect(&amp;target)</code> accepts anything implementing <code>ToSocketAddrs</code>. A <code>&quot;host:port&quot;</code> string is resolved to one or more <code>SocketAddr</code> values, and <code>connect</code> tries them in order until one succeeds or all fail.</td></tr>
+          <tr><td>What happens if the peer never replies?</td><td><code>set_read_timeout</code> bounds how long <code>read_line</code> will block; past that, it returns <code>io::ErrorKind::WouldBlock</code>/<code>TimedOut</code>, which <code>?</code> propagates as an <code>Err</code> instead of hanging the calling thread forever.</td></tr>
+          <tr><td>What happens if the connect step itself hangs?</td><td><code>connect</code> has no built-in timeout on all platforms; production code typically uses <code>TcpStream::connect_timeout</code> with an explicit <code>SocketAddr</code> when the peer might be unreachable rather than merely slow to reply.</td></tr>
+          <tr><td>Why measure latency with <code>Instant</code> rather than <code>SystemTime</code>?</td><td><code>Instant</code> is monotonic and immune to wall-clock adjustments; <code>SystemTime</code> can jump backward, which would corrupt an elapsed-duration calculation.</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>Excerpt only</strong> (a side-by-side illustration of the framing problem described above — neither snippet is a file to create or edit):</p>
+      <div class="code-compare">
+        <div>
+          <div class="code-label bad">Fragile: assume one <code>read</code> gets the whole reply</div>
+          <pre><code>let mut buf = [0u8; 64];
+let n = reader.read(&amp;mut buf)?;
+let reply = std::str::from_utf8(&amp;buf[..n])
+    .unwrap();</code></pre>
+        </div>
+        <div>
+          <div class="code-label good">Robust: read until the agreed frame boundary</div>
+          <pre><code>let mut line = String::new();
+reader.read_line(&amp;mut line)?;
+let reply = line.trim_end();</code></pre>
+        </div>
+      </div>
+      <p>A single <code>TcpStream::read</code> call may return anywhere from one byte to the full reply, split arbitrarily across TCP segments. The left column silently assumes the whole message arrived in one <code>read</code>; <code>read_line</code> on the right loops internally until the frame boundary appears, which is the behavior a byte-stream protocol actually needs.</p>
+
+      <h2>Part 4: exercise — a bounded, tested Pulsewatch probe on loopback</h2>
+      <p>This exercise creates four new files that, together, are the complete, runnable form of everything Parts 1 through 3 introduced piece by piece. Work through the numbered steps in order from the workspace root.</p>
+      <ol class="numbered-steps">
+        <li>
+          <strong>Create <code>crates/pulsewatch-cli/src/lib.rs</code></strong> (this file does not exist yet; Lesson 7 gave <code>pulsewatch-cli</code> only a <code>src/main.rs</code>). No Cargo.toml edit is needed — Cargo automatically treats <code>src/lib.rs</code> as the package's library target and <code>src/main.rs</code>/<code>src/bin/*.rs</code> as its binaries once the file exists.
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/lib.rs
+pub mod tcp_probe;</code></pre>
+        </li>
+        <li>
+          <strong>Create <code>crates/pulsewatch-cli/src/tcp_probe.rs</code></strong> with exactly this content — it supersedes the Part 1/Part 2/Part 3 excerpts above by combining the bind loop, a bounded <code>handle_connection</code> capped at <code>MAX_LINE_BYTES</code>, <code>probe_once</code>, and a loopback test in one file:
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/tcp_probe.rs
+use std::io::{BufRead, BufReader, Read, Write};
+use std::net::{TcpListener, TcpStream};
+use std::time::{Duration, Instant};
+
+const MAX_LINE_BYTES: usize = 256;
+
+pub fn run_server(bind_addr: &amp;str) -&gt; std::io::Result&lt;()&gt; {
+    let listener = TcpListener::bind(bind_addr)?;
+    println!("pulsewatch-probe listening on {}", listener.local_addr()?);
+
+    for incoming in listener.incoming() {
+        let stream = incoming?;
+        std::thread::spawn(move || {
+            if let Err(err) = handle_connection(stream) {
+                eprintln!("connection error: {err}");
+            }
+        });
+    }
+    Ok(())
+}
+
+pub fn handle_connection(stream: TcpStream) -&gt; std::io::Result&lt;()&gt; {
+    stream.set_read_timeout(Some(Duration::from_secs(5)))?;
+    let mut writer = stream.try_clone()?;
+    let mut reader = BufReader::new(stream).take(MAX_LINE_BYTES as u64);
+
+    let mut line = String::new();
+    reader.read_line(&amp;mut line)?;
+
+    if !line.ends_with('\n') {
+        writeln!(writer, "ERR line-too-long")?;
+        return Ok(());
+    }
+
+    match line.trim_end().strip_prefix("PING ") {
+        Some(token) if !token.is_empty() =&gt; writeln!(writer, "PONG {token}")?,
+        _ =&gt; writeln!(writer, "ERR bad-request")?,
+    }
+    Ok(())
+}
+
+pub fn probe_once(
+    host: &amp;str,
+    port: u16,
+    timeout: Duration,
+) -&gt; std::io::Result&lt;pulsewatch_core::ProbeOutcome&gt; {
+    let target = format!("{host}:{port}");
+    let started = Instant::now();
+
+    let stream = TcpStream::connect(&amp;target)?;
+    stream.set_read_timeout(Some(timeout))?;
+    stream.set_write_timeout(Some(timeout))?;
+
+    let mut writer = stream.try_clone()?;
+    let mut reader = BufReader::new(stream);
+
+    writeln!(writer, "PING pulsewatch-v1")?;
+    writer.flush()?;
+
+    let mut line = String::new();
+    reader.read_line(&amp;mut line)?;
+    let latency_ms = started.elapsed().as_millis();
+    let reply = line.trim_end();
+
+    Ok(pulsewatch_core::ProbeOutcome {
+        target,
+        success: reply.starts_with("PONG"),
+        latency_ms,
+        message: reply.to_string(),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn loopback_ping_pong_round_trip() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind loopback");
+        let addr = listener.local_addr().expect("local addr");
+
+        std::thread::spawn(move || {
+            for incoming in listener.incoming() {
+                let stream = incoming.expect("accept");
+                handle_connection(stream).expect("handle connection");
+            }
+        });
+
+        let outcome = probe_once(
+            &amp;addr.ip().to_string(),
+            addr.port(),
+            Duration::from_secs(2),
+        )
+        .expect("probe_once should succeed");
+
+        assert!(outcome.success);
+        assert!(outcome.message.starts_with("PONG"));
+    }
+}</code></pre>
+          <p><code>BufReader::take(MAX_LINE_BYTES as u64)</code> wraps the reader in an adapter that reports end-of-input once that many bytes have been read, so an unterminated line stops growing memory instead of consuming it without bound. Binding to <code>127.0.0.1:0</code> asks the OS to assign an unused port, keeping the test independent of any port already in use; <code>local_addr()</code> reports back which port was actually chosen.</p>
+        </li>
+        <li>
+          <strong>Create <code>crates/pulsewatch-cli/src/bin/pulsewatch-probe-server.rs</code></strong> (new file; Cargo compiles every file under <code>src/bin/</code> as its own binary named after the file, with no extra Cargo.toml entry required):
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/bin/pulsewatch-probe-server.rs
+fn main() -&gt; std::io::Result&lt;()&gt; {
+    let bind_addr = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "127.0.0.1:7878".to_string());
+    pulsewatch_cli::tcp_probe::run_server(&amp;bind_addr)
+}</code></pre>
+        </li>
+        <li>
+          <strong>Create <code>crates/pulsewatch-cli/src/bin/pulsewatch-probe-client.rs</code></strong> (new file):
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/bin/pulsewatch-probe-client.rs
+fn main() -&gt; std::io::Result&lt;()&gt; {
+    let mut args = std::env::args().skip(1);
+    let host = args.next().unwrap_or_else(|| "127.0.0.1".to_string());
+    let port: u16 = args
+        .next()
+        .unwrap_or_else(|| "7878".to_string())
+        .parse()
+        .expect("port must be a u16");
+
+    let outcome = pulsewatch_cli::tcp_probe::probe_once(
+        &amp;host,
+        port,
+        std::time::Duration::from_secs(2),
+    )?;
+    println!("{outcome:?}");
+    Ok(())
+}</code></pre>
+        </li>
+        <li>
+          Run, from the workspace root: <code>cargo fmt --check</code><br>
+          <strong>Expected evidence:</strong> the command exits with status 0 and prints nothing (no formatting diffs).
+        </li>
+        <li>
+          Run, from the workspace root: <code>cargo test -p pulsewatch-cli loopback_ping_pong_round_trip</code><br>
+          <strong>Expected evidence:</strong> output includes <code>test tcp_probe::tests::loopback_ping_pong_round_trip ... ok</code> and a final <code>test result: ok. 1 passed; 0 failed</code> line.
+        </li>
+        <li>
+          In one terminal, from the workspace root, run: <code>cargo run --bin pulsewatch-probe-server -- 127.0.0.1:7878</code><br>
+          <strong>Expected evidence:</strong> the terminal prints <code>pulsewatch-probe listening on 127.0.0.1:7878</code> and keeps running (it does not exit).
+        </li>
+        <li>
+          In a second terminal, from the workspace root, run: <code>cargo run --bin pulsewatch-probe-client -- 127.0.0.1 7878</code><br>
+          <strong>Expected evidence:</strong> the client terminal prints a <code>ProbeOutcome</code> value with <code>success: true</code> and a small <code>latency_ms</code>, for example <code>ProbeOutcome { target: "127.0.0.1:7878", success: true, latency_ms: 1, message: "PONG pulsewatch-v1" }</code>; the server terminal's log is unaffected (it only prints on startup and on connection errors).
+        </li>
+      </ol>
+
+      <div class="callout warning">
+        <span class="callout-icon">🚧</span>
+        <div class="callout-content">
+          <strong>Explicitly out of scope for this lesson</strong>
+          <p>This protocol is intentionally not TLS and not HTTP. Hand-rolling encryption is a well-known way to introduce serious, hard-to-notice vulnerabilities; production Pulsewatch would terminate TLS with an audited crate such as <code>rustls</code> rather than add encryption to this line protocol by hand. Likewise, reimplementing HTTP framing, headers, and status codes from raw sockets duplicates work that <code>reqwest</code> and <code>axum</code> already do correctly — that work starts in Lesson 13.</p>
+        </div>
+      </div>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://media.ccc.de/v/rustfest18-6-scalable_networking_with_rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">19 min · CONFERENCE TALK</span><h3>Scalable Networking with Rust</h3><p>Tigran Bayburtsyan, RustFest 2018 Paris (media.ccc.de). Covers scaling raw socket handling beyond one thread per connection, the exact pressure that motivates Lesson 12's move to async.</p></div>
+        </a>
+        <a class="video-card" href="https://media.ccc.de/v/rustfest18-2-rustls_modern_faster_safer_tls">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">34 min · CONFERENCE TALK</span><h3>rustls: modern, faster, safer TLS</h3><p>Joe Birr-Pixton, RustFest 2018 Paris (media.ccc.de). Explains why TLS is built as a dedicated, audited layer on top of raw sockets rather than hand-rolled — the reasoning behind this lesson's TLS exclusion.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the networking-at-scale talk, read the <a href="https://doc.rust-lang.org/std/net/struct.TcpListener.html">TcpListener</a> documentation's notes on <code>incoming()</code> and connection handling.</li>
+        <li>Instead of the TLS talk, read the crate-level overview at <a href="https://docs.rs/rustls/latest/rustls/">docs.rs/rustls</a> for what a production TLS layer covers that this lesson does not.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why does <code>handle_connection</code> call <code>stream.try_clone()</code> instead of reading and writing through one shared <code>TcpStream</code> value?</summary><p><strong>Answer:</strong> <code>Read</code> and <code>Write</code> both take <code>&amp;mut self</code>, so one value cannot be mutably borrowed for reading and writing at the same time in the same scope. <code>try_clone</code> duplicates the socket handle so a reader and a writer can be owned and used independently while referring to the same underlying connection.</p></details>
+      <details class="quiz"><summary>2. Why can a single call to <code>TcpStream::read</code> not be trusted to return one complete Pulsewatch message?</summary><p><strong>Answer:</strong> TCP is a byte stream with no built-in message boundaries; a <code>read</code> call may return part of a message, one message, or several, split arbitrarily by the network stack. <code>read_line</code> loops internally until the agreed-upon <code>\n</code> boundary appears, which handles partial reads correctly where a single fixed-size <code>read</code> would not.</p></details>
+      <details class="quiz"><summary>3. What does <code>TcpStream::connect(&quot;host:port&quot;)</code> do before it opens a socket?</summary><p><strong>Answer:</strong> The string argument implements <code>ToSocketAddrs</code>, so <code>connect</code> first resolves the host through DNS (or parses it directly if it is already an IP literal) into one or more <code>SocketAddr</code> values, then tries each in turn until a connection succeeds or all attempts fail.</p></details>
+      <details class="quiz"><summary>4. Why does this lesson cap the request line at <code>MAX_LINE_BYTES</code> instead of trusting <code>read_line</code> alone?</summary><p><strong>Answer:</strong> <code>read_line</code> keeps appending bytes until it finds <code>\n</code> or the connection closes; a peer that never sends a newline would make the buffer grow without bound. Wrapping the reader in <code>.take(MAX_LINE_BYTES as u64)</code> forces end-of-input once that many bytes are read, turning an unbounded hang or memory grow into a bounded, reportable error.</p></details>
+      <details class="quiz"><summary>5. Where is <code>ProbeOutcome</code> actually defined, and why does <code>probe_once</code> return <code>pulsewatch_core::ProbeOutcome</code> instead of declaring its own struct?</summary><p><strong>Answer:</strong> <code>ProbeOutcome</code> is defined once, in <code>crates/pulsewatch-core/src/outcome.rs</code>, and re-exported from that crate's <code>lib.rs</code> as <code>pulsewatch_core::ProbeOutcome</code>. <code>probe_once</code> imports and returns that exact type rather than a locally declared one so that Lesson 12's async wrapper, Lesson 13's HTTP probe and DTO conversion, and Lesson 14's SQLite persistence all operate on one shared, compiler-checked type — not four separately declared structs that merely share a name and would not type-check against each other.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Need a quick blocking prototype on loopback?   std::net::{TcpListener, TcpStream}
+Need independent read and write access?         stream.try_clone(), one handle each
+Reading small amounts repeatedly?               Wrap in BufReader / BufWriter
+Message boundaries matter?                      Pick and document a framing rule (here: newline)
+Peer might stall or vanish?                     set_read_timeout / set_write_timeout
+Untrusted or unbounded input?                    Cap the buffer (.take(N)) before parsing
+Need encryption?                                 Reach for rustls; do not hand-roll TLS
+A result type is shared across lessons/crates?   Define it once in pulsewatch-core, import everywhere
+Need thousands of concurrent connections?        Move to async (Lesson 12)</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/std/net/struct.TcpListener.html">TcpListener</a>, Rust standard library documentation, Rust Project. Binding, accepting, and iterating incoming connections. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/net/struct.TcpStream.html">TcpStream</a>, Rust standard library documentation, Rust Project. Connecting, cloning, and setting read/write timeouts. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/net/trait.ToSocketAddrs.html">ToSocketAddrs</a>, Rust standard library documentation, Rust Project. How string addresses resolve through DNS before connecting. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/io/struct.BufReader.html">BufReader</a>, Rust standard library documentation, Rust Project. Buffering reads and the <code>take</code> adapter used to bound line length. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/io/struct.BufWriter.html">BufWriter</a>, Rust standard library documentation, Rust Project. Buffering writes over a byte-oriented sink such as a socket. Accessed September 17, 2026.</li>
+        <li><a href="https://media.ccc.de/v/rustfest18-6-scalable_networking_with_rust">Scalable Networking with Rust</a>, Tigran Bayburtsyan, RustFest 2018 Paris (media.ccc.de), 19 min. Accessed September 17, 2026.</li>
+        <li><a href="https://media.ccc.de/v/rustfest18-2-rustls_modern_faster_safer_tls">rustls: modern, faster, safer TLS</a>, Joe Birr-Pixton, RustFest 2018 Paris (media.ccc.de), 34 min. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="10-locks-atomics-deadlocks-data-parallelism.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 10: Locks, Atomics &amp; Parallelism</span></a>
+        <a href="12-async-rust-tokio.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 12: Async Rust &amp; Tokio</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debugging & Observability — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html" class="active"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 17 · 30 minutes</span>
+      <h1>Debugging & Observability</h1>
+      <p class="lesson-subtitle">Diagnose a Pulsewatch failure with backtraces, LLDB/GDB, panic hooks, typed errors, and structured tracing, without leaking secrets or confusing debug-build behavior with release.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> you can distinguish rust-analyzer diagnostics from a real compiler check, capture and read a backtrace, attach LLDB or GDB to a Rust binary, choose between thiserror and anyhow at the right boundary, add tracing spans and a subscriber, and avoid logging secrets or high-cardinality data.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td>rust-analyzer vs cargo check, and reading a backtrace</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>A guided LLDB/GDB session against pulsewatch-service</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Panic hooks and the thiserror/anyhow boundary</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>tracing spans, events, and subscribers, and what not to log</td></tr>
+          <tr data-minutes="7"><td>7 min</td><td>Exercise: diagnose and fix a simulated Pulsewatch panic</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Follow-along setup</h2>
+      <p>This lesson starts from the Pulsewatch workspace as Lessons 7–16 left it: <code>crates/pulsewatch-core</code> (the <code>Probe</code> trait and types), and <code>crates/pulsewatch-service</code>, the Axum binary from Lesson 13 that Lesson 15 extended with SQLx persistence and <code>AppConfig</code>. This lesson adds error types, a panic hook, and tracing to that existing binary; it does not remove anything.</p>
+      <pre class="large-code"><code>cd path/to/pulsewatch</code></pre>
+      <p><code>path/to</code> is a placeholder: replace the whole segment with wherever you checked out the Pulsewatch workspace, for example <code>cd ~/dev/pulsewatch</code>. Unless a step says otherwise, run every <code>cargo</code> command below from this workspace root, the directory containing the top-level <code>Cargo.toml</code>. The debugger session in Part 2 additionally requires <code>rust-lldb</code> (bundled with a standard <code>rustup</code>-installed toolchain) or <code>rust-gdb</code> on Linux.</p>
+
+      <h2>Part 1: rust-analyzer, compiler diagnostics, and backtraces</h2>
+      <p>rust-analyzer's red squiggles are a fast, incremental approximation running inside the editor; the real source of truth is still <code>cargo check</code>, which runs the actual compiler front end. When rust-analyzer and <code>cargo check</code> disagree (stale index, macro-heavy code, cross-crate changes), trust <code>cargo check</code>. When something panics, ask for a stack trace before guessing. Run both commands from the workspace root:</p>
+      <pre class="large-code"><code>RUST_BACKTRACE=1 cargo run -p pulsewatch-service
+RUST_BACKTRACE=full cargo run -p pulsewatch-service   # includes library-internal frames</code></pre>
+      <p>You can also capture a backtrace programmatically, useful when converting a panic into a structured log line. This line belongs inside the panic hook you add in Part 3:</p>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — excerpt (used inside the panic hook added in Part 3, not a separate edit)</div>
+      <pre class="large-code"><code>let backtrace = std::backtrace::Backtrace::capture();
+tracing::error!(%backtrace, "unexpected panic captured");</code></pre>
+
+      <h2>Part 2: a debugger session with LLDB or GDB</h2>
+      <p>Rust ships thin wrappers, <code>rust-lldb</code> and <code>rust-gdb</code>, that pretty-print Rust types (<code>Vec</code>, <code>String</code>, enums) inside the same LLDB/GDB you already know from C++. Build the server, run it under the debugger, set a breakpoint on a handler the running server actually calls (<code>check_target</code>, from Lesson 13), then trigger that handler from another terminal with <code>curl</code>:</p>
+      <pre class="large-code"><code>cargo build -p pulsewatch-service
+rust-lldb target/debug/pulsewatch-service
+(lldb) breakpoint set --name check_target
+(lldb) run
+# in a second terminal, from anywhere: curl http://127.0.0.1:8080/check/example.com
+(lldb) print url
+(lldb) bt
+(lldb) continue</code></pre>
+      <p>The commands are the same ones you already use for C++: set a breakpoint, run, print a value, unwind the stack, continue. The only new thing is that Rust's richer pretty-printers show a Rust <code>String</code> or <code>Vec</code> as a real value instead of a raw pointer and length.</p>
+
+      <h2>Part 3: panic hooks and typed error boundaries</h2>
+      <p>A custom panic hook lets you route every panic through your own logging instead of only stderr:</p>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — append near the top of fn main, before serve() is called</div>
+      <pre class="large-code"><code>std::panic::set_hook(Box::new(|info| {
+    tracing::error!(panic = %info, "pulsewatch-service panicked");
+}));</code></pre>
+      <p>For recoverable failures, Rust draws a boundary between library and application error handling. <code>thiserror</code> derives a concrete, typed error enum at a library boundary such as <code>pulsewatch-core</code>, so callers can match on a variant; <code>anyhow</code> is for the application's <code>main</code>, where you mostly want to attach context and propagate, not match on variants.</p>
+      <div class="code-label">crates/pulsewatch-core/src/error.rs — create (then add `mod error; pub use error::PersistError;` to crates/pulsewatch-core/src/lib.rs — append)</div>
+      <pre class="large-code"><code>// pulsewatch-core: a typed error at the library boundary
+#[derive(Debug, thiserror::Error)]
+pub enum PersistError {
+    #[error("database unavailable: {0}")]
+    Unavailable(#[source] sqlx::Error),
+    #[error("row violated a constraint: {0}")]
+    Constraint(String),
+}</code></pre>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — append</div>
+      <pre class="large-code"><code>// pulsewatch-service/src/main.rs: anyhow at the application boundary
+fn load_config() -&gt; anyhow::Result&lt;AppConfig&gt; {
+    AppConfig::from_env().context("failed to load Pulsewatch configuration")
+}</code></pre>
+
+      <h2>Part 4: structured observability with tracing</h2>
+      <p><code>tracing</code> replaces scattered <code>println!</code> calls with structured, leveled spans and events that a subscriber can filter, format, or export:</p>
+      <div class="code-label">crates/pulsewatch-service/src/main.rs — append near the top of fn main, before the panic hook and before serve()</div>
+      <pre class="large-code"><code>use tracing_subscriber::{fmt, EnvFilter};
+
+fn init_observability() {
+    tracing_subscriber::registry()
+        .with(EnvFilter::from_default_env())
+        .with(fmt::layer())
+        .init();
+}</code></pre>
+      <p>The function below shows the <code>#[tracing::instrument]</code> pattern on a simplified <code>record_batch(pool, samples: &amp;[Sample])</code> signature for illustration; apply the same <code>#[tracing::instrument(skip(pool))]</code> attribute and <code>tracing::info!</code> call to the real <code>record_batch</code> in <code>crates/pulsewatch-service/src/db.rs</code> from Lesson 15, whose parameters are <code>pool: &amp;SqlitePool, target_id: i64, outcomes: &amp;[ProbeOutcome]</code>:</p>
+      <div class="code-label">crates/pulsewatch-service/src/db.rs — replace the existing record_batch signature line and its first statement (add the attribute and the info! line shown here; the rest of the function body is unchanged from Lesson 15)</div>
+      <pre class="large-code"><code>#[tracing::instrument(skip(pool))]
+async fn record_batch(pool: &amp;SqlitePool, samples: &amp;[Sample]) -&gt; Result&lt;(), PersistError&gt; {
+    tracing::info!(count = samples.len(), "recording sample batch");
+    // ...
+    Ok(())
+}</code></pre>
+      <p><code>#[tracing::instrument]</code> wraps a whole async function in a span, so every event inside it, and any spans it enters, are automatically tagged with the function's name and arguments (unless explicitly skipped, as <code>pool</code> is here).</p>
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong>Do not instrument secrets or high-cardinality data</strong>
+          <p><code>#[tracing::instrument]</code> captures every non-<code>skip</code>ped argument by default. Skip database URLs, tokens, and any field that is effectively unique per record (raw sample payloads, full request bodies); log a count, a hash, or a bucketed value instead. A field logged once in a test fixture can end up in production log output the first time this code path runs there.</p>
+        </div>
+      </div>
+
+      <h2>Part 5: debug builds are not release behavior</h2>
+      <p>Debug builds enable overflow checks and <code>debug_assert!</code>; release builds optimize and, by default, still keep debug symbols on many platforms unless stripped. A bug that only reproduces in release is often an overflow check or an assertion that silently no-ops there &mdash; do not assume debug-build behavior generalizes:</p>
+      <div class="code-label">Cargo.toml (workspace root) — append (profile sections apply only from the root Cargo.toml of a virtual workspace, not from a member crate's Cargo.toml)</div>
+      <pre class="large-code"><code>[profile.release]
+debug = true       # keep symbols for profiling/debugging without disabling optimizations
+# strip = true     # would remove symbols again; leave unset while you still need them</code></pre>
+
+      <h2>Read the Rust: syntax mapped to C++</h2>
+      <table class="comparison-table">
+        <thead><tr><th>Rust</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>RUST_BACKTRACE=full</code></td><td>Prints a full stack trace, including library-internal frames, on panic.</td><td>Comparable to running under a debugger just to capture a crash's call stack.</td></tr>
+          <tr><td><code>rust-lldb / rust-gdb</code></td><td>Thin wrappers around LLDB/GDB with Rust-aware pretty-printers.</td><td>The same debugger you use for C++, with better printing of Vec/String/enums.</td></tr>
+          <tr><td><code>std::panic::set_hook</code></td><td>Installs a custom handler that runs before a panic unwinds or aborts.</td><td>Similar in spirit to a custom std::terminate handler, but per-panic rather than per-process-exit.</td></tr>
+          <tr><td><code>thiserror::Error</code></td><td>Derives a concrete, matchable error enum for a library boundary.</td><td>Like a small hierarchy of exception types callers can catch by kind.</td></tr>
+          <tr><td><code>anyhow::Result&lt;T&gt;</code></td><td>A type-erased error with attachable context, for application-level code.</td><td>Closer to catching-and-rethrowing with an added message, not a typed exception.</td></tr>
+          <tr><td><code>#[tracing::instrument]</code></td><td>Wraps a function body in a span tagging every event inside it.</td><td>Similar to a scoped logging context object that auto-tags every log line in its lifetime.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Worked Pulsewatch increment</h2>
+      <p>Pulsewatch now has structured, leveled logs from every async handler via <code>#[tracing::instrument]</code>, a typed <code>PersistError</code> at the <code>pulsewatch-core</code> boundary that <code>anyhow::Context</code> annotates in <code>main</code>, a panic hook that routes crashes through the same subscriber as everything else, and a documented LLDB workflow for attaching to <code>pulsewatch-service</code> when a report alone is not enough.</p>
+
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Stability and production boundary</strong>
+          <p>A panic hook, typed errors, and tracing spans make failures easier to diagnose; they do not prevent failures, and a debug build's overflow checks and <code>debug_assert!</code>s do not run in release, so a bug that only reproduces under <code>--release</code> needs to be reproduced there, not assumed away from a debug-build repro.</p>
+        </div>
+      </div>
+
+      <h2>Active exercise</h2>
+      <ol>
+        <li>In <code>crates/pulsewatch-service/src/db.rs</code> (replace the body of <code>record_batch</code> temporarily, or add a throwaway line just above its <code>tx.commit()</code> call for this step only), insert <code>let _ = outcomes[outcomes.len()];</code> so the function genuinely panics with an "index out of bounds" message on any call.</li>
+        <li>From the workspace root, run <code>RUST_BACKTRACE=full cargo test -p pulsewatch-service batch_insert_with_unknown_target_rolls_back</code>. <strong>Expected evidence:</strong> the test binary aborts with a panic message naming the exact line, followed by a full backtrace that includes <code>record_batch</code>'s frame.</li>
+        <li>In <code>crates/pulsewatch-service/src/main.rs</code> (append near the top of <code>fn main</code>, before <code>serve()</code> is called), add the panic hook from Part 3 if it is not already there, then repeat step 2. <strong>Expected evidence:</strong> the panic now also appears as a <code>tracing::error!</code> line (visible because <code>init_observability()</code> from Part 4 must run before the hook fires), in addition to the default panic message on stderr.</li>
+        <li>Remove the throwaway <code>let _ = outcomes[outcomes.len()];</code> line from <code>crates/pulsewatch-service/src/db.rs</code> so <code>record_batch</code> returns to its Lesson 15 behavior, then confirm with <code>cargo test -p pulsewatch-service batch_insert_with_unknown_target_rolls_back</code> from the workspace root. <strong>Expected evidence:</strong> the test passes again with no panic.</li>
+        <li>In <code>crates/pulsewatch-core/src/error.rs</code> (append), add <code>impl From&lt;sqlx::Error&gt; for PersistError { fn from(err: sqlx::Error) -&gt; Self { PersistError::Unavailable(err) } }</code>. In <code>crates/pulsewatch-service/src/db.rs</code> (replace the return type on the <code>record_batch</code> signature line), change <code>Result&lt;(), sqlx::Error&gt;</code> to <code>Result&lt;(), pulsewatch_core::PersistError&gt;</code>.</li>
+        <li>From the workspace root, run <code>cargo build -p pulsewatch-service</code>. <strong>Expected evidence:</strong> the build succeeds because the <code>From</code> impl lets every <code>?</code> inside <code>record_batch</code> convert <code>sqlx::Error</code> into <code>PersistError</code> automatically; if it instead reports a type mismatch, the <code>From</code> impl from this step is missing or misnamed.</li>
+        <li>From the workspace root, run <code>cargo test -p pulsewatch-service --no-run</code> and note the path it prints for <code>Executable unittests src/main.rs</code> (looks like <code>target/debug/deps/pulsewatch_service-&lt;hash&gt;</code>; the hash suffix is specific to your build). Debugging the running server binary will not hit this breakpoint, because <code>record_batch</code> is only called from the <code>batch_insert_with_unknown_target_rolls_back</code> test in this lesson, not from an HTTP handler.</li>
+        <li>From the workspace root, run <code>rust-lldb target/debug/deps/pulsewatch_service-&lt;hash&gt;</code> (substituting the exact path from the previous step), then inside the LLDB session run <code>breakpoint set --name record_batch</code>, <code>run batch_insert_with_unknown_target_rolls_back</code>, <code>print outcomes</code>, <code>bt</code>, <code>continue</code>. <strong>Expected evidence:</strong> a session transcript showing the breakpoint hit inside <code>record_batch</code> and <code>outcomes</code> printed as a slice of <code>ProbeOutcome</code> values, not a raw pointer.</li>
+      </ol>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=21rtHinFA40">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">2:57:24 · OPTIONAL</span><h3>Decrusting the tracing crate</h3><p>Jon Gjengset. A deep, from-source look at how spans, events, and subscribers fit together; skim to the subscriber/layer sections if short on time.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=v_C1cvo1biI">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">11:41 · OPTIONAL</span><h3>Learn the lldb debugger basics in 11 minutes | 2021 (Also works on M1 Apple Silicon)</h3><p>Mike Shah. Breakpoints, printing variables, and stack traces in LLDB, directly transferable to rust-lldb.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the tracing deep-dive video, read the <a href="https://docs.rs/tracing/latest/tracing/">tracing</a> and <a href="https://docs.rs/tracing-subscriber/latest/tracing_subscriber/">tracing-subscriber</a> docs and Part 4 above.</li>
+        <li>Instead of the LLDB video, read the <a href="https://lldb.llvm.org/use/tutorial.html">LLDB tutorial</a> and work through the Part 2 debugger session.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. rust-analyzer and cargo check disagree about whether a function compiles. Which do you trust, and why?</summary><p><strong>Answer:</strong> cargo check, because it runs the real compiler front end; rust-analyzer is a fast incremental approximation that can lag behind on macro-heavy or cross-crate changes.</p></details>
+      <details class="quiz"><summary>2. When should a Pulsewatch function return a thiserror-derived enum instead of an anyhow::Result?</summary><p><strong>Answer:</strong> At a library boundary, such as pulsewatch-core, where callers need to match on a specific error variant; anyhow is for application-level code in main that mostly needs to attach context and propagate.</p></details>
+      <details class="quiz"><summary>3. Why should you skip a database URL or raw sample payload from #[tracing::instrument] instead of letting it log by default?</summary><p><strong>Answer:</strong> Instrument captures every non-skipped argument by default; secrets should never be logged, and high-cardinality or unique-per-record data bloats and de-values log output, so both should be skipped, counted, or hashed instead.</p></details>
+      <details class="quiz"><summary>4. A bug reproduces in debug builds but not in --release. What is the first thing to check?</summary><p><strong>Answer:</strong> Whether the bug depends on debug-only behavior such as overflow checks or debug_assert!, which do not run in release; reproduce and diagnose it under --release rather than assuming the debug-build repro generalizes.</p></details>
+
+      <h2>Recap and decision rules</h2>
+<pre class="large-code"><code>Unexpected panic, need the call stack?         RUST_BACKTRACE=full, or capture programmatically
+Need to inspect live state under a breakpoint?  rust-lldb / rust-gdb, same workflow as C++
+Library-boundary error callers must match on?   thiserror-derived enum
+Application-level error that just needs context? anyhow::Result + .context(...)
+Want every event auto-tagged with a function?    #[tracing::instrument]
+About to log a secret or unique-per-record value? Skip it, or log a count/hash instead
+Bug only reproduces in release?                 Debug-only checks are off; verify under --release</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://rust-analyzer.github.io/book/diagnostics.html">Diagnostics</a>, rust-analyzer Book, rust-analyzer maintainers. How rust-analyzer's diagnostics relate to real compiler checks. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/backtrace/struct.Backtrace.html">Backtrace</a>, std, Rust Project. Capturing a backtrace programmatically. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/panic/fn.set_hook.html">set_hook</a>, std, Rust Project. Installing a custom panic hook. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/thiserror/latest/thiserror/">thiserror</a>, docs.rs, dtolnay. Deriving typed error enums at a library boundary. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/anyhow/latest/anyhow/">anyhow</a>, docs.rs, dtolnay. Context-attaching error type for application code. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tracing/latest/tracing/">tracing</a>, docs.rs, Tokio project. Spans, events, and instrumentation macros. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tracing-subscriber/latest/tracing_subscriber/">tracing-subscriber</a>, docs.rs, Tokio project. EnvFilter and fmt layer subscriber composition. Accessed September 17, 2026.</li>
+        <li><a href="https://lldb.llvm.org/use/tutorial.html">LLDB Tutorial</a>, LLDB Project, LLVM. Breakpoints, printing, and stack traces used by rust-lldb. Accessed September 17, 2026.</li>
+        <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb/">Debugging with GDB</a>, GDB Project, GNU/Free Software Foundation. Reference manual for the debugger rust-gdb wraps. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="16-testing-quality-gates.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 16: Testing &amp; Quality Gates</span></a>
+        <a href="18-performance-profiling-unsafe-verification.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 18: Performance &amp; Unsafe Verification</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

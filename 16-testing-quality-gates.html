@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testing & Quality Gates — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html" class="active"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 16 · 30 minutes</span>
+      <h1>Testing & Quality Gates</h1>
+      <p class="lesson-subtitle">Choose deliberately among unit, integration, doc, property, and differential tests for Pulsewatch, filter test runs with cargo test selectors, and gate merges on rustfmt and Clippy.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> you can place a test in the right harness (unit, integration, doc, property, or differential), filter which tests run with cargo test selectors, write a proptest for an invariant, compare new output against recorded legacy C++ output, and wire rustfmt/Clippy into CI as quality gates.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td>Map unit, integration, doc, property, and differential tests to Pulsewatch</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Read the libtest unit/integration split and why it enforces the public boundary</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Write a proptest for a Pulsewatch invariant</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Add rustfmt and Clippy as CI quality gates</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Exercise: extend the tests and run every selector</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Follow-along setup</h2>
+      <p>This lesson starts from the Pulsewatch workspace as Lessons 7–15 left it: <code>crates/pulsewatch-core</code> (the <code>Probe</code> trait, <code>Millis</code>, <code>Sample</code>, and <code>FixedProbe</code> from Lesson 7, with <code>crates/pulsewatch-core/tests/public_api.rs</code> already present), <code>crates/pulsewatch-cli</code>, and <code>crates/pulsewatch-service</code>. Nothing here is deleted; this lesson only adds test code and CI configuration.</p>
+      <pre class="large-code"><code>cd path/to/pulsewatch</code></pre>
+      <p><code>path/to</code> is a placeholder: replace the whole segment with wherever you checked out the Pulsewatch workspace, for example <code>cd ~/dev/pulsewatch</code>. Unless a step says otherwise, run every <code>cargo</code> command below from this workspace root, the directory containing the top-level <code>Cargo.toml</code>. This lesson also requires the <code>rustfmt</code> and <code>clippy</code> rustup components; if <code>cargo fmt --version</code> or <code>cargo clippy --version</code> fails, run <code>rustup component add rustfmt clippy</code> first, from anywhere.</p>
+
+      <h2>Part 1: five kinds of test, five different jobs</h2>
+      <p>Pulsewatch began as a port of a legacy C++ monitoring tool, and it now has a workspace, a trait-based probe API, an async SQLx-backed server, and formatting rules inherited from the original tool. Each test kind answers a different question:</p>
+      <ul>
+        <li><strong>Unit test</strong> &mdash; a <code>#[cfg(test)] mod tests</code> block beside the code. Compiled into the crate itself, so it can see private items.</li>
+        <li><strong>Integration test</strong> &mdash; a file under <code>tests/</code>. Each one compiles as its own crate that links only your library's <code>pub</code> surface, the same view an external consumer has.</li>
+        <li><strong>Doc test</strong> &mdash; a fenced code block inside a doc comment. <code>cargo test</code> compiles and runs it, so a documentation example that stops compiling is a test failure.</li>
+        <li><strong>Property test</strong> &mdash; a <code>proptest!</code> block that generates many inputs and checks one invariant holds for all of them, shrinking any failing case to a minimal reproduction.</li>
+        <li><strong>Differential test</strong> &mdash; assert your new implementation's output against recorded output from the system it is replacing, here the legacy C++ formatter.</li>
+      </ul>
+
+      <h2>Part 2: a unit test beside private code</h2>
+      <div class="code-label">crates/pulsewatch-core/src/probe.rs — append (new private function and its test module)</div>
+      <pre class="large-code"><code>// pulsewatch-core/src/probe.rs
+fn clamp_latency(raw_ms: u64) -&gt; u64 {
+    raw_ms.min(60_000)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn clamp_caps_unreasonable_latency() {
+        assert_eq!(clamp_latency(1_000), 1_000);
+        assert_eq!(clamp_latency(500_000), 60_000);
+    }
+}</code></pre>
+      <p><code>clamp_latency</code> is a private helper; only a unit test compiled into the same crate can call it directly.</p>
+
+      <h2>Part 3: an integration test through the public API only</h2>
+      <div class="code-label">crates/pulsewatch-core/tests/public_api.rs — append (this file already exists from Lesson 7; add this test alongside what is already there)</div>
+      <pre class="large-code"><code>// pulsewatch-core/tests/public_api.rs
+use pulsewatch_core::{FixedProbe, Millis, Probe};
+
+#[test]
+fn fixed_probe_reports_configured_latency() {
+    let mut probe = FixedProbe::new("db-primary", Millis::new(42));
+    let sample = probe.sample();
+    assert_eq!(sample.latency.get(), 42);
+}</code></pre>
+      <p>This file cannot reach <code>clamp_latency</code> even if it tried: <code>tests/public_api.rs</code> is compiled as a separate crate that only sees what <code>pulsewatch-core</code> re-exports. That is exactly the boundary an external caller sees, which is why integration tests catch "it compiles inside the crate but the public API can't actually do this" mistakes that unit tests miss.</p>
+
+      <h2>Part 4: a doc test that is also documentation</h2>
+      <div class="code-label">crates/pulsewatch-core/src/probe.rs — replace the existing struct Millis(u64); line with this doc-commented version</div>
+      <pre class="large-code"><code>/// Wraps a millisecond latency so it cannot be confused with a plain count.
+///
+/// ```
+/// use pulsewatch_core::Millis;
+///
+/// let latency = Millis::new(120);
+/// assert_eq!(latency.get(), 120);
+/// ```
+pub struct Millis(u64);</code></pre>
+      <p>The fenced block compiles and runs under <code>cargo test --doc</code>. A code example here that no longer matches the real API fails the build instead of quietly going stale in a comment.</p>
+
+      <h2>Part 5: a property test for an invariant</h2>
+      <p><code>proptest</code> is a dev-dependency, added once to the library package that owns the tests directory:</p>
+      <div class="code-label">crates/pulsewatch-core/Cargo.toml — append to the existing [dev-dependencies] table (create the table if it is not present yet)</div>
+      <pre class="large-code"><code>proptest = "1"</code></pre>
+      <div class="code-label">crates/pulsewatch-core/tests/property.rs — create</div>
+      <pre class="large-code"><code>// pulsewatch-core/tests/property.rs
+use proptest::prelude::*;
+use pulsewatch_core::Millis;
+
+proptest! {
+    #[test]
+    fn millis_roundtrips_any_value(raw in any::&lt;u64&gt;()) {
+        let latency = Millis::new(raw);
+        prop_assert_eq!(latency.get(), raw);
+    }
+}</code></pre>
+      <p><code>proptest</code> generates hundreds of values for <code>raw</code>, including edge cases like <code>0</code> and <code>u64::MAX</code>, and shrinks any failure to the smallest input that still fails. A handful of hand-picked example tests would not have chosen those edge cases for you.</p>
+
+      <h2>Part 6: a differential test against the legacy C++ output</h2>
+      <div class="code-label">crates/pulsewatch-core/tests/differential.rs — create</div>
+      <pre class="large-code"><code>// pulsewatch-core/tests/differential.rs
+use pulsewatch_core::{Millis, Sample};
+
+// Captured once from the legacy C++ CLI: `pw_legacy --format &lt;source&gt; &lt;ms&gt;`.
+const LEGACY_FIXTURES: &amp;[(&amp;str, u64, &amp;str)] = &amp;[
+    ("db-primary", 4, "db-primary: 004ms"),
+    ("db-primary", 128, "db-primary: 128ms"),
+    ("edge-us-east", 12, "edge-us-east: 012ms"),
+    ("edge-us-east", 9001, "edge-us-east: 9001ms"),
+];
+
+/// Mirrors the legacy CLI's own text formatter, so both sides of the
+/// comparison below are exercising the same field values, not two
+/// independently-invented string layouts.
+fn format_sample(sample: &amp;Sample) -&gt; String {
+    format!("{}: {:03}ms", sample.source, sample.latency.get())
+}
+
+#[test]
+fn matches_legacy_cpp_formatting() {
+    for &amp;(source, ms, expected) in LEGACY_FIXTURES {
+        let sample = Sample { source: source.to_string(), latency: Millis::new(ms) };
+        assert_eq!(format_sample(&amp;sample), expected, "mismatch for {source} at {ms}ms");
+    }
+}</code></pre>
+      <p>The fixture values were recorded once from the legacy tool's own output, including its <code>%03u</code>-style zero padding below 1000ms. <code>format_sample</code> reads <code>Sample</code>'s own <code>source</code> field and calls <code>Millis::get</code> rather than any nonexistent method on <code>Sample</code> itself; Rust's <code>{:03}</code> width-and-zero-pad specifier matches C's <code>%03u</code> without truncating values that are already wider than three digits. A differential test like this proves the new formatter is byte-for-byte compatible on the recorded inputs; it says nothing about inputs nobody captured.</p>
+
+      <h2>Part 7: selecting which tests run, and gating on style</h2>
+      <p>Run every command below from the workspace root:</p>
+      <pre class="large-code"><code>cargo test --lib                 # unit tests only
+cargo test --test public_api     # one integration-test binary
+cargo test --doc                 # doc tests only
+cargo test clamp                 # name-substring filter across all harnesses
+cargo test -- --ignored          # tests marked #[ignore]
+cargo test -- --nocapture        # show println! output even on pass
+
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace
+cargo test --workspace --doc</code></pre>
+      <p><code>cargo fmt --check</code> fails instead of reformatting when style drifts; <code>-D warnings</code> promotes every Clippy lint to a hard error so a merge cannot silently accumulate warnings.</p>
+
+      <h2>Read the Rust: syntax mapped to C++</h2>
+      <table class="comparison-table">
+        <thead><tr><th>Rust</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>#[cfg(test)] mod tests</code></td><td>Compiles this module only for test builds, in the same crate as the code it tests.</td><td>Closest to a friend test fixture compiled only into the test binary, but built into the language.</td></tr>
+          <tr><td><code>tests/*.rs</code></td><td>Each file is its own crate, linking only the library's public API.</td><td>Like a separate test executable that only includes your public headers, not internal ones.</td></tr>
+          <tr><td><code>/// ``` ... ```</code></td><td>A documentation example that is compiled and executed as a test.</td><td>Similar to a Doxygen \code block, except it is not just illustrative &mdash; it must actually run.</td></tr>
+          <tr><td><code>proptest! { ... }</code></td><td>Generates many inputs and checks one property holds, shrinking failures.</td><td>A QuickCheck-style generator, comparable to RapidCheck in C++.</td></tr>
+          <tr><td><code>cargo test &lt;substring&gt;</code></td><td>Filters tests across all harnesses by name substring.</td><td>Similar to ctest -R style test filtering, but by plain substring instead of a regular expression.</td></tr>
+          <tr><td><code>cargo clippy -- -D warnings</code></td><td>Runs the linter and treats every warning as a build failure.</td><td>Comparable to enabling -Werror over a wide extra lint set, like clang-tidy checks promoted to errors.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Worked Pulsewatch increment</h2>
+      <p>The five test kinds above now cover Pulsewatch end to end: a unit test for the private clamping rule, an integration test that only exercises what <code>pulsewatch-core</code> exports, a doc test that keeps <code>Millis</code>'s example honest, a property test for the newtype's round-trip invariant, and a differential test proving the new formatter matches the legacy C++ tool's recorded output. <code>cargo fmt --check</code> and <code>cargo clippy -D warnings</code> gate style and lint issues before any of this even runs.</p>
+
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Stability and production boundary</strong>
+          <p>Passing tests are evidence, not a guarantee: the differential test only covers the four fixture values that were actually captured from the legacy tool, the property test only covers the properties you wrote assertions for, and none of this replaces a real code review. Treat a green CI run as "no known regression," not "correct for all inputs."</p>
+        </div>
+      </div>
+
+      <h2>Active exercise</h2>
+      <ol>
+        <li>In <code>crates/pulsewatch-core/tests/differential.rs</code> (append), add one more entry to <code>LEGACY_FIXTURES</code> for a latency at or above 100000ms, for example <code>("edge-us-east", 100_000, "edge-us-east: 100000ms")</code>.</li>
+        <li>From the workspace root, run <code>cargo test -p pulsewatch-core --test differential</code>. <strong>Expected evidence:</strong> <code>matches_legacy_cpp_formatting</code> still passes with the fifth fixture; if it fails, the failure message names the exact fixture your padding assumption got wrong.</li>
+        <li>In <code>crates/pulsewatch-core/src/probe.rs</code> (replace the <code>#[derive(...)]</code> line above <code>pub struct Millis(u64);</code>), add <code>PartialOrd, Ord</code> to the derive list if either is missing, so it reads <code>#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]</code>.</li>
+        <li>In <code>crates/pulsewatch-core/tests/property.rs</code> (append), add a second property:
+          <pre class="large-code"><code>proptest! {
+    #[test]
+    fn millis_preserves_ordering(a in any::&lt;u64&gt;(), b in any::&lt;u64&gt;()) {
+        prop_assume!(a &lt; b);
+        prop_assert!(Millis::new(a) &lt; Millis::new(b));
+    }
+}</code></pre>
+        </li>
+        <li>From the workspace root, run <code>cargo test -p pulsewatch-core --test property</code>. <strong>Expected evidence:</strong> both <code>millis_roundtrips_any_value</code> and <code>millis_preserves_ordering</code> pass, each reporting 256 generated cases by default.</li>
+        <li>From the workspace root, run these four commands separately and note which test names appear in each one's output: <code>cargo test -p pulsewatch-core --lib</code>, <code>cargo test -p pulsewatch-core --test public_api</code>, <code>cargo test -p pulsewatch-core --doc</code>, <code>cargo test --workspace</code>. <strong>Expected evidence:</strong> <code>--lib</code> lists only <code>clamp_caps_unreasonable_latency</code>; <code>--test public_api</code> lists only <code>fixed_probe_reports_configured_latency</code>; <code>--doc</code> lists only the <code>Millis</code> example; <code>--workspace</code> lists all of the above plus <code>property</code> and <code>differential</code>.</li>
+        <li>From the workspace root, run <code>cargo fmt --all -- --check</code>. <strong>Expected evidence:</strong> exits with no output and status 0; if it reports a diff, run <code>cargo fmt --all</code> (without <code>--check</code>) to apply it, then re-run the check.</li>
+        <li>From the workspace root, run <code>cargo clippy --workspace --all-targets --all-features -- -D warnings</code>. <strong>Expected evidence:</strong> exits with status 0 and no warnings; fix any reported lint at the file and line Clippy names, then re-run the command.</li>
+      </ol>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=18-7NoNPO30">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">15:14 · OPTIONAL</span><h3>Testing in Rust</h3><p>Let's Get Rusty. A focused walkthrough of unit tests, integration tests, and the <code>#[cfg(test)]</code> convention.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=xUH-4y92jPg">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">2:46:40 · OPTIONAL</span><h3>Setting up CI and property testing for a Rust crate</h3><p>Jon Gjengset. A long-form, from-scratch session adding CI and proptest-based property testing to a real crate; skim the property-testing segment if short on time.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the testing overview video, read <a href="https://doc.rust-lang.org/book/ch11-00-testing.html">Writing Automated Tests</a> and work through Parts 2-4 above.</li>
+        <li>Instead of the CI/property-testing stream, read the <a href="https://proptest-rs.github.io/proptest/intro.html">proptest introduction</a> and the property test in Part 5.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why can <code>tests/public_api.rs</code> not call <code>clamp_latency</code> even though it lives in the same workspace?</summary><p><strong>Answer:</strong> Each file under <code>tests/</code> compiles as its own crate that only sees the library's <code>pub</code> surface, the same view an external consumer has; private items are simply not visible from there.</p></details>
+      <details class="quiz"><summary>2. What does the property test in Part 5 check that the unit test in Part 2 does not?</summary><p><strong>Answer:</strong> It checks the round-trip invariant across hundreds of generated <code>u64</code> values, including edge cases like <code>0</code> and <code>u64::MAX</code>, rather than only the handful of values a person chose to write down.</p></details>
+      <details class="quiz"><summary>3. Why run <code>cargo clippy --workspace --all-targets --all-features -- -D warnings</code> in CI instead of just <code>cargo build</code>?</summary><p><strong>Answer:</strong> It runs the linter across every target and feature combination and turns every warning into a build failure, catching issues a plain build would only ever print as a warning that could be ignored.</p></details>
+      <details class="quiz"><summary>4. What does a passing differential test against the legacy fixtures prove, and what does it not prove?</summary><p><strong>Answer:</strong> It proves the new formatter's output is byte-identical to the legacy C++ tool's recorded output for exactly the captured inputs; it says nothing about inputs nobody recorded a fixture for.</p></details>
+
+      <h2>Recap and decision rules</h2>
+<pre class="large-code"><code>Testing one private function/module invariant?  Unit test beside the code
+Testing only the public crate surface?           Integration test under tests/
+Documenting and verifying an example at once?    Doc test
+Checking a property across many generated inputs? proptest
+Comparing against a known-good legacy system?    Differential test with recorded fixtures
+Style/lint gate before merge?                    cargo fmt --check + cargo clippy -D warnings in CI</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/book/ch11-00-testing.html">Writing Automated Tests</a>, The Rust Programming Language, Rust Project. Unit tests, integration tests, and the tests/ directory convention. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch11-02-running-tests.html">Controlling How Tests Are Run</a>, The Rust Programming Language, Rust Project. Test filtering, --ignored, and --nocapture. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/rustdoc/write-documentation/documentation-tests.html">Documentation tests</a>, rustdoc book, Rust Project. How fenced code blocks in doc comments are compiled and run as tests. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/cargo/commands/cargo-test.html">cargo test</a>, Cargo Book, Rust Project. Test binary selection, including --lib, --test, and --doc. Accessed September 17, 2026.</li>
+        <li><a href="https://proptest-rs.github.io/proptest/intro.html">Introduction</a>, proptest Book, proptest-rs maintainers. Property generation and shrinking model. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/clippy/">Clippy Documentation</a>, Clippy, Rust Project. Lint categories and how to deny warnings in CI. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="15-production-service-sqlx.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 15: Production Service with SQLx</span></a>
+        <a href="17-debugging-observability.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 17: Debugging &amp; Observability</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

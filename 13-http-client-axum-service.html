@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTTP Client &amp; Axum — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html" class="active"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 13 · 30 minutes</span>
+      <h1>HTTP Client and Service with reqwest and axum</h1>
+      <p class="lesson-subtitle">Add an HTTP-based probe kind to Pulsewatch with a reusable <code>reqwest::Client</code>, then expose Pulsewatch itself as a small <code>axum</code> service with a JSON check endpoint, middleware, graceful shutdown, and an in-process test.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can configure a shared <code>reqwest::Client</code> with timeouts and a response-size limit, build an <code>axum</code> router with extractors and shared state, serialize responses with <code>serde</code>, layer <code>tower</code> middleware, shut a service down gracefully, and test a handler without binding a real socket.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="5"><td>5 min</td><td>One reusable <code>reqwest::Client</code> with timeouts, status handling, and a body-size cap</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>An <code>axum</code> router: routes, extractors, and shared state</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Serializing JSON responses with <code>serde</code></td></tr>
+          <tr data-minutes="4"><td>4 min</td><td><code>tower</code> middleware layers and graceful shutdown</td></tr>
+          <tr data-minutes="8"><td>8 min</td><td>Exercise: a Pulsewatch check endpoint, tested with <code>oneshot</code></td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">🗂️</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p>This lesson continues the same <code>pulsewatch</code> Cargo workspace as Lessons 11 and 12, including <code>crates/pulsewatch-cli/src/lib.rs</code>, <code>tcp_probe.rs</code>, and <code>async_probe.rs</code>. Change into that workspace before doing anything else in this lesson:</p>
+          <pre class="large-code"><code>cd path/to/pulsewatch</code></pre>
+          <p><code>path/to/pulsewatch</code> is a placeholder for wherever that workspace already sits on your machine — replace it with your actual path. Every command in this lesson runs from that workspace root unless a step states otherwise.</p>
+        </div>
+      </div>
+
+      <h2>Part 1: an HTTP probe needs one reused client, not one per call</h2>
+      <p>Lessons 11 and 12 gave Pulsewatch a raw TCP probe. Many real targets instead expose an HTTP health endpoint such as <code>GET /healthz</code>. <code>reqwest</code> builds on the Tokio runtime from Lesson 12 and gives Pulsewatch a real HTTP client instead of hand-rolling HTTP framing on top of Lesson 11's sockets.</p>
+      <p>This lesson's HTTP and service code builds toward one new file, <code>crates/pulsewatch-cli/src/http_probe.rs</code>, another sibling module of Lesson 11's <code>tcp_probe.rs</code> and Lesson 12's <code>async_probe.rs</code> in the same <code>pulsewatch-cli</code> package. Parts 1 through 3 below are excerpts that explain one function at a time; the exercise in Part 4 gives that file's complete, exact contents to create.</p>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/http_probe.rs</code></strong> (illustrates the reusable client and the bounded chunk-streaming read; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>use std::time::Duration;
+
+pub fn build_http_client() -&gt; reqwest::Result&lt;reqwest::Client&gt; {
+    reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(3))
+        .timeout(Duration::from_secs(5))
+        .pool_max_idle_per_host(8)
+        .build()
+}
+
+pub async fn probe_http(
+    client: &amp;reqwest::Client,
+    url: &amp;str,
+) -&gt; Result&lt;pulsewatch_core::ProbeOutcome, reqwest::Error&gt; {
+    const MAX_BODY_BYTES: usize = 64 * 1024;
+    let started = tokio::time::Instant::now();
+
+    let mut response = client.get(url).send().await?;
+    let status = response.status();
+
+    // Content-Length is only a declared hint, and reqwest's own docs note it
+    // can be absent or stale once a gzipped body is auto-decoded. Rejecting
+    // early on an already-oversized declared length is a cheap optimization,
+    // but it must not be the only guard: a missing, wrong, or chunked-encoded
+    // length would let it through unchecked.
+    if let Some(len) = response.content_length() {
+        if len as usize &gt; MAX_BODY_BYTES {
+            return Ok(pulsewatch_core::ProbeOutcome {
+                target: url.to_string(),
+                success: false,
+                latency_ms: started.elapsed().as_millis(),
+                message: format!("body too large: {len} declared bytes"),
+            });
+        }
+    }
+
+    // The real cap: stream the body one chunk at a time and add each
+    // chunk's length to a running total before buffering it, so an unknown,
+    // chunked-transfer, or decompressed-larger-than-declared body is bounded
+    // by what is actually received, not by what the server claimed.
+    let mut body = Vec::new();
+    while let Some(chunk) = response.chunk().await? {
+        if body.len() + chunk.len() &gt; MAX_BODY_BYTES {
+            return Ok(pulsewatch_core::ProbeOutcome {
+                target: url.to_string(),
+                success: false,
+                latency_ms: started.elapsed().as_millis(),
+                message: format!("body exceeded {MAX_BODY_BYTES} bytes while streaming"),
+            });
+        }
+        body.extend_from_slice(&amp;chunk);
+    }
+
+    let text = String::from_utf8_lossy(&amp;body);
+    Ok(pulsewatch_core::ProbeOutcome {
+        target: url.to_string(),
+        success: status.is_success(),
+        latency_ms: started.elapsed().as_millis(),
+        message: format!("{status}: {text}"),
+    })
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>reqwest::Client::builder()...build()</code></td><td>Configures and constructs one client, expected to be created once and reused (it internally pools connections and DNS caches).</td><td>Comparable to constructing one long-lived <code>curl</code> multi-handle or HTTP session object instead of a fresh handle per request.</td></tr>
+          <tr><td><code>.connect_timeout(...)</code> / <code>.timeout(...)</code></td><td>Separately bounds the connection-establishment phase and the whole request/response round trip.</td><td>Roughly <code>CURLOPT_CONNECTTIMEOUT</code> versus <code>CURLOPT_TIMEOUT</code>.</td></tr>
+          <tr><td><code>response.content_length()</code></td><td>Reads the response's known body length, if any — an early-rejection optimization only; it can be absent, or wrong once a compressed body is auto-decoded, so it is never the only guard.</td><td>Similar to checking a header value before a read, while knowing that header can lie or be missing — never a substitute for bounding the read itself.</td></tr>
+          <tr><td><code>response.chunk().await</code></td><td>Pulls one piece of the response body at a time inside a <code>while let Some(chunk) = ...</code> loop, returning <code>None</code> once the body is exhausted; the caller controls how much it accumulates.</td><td>Comparable to repeated bounded <code>recv()</code> calls on a socket, checking the running total after each one, instead of one unbounded read-to-end.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong>TLS, redirects, and SSRF are the caller's responsibility</strong>
+          <p><code>reqwest</code> defaults to following redirects and validating TLS certificates against the system trust store, both sensible defaults for a monitoring client. But if Pulsewatch's target URLs ever come from user input, an attacker-controlled URL that resolves to an internal address is a server-side request forgery (SSRF) risk: the check runs from inside your network with your service's credentials. Production Pulsewatch would validate and restrict target hosts before ever calling <code>client.get(url)</code>, and would consider capping or disabling redirect following with <a href="https://docs.rs/reqwest/latest/reqwest/struct.ClientBuilder.html"><code>ClientBuilder::redirect</code></a> for targets it does not fully trust.</p>
+        </div>
+      </div>
+
+      <h2>Part 2: axum turns Pulsewatch itself into a small HTTP service</h2>
+      <p>Alongside probing others, Pulsewatch now exposes its own status over HTTP: an operator or another service can ask it what it has observed. <code>axum</code> builds routers out of composable handler functions.</p>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/http_probe.rs</code></strong> (the router and its handlers; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>use axum::{extract::State, routing::get, Json, Router};
+use std::sync::Arc;
+
+#[derive(Clone)]
+struct AppState {
+    http_client: reqwest::Client,
+}
+
+async fn health() -&gt; &amp;'static str {
+    "ok"
+}
+
+async fn check_target(
+    State(state): State&lt;Arc&lt;AppState&gt;&gt;,
+    axum::extract::Path(url): axum::extract::Path&lt;String&gt;,
+) -&gt; Json&lt;pulsewatch_core::ProbeOutcomeDto&gt; {
+    let outcome = probe_http(&amp;state.http_client, &amp;url)
+        .await
+        .unwrap_or_else(|err| pulsewatch_core::ProbeOutcome {
+            target: url.clone(),
+            success: false,
+            latency_ms: 0,
+            message: err.to_string(),
+        });
+    Json(outcome.into())
+}
+
+pub fn build_router(state: Arc&lt;AppState&gt;) -&gt; Router {
+    Router::new()
+        .route("/healthz", get(health))
+        .route("/check/{*url}", get(check_target))
+        .with_state(state)
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>Router::new().route(path, get(handler))</code></td><td>Registers <code>handler</code> for <code>GET</code> requests on <code>path</code>; each handler is an ordinary async function, matched by its parameter types.</td><td>Closer to a declarative route table (as in many C++ REST frameworks built on Boost.Beast) than to manually parsing a request line and dispatching by hand.</td></tr>
+          <tr><td><code>State(state): State&lt;Arc&lt;AppState&gt;&gt;</code></td><td>An <strong>extractor</strong>: axum inspects the handler's parameter types and supplies each one by pulling it out of the request or the shared application state.</td><td>No direct analogue; closest to dependency injection resolved by parameter type at each call, rather than through a constructor.</td></tr>
+          <tr><td><code>axum::extract::Path(url): Path&lt;String&gt;</code></td><td>Extracts the matched wildcard segment of the URL path directly into a typed value.</td><td>Comparable to a route framework binding a URL template capture group to a typed handler parameter.</td></tr>
+          <tr><td><code>Json&lt;pulsewatch_core::ProbeOutcomeDto&gt;</code></td><td>Both an extractor (for request bodies) and a response type; here it serializes the returned value as the JSON response body.</td><td>Similar to a framework's typed response wrapper that sets <code>Content-Type: application/json</code> and serializes automatically.</td></tr>
+          <tr><td><code>.with_state(state)</code></td><td>Attaches shared, cloneable application state so every handler can extract it via <code>State&lt;T&gt;</code>.</td><td>Comparable to storing a shared service-locator object that request handlers can access, but type-checked per handler.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">🧩</span>
+        <div class="callout-content">
+          <strong>Why the DTO instead of returning <code>ProbeOutcome</code> directly?</strong>
+          <p>Pulsewatch's internal <code>ProbeOutcome</code> may gain fields over time that are not meant for external API consumers. A small, explicit <code>ProbeOutcomeDto</code> that implements <code>serde::Serialize</code> keeps the wire format stable and reviewed even as the internal type evolves — a discipline familiar from any service that separates its persistence or domain model from its public API contract.</p>
+        </div>
+      </div>
+
+      <h2>Part 3: JSON with serde, middleware with tower, and graceful shutdown</h2>
+      <p><code>ProbeOutcomeDto</code> is a wire-format type, not internal probe logic, so — like <code>ProbeOutcome</code> in Lesson 11 — it belongs in <code>pulsewatch-core</code>, not in the service module that calls it. <code>check_target</code> above already references it fully qualified as <code>pulsewatch_core::ProbeOutcomeDto</code>, which is only valid Rust if the type truly lives outside the crate that contains <code>check_target</code>.</p>
+      <p><strong>Append to <code>crates/pulsewatch-core/src/outcome.rs</code></strong> (this file already contains <code>ProbeOutcome</code> from Lesson 11; add the following below it, in the same file, in the same module — so the <code>From</code> impl below refers to <code>ProbeOutcome</code> with no crate-name prefix, since it is already in scope in this file):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-core/src/outcome.rs (append)
+use serde::Serialize;
+
+#[derive(Serialize)]
+pub struct ProbeOutcomeDto {
+    pub target: String,
+    pub success: bool,
+    pub latency_ms: u128,
+    pub message: String,
+}
+
+impl From&lt;ProbeOutcome&gt; for ProbeOutcomeDto {
+    fn from(outcome: ProbeOutcome) -&gt; Self {
+        Self {
+            target: outcome.target,
+            success: outcome.success,
+            latency_ms: outcome.latency_ms,
+            message: outcome.message,
+        }
+    }
+}</code></pre>
+      <p><strong>Append to <code>crates/pulsewatch-core/src/lib.rs</code></strong> (add one more re-export next to the existing <code>pub use outcome::ProbeOutcome;</code> line from Lesson 11):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-core/src/lib.rs (append)
+pub use outcome::ProbeOutcomeDto;</code></pre>
+      <p><strong>Append to <code>crates/pulsewatch-core/Cargo.toml</code></strong> under its <code>[dependencies]</code> table (this is the first lesson to add an external dependency to <code>pulsewatch-core</code> itself, since <code>#[derive(Serialize)]</code> is used directly in this crate's own source):</p>
+      <pre class="large-code"><code># crates/pulsewatch-core/Cargo.toml (append under [dependencies])
+serde = { version = "1", features = ["derive"] }</code></pre>
+      <p><code>#[derive(Serialize)]</code> generates the code that walks each field and writes it out through whichever format <code>serde</code> is asked to target; <code>axum::Json</code>, in the service module, asks for the JSON one. No field is written or parsed by hand.</p>
+
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/http_probe.rs</code></strong> (middleware layering and graceful shutdown; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>use tower_http::limit::RequestBodyLimitLayer;
+use tower_http::timeout::TimeoutLayer;
+use std::time::Duration;
+
+pub fn build_router_with_middleware(state: Arc&lt;AppState&gt;) -&gt; Router {
+    build_router(state)
+        .layer(RequestBodyLimitLayer::new(64 * 1024))
+        .layer(TimeoutLayer::new(Duration::from_secs(10)))
+}
+
+pub async fn serve(router: Router, addr: std::net::SocketAddr) -&gt; std::io::Result&lt;()&gt; {
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, router)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+}
+
+async fn shutdown_signal() {
+    tokio::signal::ctrl_c()
+        .await
+        .expect("failed to install Ctrl+C handler");
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>.layer(SomeLayer)</code></td><td>Wraps the whole router in a <code>tower::Service</code> middleware; layers apply to every route registered before the call.</td><td>Comparable to registering a middleware/filter chain in front of a request dispatcher.</td></tr>
+          <tr><td><code>RequestBodyLimitLayer::new(64 * 1024)</code></td><td>Rejects any request whose body (by declared or actual length) exceeds the given byte cap before a handler ever sees it.</td><td>Similar to configuring a maximum request size at a reverse proxy or web server layer rather than trusting each handler to check it.</td></tr>
+          <tr><td><code>axum::serve(listener, router).with_graceful_shutdown(fut)</code></td><td>Serves connections until <code>fut</code> completes, then stops accepting new connections while letting in-flight ones finish.</td><td>Analogous to a signal handler that closes the listening socket and waits for outstanding requests to drain instead of terminating mid-response.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 4: exercise — a tested Pulsewatch check endpoint</h2>
+      <p>This exercise creates the complete <code>http_probe.rs</code> file — combining Parts 1 through 3's excerpts into one router, plus a test using <code>tower::ServiceExt::oneshot</code> to send one request straight into the router without binding a real port — along with its dependencies and a runnable service binary. Work through the numbered steps in order from the workspace root.</p>
+      <ol class="numbered-steps">
+        <li>
+          <strong>Append to <code>crates/pulsewatch-cli/Cargo.toml</code></strong> under its existing <code>[dependencies]</code> table:
+          <pre class="large-code"><code># crates/pulsewatch-cli/Cargo.toml (append under [dependencies])
+reqwest = "0.13"
+axum = "0.8"
+tower = "0.5"
+tower-http = { version = "0.7", features = ["limit", "timeout"] }</code></pre>
+        </li>
+        <li>
+          <strong>Update</strong> the <code>tokio</code> dependency line already added to <code>crates/pulsewatch-cli/Cargo.toml</code> in Lesson 12, adding one feature (<code>"signal"</code>, needed below for <code>tokio::signal::ctrl_c()</code>):
+          <pre class="large-code"><code># crates/pulsewatch-cli/Cargo.toml (replace the Lesson 12 tokio line with this one)
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync", "signal"] }</code></pre>
+        </li>
+        <li>
+          <strong>Append to <code>crates/pulsewatch-cli/src/lib.rs</code></strong> (this file already has <code>pub mod tcp_probe;</code> and <code>pub mod async_probe;</code> from Lessons 11 and 12; add one more line below them):
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/lib.rs (append)
+pub mod http_probe;</code></pre>
+        </li>
+        <li>
+          <strong>Create <code>crates/pulsewatch-cli/src/http_probe.rs</code></strong> with exactly this content:
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/http_probe.rs
+use axum::{extract::State, routing::get, Json, Router};
+use std::sync::Arc;
+use std::time::Duration;
+use tower_http::limit::RequestBodyLimitLayer;
+use tower_http::timeout::TimeoutLayer;
+
+pub fn build_http_client() -&gt; reqwest::Result&lt;reqwest::Client&gt; {
+    reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(3))
+        .timeout(Duration::from_secs(5))
+        .pool_max_idle_per_host(8)
+        .build()
+}
+
+pub async fn probe_http(
+    client: &amp;reqwest::Client,
+    url: &amp;str,
+) -&gt; Result&lt;pulsewatch_core::ProbeOutcome, reqwest::Error&gt; {
+    const MAX_BODY_BYTES: usize = 64 * 1024;
+    let started = tokio::time::Instant::now();
+
+    let mut response = client.get(url).send().await?;
+    let status = response.status();
+
+    if let Some(len) = response.content_length() {
+        if len as usize &gt; MAX_BODY_BYTES {
+            return Ok(pulsewatch_core::ProbeOutcome {
+                target: url.to_string(),
+                success: false,
+                latency_ms: started.elapsed().as_millis(),
+                message: format!("body too large: {len} declared bytes"),
+            });
+        }
+    }
+
+    let mut body = Vec::new();
+    while let Some(chunk) = response.chunk().await? {
+        if body.len() + chunk.len() &gt; MAX_BODY_BYTES {
+            return Ok(pulsewatch_core::ProbeOutcome {
+                target: url.to_string(),
+                success: false,
+                latency_ms: started.elapsed().as_millis(),
+                message: format!("body exceeded {MAX_BODY_BYTES} bytes while streaming"),
+            });
+        }
+        body.extend_from_slice(&amp;chunk);
+    }
+
+    let text = String::from_utf8_lossy(&amp;body);
+    Ok(pulsewatch_core::ProbeOutcome {
+        target: url.to_string(),
+        success: status.is_success(),
+        latency_ms: started.elapsed().as_millis(),
+        message: format!("{status}: {text}"),
+    })
+}
+
+#[derive(Clone)]
+pub struct AppState {
+    pub http_client: reqwest::Client,
+}
+
+async fn health() -&gt; &amp;'static str {
+    "ok"
+}
+
+async fn check_target(
+    State(state): State&lt;Arc&lt;AppState&gt;&gt;,
+    axum::extract::Path(url): axum::extract::Path&lt;String&gt;,
+) -&gt; Json&lt;pulsewatch_core::ProbeOutcomeDto&gt; {
+    let outcome = probe_http(&amp;state.http_client, &amp;url)
+        .await
+        .unwrap_or_else(|err| pulsewatch_core::ProbeOutcome {
+            target: url.clone(),
+            success: false,
+            latency_ms: 0,
+            message: err.to_string(),
+        });
+    Json(outcome.into())
+}
+
+pub fn build_router(state: Arc&lt;AppState&gt;) -&gt; Router {
+    Router::new()
+        .route("/healthz", get(health))
+        .route("/check/{*url}", get(check_target))
+        .with_state(state)
+}
+
+pub fn build_router_with_middleware(state: Arc&lt;AppState&gt;) -&gt; Router {
+    build_router(state)
+        .layer(RequestBodyLimitLayer::new(64 * 1024))
+        .layer(TimeoutLayer::new(Duration::from_secs(10)))
+}
+
+pub async fn serve(router: Router, addr: std::net::SocketAddr) -&gt; std::io::Result&lt;()&gt; {
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, router)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+}
+
+async fn shutdown_signal() {
+    tokio::signal::ctrl_c()
+        .await
+        .expect("failed to install Ctrl+C handler");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use tower::ServiceExt;
+
+    #[tokio::test]
+    async fn healthz_returns_ok() {
+        let state = Arc::new(AppState { http_client: build_http_client().unwrap() });
+        let router = build_router(state);
+
+        let response = router
+            .oneshot(Request::builder().uri("/healthz").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+}</code></pre>
+          <table class="comparison-table">
+            <thead><tr><th>New line</th><th>Why it exists</th></tr></thead>
+            <tbody>
+              <tr><td><code>tower::ServiceExt::oneshot</code></td><td>Sends exactly one request into the router's <code>Service</code> implementation and returns its response, with no listening socket, no TCP connection, and no external process involved.</td></tr>
+              <tr><td><code>Request::builder().uri(...).body(Body::empty())</code></td><td>Builds an in-memory HTTP request value directly, mirroring how a real client's request would be shaped once it reaches the router.</td></tr>
+              <tr><td><code>#[tokio::test]</code></td><td>Runs the async test body on a Tokio runtime, since both the router and the client type used inside <code>AppState</code> require one.</td></tr>
+            </tbody>
+          </table>
+        </li>
+        <li>
+          <strong>Create <code>crates/pulsewatch-cli/src/bin/pulsewatch-service.rs</code></strong> (new file; parses <code>--addr HOST:PORT</code>, defaulting to <code>127.0.0.1:8080</code>):
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/bin/pulsewatch-service.rs
+use std::sync::Arc;
+
+#[tokio::main]
+async fn main() {
+    let args: Vec&lt;String&gt; = std::env::args().collect();
+    let addr: std::net::SocketAddr = args
+        .iter()
+        .position(|a| a == "--addr")
+        .and_then(|i| args.get(i + 1))
+        .cloned()
+        .unwrap_or_else(|| "127.0.0.1:8080".to_string())
+        .parse()
+        .expect("--addr must be HOST:PORT");
+
+    let state = Arc::new(pulsewatch_cli::http_probe::AppState {
+        http_client: pulsewatch_cli::http_probe::build_http_client().expect("build http client"),
+    });
+    let router = pulsewatch_cli::http_probe::build_router_with_middleware(state);
+
+    pulsewatch_cli::http_probe::serve(router, addr)
+        .await
+        .expect("service exited with an error");
+}</code></pre>
+        </li>
+        <li>
+          Run, from the workspace root: <code>cargo fmt --check</code><br>
+          <strong>Expected evidence:</strong> the command exits with status 0 and prints nothing.
+        </li>
+        <li>
+          Run, from the workspace root: <code>cargo test -p pulsewatch-cli healthz_returns_ok</code><br>
+          <strong>Expected evidence:</strong> output includes <code>test http_probe::tests::healthz_returns_ok ... ok</code>; the request never opens a listening socket.
+        </li>
+        <li>
+          In one terminal, from the workspace root, run: <code>cargo run --bin pulsewatch-service -- --addr 127.0.0.1:8080</code><br>
+          <strong>Expected evidence:</strong> the terminal keeps running with no output yet (it only prints on error).
+        </li>
+        <li>
+          In a second terminal, run: <code>curl http://127.0.0.1:8080/healthz</code><br>
+          <strong>Expected evidence:</strong> the response body is exactly <code>ok</code>.
+        </li>
+        <li>
+          With a Lesson 11 or 12 probe server still running on, for example, <code>127.0.0.1:7878</code>, run: <code>curl http://127.0.0.1:8080/check/http%3A%2F%2F127.0.0.1%3A7878%2F</code><br>
+          <strong>Expected evidence:</strong> a JSON body matching <code>ProbeOutcomeDto</code>'s fields (<code>target</code>, <code>success</code>, <code>latency_ms</code>, <code>message</code>) prints, since a plain TCP line-protocol server does not speak HTTP, expect <code>success</code> to be <code>false</code> with a connection-level <code>message</code> — this is expected evidence that the body-limit and error-handling path works, not a failure of the exercise itself.
+        </li>
+        <li>
+          In the first terminal, press <code>Ctrl+C</code>.<br>
+          <strong>Expected evidence:</strong> the process exits only after any in-flight request finishes, rather than terminating immediately.
+        </li>
+      </ol>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://media.ccc.de/v/froscon2023-2867-writing_a_link_checker_in_rust_in_a_weekend_plus_two_years">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">54 min · CONFERENCE TALK</span><h3>Writing a link checker in Rust in a weekend (plus two years)</h3><p>Matthias Endler, FrOSCon 2023 (media.ccc.de). Building and hardening a real HTTP client tool in Rust, including the timeout, retry, and error-handling decisions this lesson's <code>reqwest</code> client mirrors.</p></div>
+        </a>
+        <a class="video-card" href="https://media.ccc.de/v/rustfest18-2-rustls_modern_faster_safer_tls">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">34 min · CONFERENCE TALK</span><h3>rustls: modern, faster, safer TLS</h3><p>Joe Birr-Pixton, RustFest 2018 Paris (media.ccc.de). <code>reqwest</code>'s HTTPS support is built on exactly this kind of audited TLS stack rather than a hand-rolled one, the same boundary Lesson 11 drew around raw sockets.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the link-checker talk, read the <a href="https://docs.rs/reqwest/latest/reqwest/">reqwest</a> crate documentation's client configuration and error-handling sections.</li>
+        <li>Instead of the TLS talk, read <a href="https://docs.rs/reqwest/latest/reqwest/struct.ClientBuilder.html">ClientBuilder</a>'s notes on redirect policy and TLS configuration.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why build one <code>reqwest::Client</code> and share it, instead of constructing a new client per probe?</summary><p><strong>Answer:</strong> A <code>Client</code> owns pooled connections and cached DNS lookups; reusing it lets subsequent requests to the same host skip a fresh TCP and TLS handshake. Constructing a new client per call throws that pooling away and adds latency and resource churn to every probe.</p></details>
+      <details class="quiz"><summary>2. What determines which parts of an incoming request an axum handler parameter receives?</summary><p><strong>Answer:</strong> Each parameter's type is an extractor axum knows how to construct from the request or the router's shared state — for example, <code>State&lt;T&gt;</code> pulls shared application state, and <code>Path&lt;String&gt;</code> pulls a matched URL segment. The handler's signature declares what it needs; axum wires it up.</p></details>
+      <details class="quiz"><summary>3. Why does this lesson stream the body in a <code>chunk()</code> loop instead of trusting <code>content_length()</code> alone before calling <code>response.text().await</code>?</summary><p><strong>Answer:</strong> <code>Content-Length</code> is only a declared hint: it can be missing, wrong, or bypassed entirely by chunked transfer encoding or a compressed body that expands on decode. Checking it first is a cheap optimization for the common case, but only adding each chunk's length to a running total and erroring once it crosses the cap — before the bytes are appended to the buffer — actually bounds memory use regardless of what the server declared or how the body was framed.</p></details>
+      <details class="quiz"><summary>4. What does <code>with_graceful_shutdown</code> actually change about how the service stops?</summary><p><strong>Answer:</strong> Without it, stopping the process (or dropping the listener) can cut off in-flight requests mid-response. With it, the server stops accepting new connections once the shutdown future completes but continues serving requests already in progress until they finish.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Calling out to other services over HTTP?         Build one reqwest::Client, reuse it
+Bound the request/connect time?                    ClientBuilder::timeout / connect_timeout
+Body size cannot be trusted?                        Stream chunk() and check a running total, not just content_length
+Target host comes from user input?                  Validate/restrict it; watch for SSRF
+Exposing your own HTTP API?                          axum::Router with typed extractors
+Need shared config/clients in handlers?              .with_state(Arc&lt;AppState&gt;)
+Cross-cutting request handling (limits, timeouts)?   tower_http layers via .layer(...)
+Testing a handler without a real socket?             tower::ServiceExt::oneshot
+Stopping without dropping in-flight requests?        axum::serve(...).with_graceful_shutdown(...)</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://docs.rs/reqwest/latest/reqwest/">reqwest</a>, crate documentation, docs.rs. HTTP client configuration, timeouts, and response handling. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/reqwest/latest/reqwest/struct.ClientBuilder.html">ClientBuilder</a>, reqwest API documentation, docs.rs. Timeout, redirect, and connection-pool configuration. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/axum/latest/axum/">axum</a>, crate documentation, docs.rs. Routers, extractors, and shared state. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/axum/latest/axum/extract/struct.State.html">State</a>, axum API documentation, docs.rs. Sharing application state with handlers. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/axum/latest/axum/serve/fn.serve.html">serve</a>, axum API documentation, docs.rs. Running a router and attaching graceful shutdown. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tower/latest/tower/">tower</a>, crate documentation, docs.rs. The <code>Service</code> abstraction and middleware layering. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tower/latest/tower/trait.ServiceExt.html">ServiceExt</a>, tower API documentation, docs.rs. The <code>oneshot</code> method used for in-process handler testing. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/tower-http/latest/tower_http/limit/index.html">tower_http::limit</a>, tower-http API documentation, docs.rs. Rejecting oversized request bodies before they reach a handler. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/serde_json/latest/serde_json/">serde_json</a>, crate documentation, docs.rs. JSON serialization used by axum's <code>Json</code> extractor and response type. Accessed September 17, 2026.</li>
+        <li><a href="https://media.ccc.de/v/froscon2023-2867-writing_a_link_checker_in_rust_in_a_weekend_plus_two_years">Writing a link checker in Rust in a weekend (plus two years)</a>, Matthias Endler, FrOSCon 2023 (media.ccc.de), 54 min. Accessed September 17, 2026.</li>
+        <li><a href="https://media.ccc.de/v/rustfest18-2-rustls_modern_faster_safer_tls">rustls: modern, faster, safer TLS</a>, Joe Birr-Pixton, RustFest 2018 Paris (media.ccc.de), 34 min. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="12-async-rust-tokio.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 12: Async Rust &amp; Tokio</span></a>
+        <a href="14-sqlite-rusqlite.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 14: SQLite with rusqlite</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Pointers, Interior Mutability, and Unsafe Boundaries — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html" class="active"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 8 · 30 minutes</span>
+      <h1>Smart Pointers, Interior Mutability, and Unsafe Boundaries</h1>
+      <p class="lesson-subtitle">Choose Pulsewatch's ownership wrappers by invariant instead of habit, break a parent/child reference cycle with <code>Weak</code>, and isolate one small, documented <code>unsafe</code> operation behind a safe wrapper.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can choose among <code>Box</code>, <code>Rc</code>, <code>Weak</code>, <code>Arc</code>, <code>Cow</code>, <code>Cell</code>, and <code>RefCell</code> by the invariant each one states; break an ownership cycle with <code>Weak</code>; and explain what a minimal safe wrapper over a raw pointer must document and check, including why Miri is dynamic checking rather than proof.
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">📁</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p><strong>Starting state:</strong> the <code>pulsewatch</code> workspace exactly as Lesson 7's exercise left it — <code>crates/pulsewatch-core/src/lib.rs</code> and <code>src/probe.rs</code>, <code>crates/pulsewatch-core/tests/public_api.rs</code>, and <code>crates/pulsewatch-cli/src/main.rs</code> all in place, with no leftover temporary lines. <strong>Working directory:</strong> <code>cd path/to/pulsewatch</code> — the folder you created in Lesson 7. Unless a step says otherwise, every command below runs from that <code>pulsewatch/</code> workspace root. This lesson creates four new files inside <code>crates/pulsewatch-core/src/</code> — <code>alert_group.rs</code>, <code>hit_counter.rs</code>, <code>label.rs</code>, and <code>unsafe_probe.rs</code> — and edits <code>lib.rs</code> to declare and re-export them.</p>
+        </div>
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="5"><td>5 min</td><td>Map pointer types to the ownership and mutation invariant each one states</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Use <code>Rc</code> and <code>Weak</code> to break a parent/child cycle</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Use <code>Cow</code>, <code>Cell</code>, and <code>RefCell</code>; place <code>UnsafeCell</code> beneath them</td></tr>
+          <tr data-minutes="7"><td>7 min</td><td>Build and audit one minimal unsafe raw-pointer wrapper</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Exercise: verify no cycle and confirm buffer-safety invariants with tests</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: "smart pointer" is not one hierarchy</h2>
+      <p>C++ tends to group <code>unique_ptr</code>, <code>shared_ptr</code>, and <code>weak_ptr</code> together as one family with one mental model. Rust's pointer types state different, incompatible invariants, and picking the wrong one is a design error the compiler will not always catch for you:</p>
+      <table class="comparison-table">
+        <thead><tr><th>Type</th><th>Ownership and mutation invariant</th><th>C++ bridge</th><th>Threads?</th></tr></thead>
+        <tbody>
+          <tr><td><code>Box&lt;T&gt;</code></td><td>Exactly one owner of a heap-allocated <code>T</code>.</td><td><code>std::unique_ptr&lt;T&gt;</code></td><td>If <code>T</code> is safe to send</td></tr>
+          <tr><td><code>Rc&lt;T&gt;</code></td><td>Shared ownership on one thread; a non-atomic strong count.</td><td>A <code>shared_ptr</code>-like handle restricted to one thread</td><td>No</td></tr>
+          <tr><td><code>Weak&lt;T&gt;</code></td><td>Observes an <code>Rc</code>/<code>Arc</code> value without owning it or keeping it alive.</td><td><code>std::weak_ptr&lt;T&gt;</code></td><td>Matches whichever of <code>Rc</code>/<code>Arc</code> it observes</td></tr>
+          <tr><td><code>Arc&lt;T&gt;</code></td><td>Shared ownership using an atomically updated strong count.</td><td><code>std::shared_ptr&lt;T&gt;</code> with an atomic control block</td><td>Only if <code>T</code> is thread-safe</td></tr>
+          <tr><td><code>Cow&lt;'a, T&gt;</code></td><td>Borrows until a mutation is needed, then clones into an owned value.</td><td>No direct equivalent; closer to a <code>string_view</code> that can promote itself to <code>std::string</code> on demand</td><td>If <code>T</code> is safe to send</td></tr>
+        </tbody>
+      </table>
+      <p><code>Rc</code> and <code>Arc</code> look similar and are not interchangeable: <code>Rc</code>'s reference count is a plain integer update, so <code>Rc&lt;T&gt;</code> is neither <code>Send</code> nor <code>Sync</code>. <code>Arc</code> pays for an atomic increment on every clone so that sharing the ownership count itself is safe across threads.</p>
+
+      <h2>Part 2: cycles are a logical leak, not a memory-safety hole</h2>
+      <p>A parent that strongly owns its children, where each child also strongly owns its parent, never reaches a strong count of zero. Nothing in that cycle is ever freed. This is a resource leak, not undefined behavior, but it is still a real production bug. Pulsewatch groups alerts into a tree; each group needs to reach its parent without keeping it alive:</p>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/alert_group.rs</code> — create.</p>
+      <pre class="large-code"><code>use std::cell::RefCell;
+use std::rc::{Rc, Weak};
+
+pub struct AlertGroup {
+    pub name: String,
+    parent: RefCell&lt;Weak&lt;AlertGroup&gt;&gt;,
+    children: RefCell&lt;Vec&lt;Rc&lt;AlertGroup&gt;&gt;&gt;,
+}
+
+impl AlertGroup {
+    pub fn new(name: impl Into&lt;String&gt;) -&gt; Rc&lt;Self&gt; {
+        Rc::new(Self {
+            name: name.into(),
+            parent: RefCell::new(Weak::new()),
+            children: RefCell::new(Vec::new()),
+        })
+    }
+
+    pub fn add_child(parent: &amp;Rc&lt;Self&gt;, child: Rc&lt;Self&gt;) {
+        *child.parent.borrow_mut() = Rc::downgrade(parent);
+        parent.children.borrow_mut().push(child);
+    }
+
+    pub fn parent(&amp;self) -&gt; Option&lt;Rc&lt;Self&gt;&gt; {
+        self.parent.borrow().upgrade()
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>New syntax</th><th>Why it exists</th></tr></thead>
+        <tbody>
+          <tr><td><code>RefCell&lt;Weak&lt;AlertGroup&gt;&gt;</code></td><td>The parent link must be replaceable after construction, so it needs interior mutability; the link itself is a non-owning <code>Weak</code>.</td></tr>
+          <tr><td><code>Rc::downgrade(parent)</code></td><td>Creates a <code>Weak</code> observer from an existing <code>Rc</code> without incrementing the strong count.</td></tr>
+          <tr><td><code>self.parent.borrow().upgrade()</code></td><td><code>upgrade()</code> tries to produce a strong <code>Rc</code> and returns <code>Option::None</code> if every strong owner has already been dropped.</td></tr>
+        </tbody>
+      </table>
+      <p>Every group keeps its children alive strongly through <code>Vec&lt;Rc&lt;AlertGroup&gt;&gt;</code>. Every child observes its parent weakly. Dropping the top-level <code>Rc</code> now actually frees the tree instead of leaking it.</p>
+
+      <h2>Part 3: interior mutability means checked mutation through a shared reference</h2>
+      <p><code>Cell&lt;T&gt;</code> and <code>RefCell&lt;T&gt;</code> let a method that only borrows <code>&amp;self</code> still mutate a field. Neither is thread-safe; both are single-threaded tools layered over one core primitive:</p>
+      <table class="comparison-table">
+        <thead><tr><th>Type</th><th>Rule enforced</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>Cell&lt;T&gt;</code></td><td>Whole-value get/set/replace for small, usually <code>Copy</code> values; never hands out a reference into the value.</td><td>No direct equivalent; closer to an atomic-free, single-threaded value slot.</td></tr>
+          <tr><td><code>RefCell&lt;T&gt;</code></td><td>Runtime-checked borrowing: many shared borrows, or exactly one exclusive borrow, never both at once. Violating this panics instead of compiling.</td><td>The single-threaded analogue of a checked lock: no compile-time enforcement, but a checked runtime rule instead of silent aliasing.</td></tr>
+          <tr><td><code>UnsafeCell&lt;T&gt;</code></td><td>The primitive that makes interior mutation possible at all. It carries no rule of its own; <code>Cell</code>, <code>RefCell</code>, and every synchronization type are built on top of it.</td><td>Closest to the raw <code>mutable</code> keyword's effect, without any policy attached.</td></tr>
+        </tbody>
+      </table>
+      <p>Pulsewatch uses <code>Cell</code> for a lightweight per-probe hit counter that many holders of a shared reference can update:</p>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/hit_counter.rs</code> — create.</p>
+      <pre class="large-code"><code>use std::cell::Cell;
+
+pub struct HitCounter {
+    hits: Cell&lt;u32&gt;,
+}
+
+impl HitCounter {
+    pub fn new() -&gt; Self {
+        Self { hits: Cell::new(0) }
+    }
+
+    pub fn record(&amp;self) {
+        self.hits.set(self.hits.get() + 1);
+    }
+
+    pub fn total(&amp;self) -&gt; u32 {
+        self.hits.get()
+    }
+}</code></pre>
+      <p><code>record</code> only borrows <code>&amp;self</code>, yet it mutates <code>hits</code>. That is interior mutability: the exterior borrow is shared, the interior state still changes.</p>
+      <p><code>RefCell</code> is for values too large or too structured to copy in and out on every access, such as <code>AlertGroup</code>'s children list above. Its runtime rule can be violated, and violating it panics rather than compiling:</p>
+      <p><em>Conceptual example — not part of the <code>pulsewatch-core</code> crate. It is a standalone illustration; the Active exercise below shows how to observe the same panic inside the CLI.</em></p>
+      <div class="code-compare">
+        <div>
+          <div class="code-label bad">Panics: already borrowed</div>
+          <pre><code>use std::cell::RefCell;
+
+let values = RefCell::new(vec![Millis::new(4)]);
+let _read_guard = values.borrow();
+values.borrow_mut().push(Millis::new(9));
+// panics: already borrowed: BorrowMutError</code></pre>
+        </div>
+        <div>
+          <div class="code-label good">Scope each borrow to one statement</div>
+          <pre><code>use std::cell::RefCell;
+
+let values = RefCell::new(vec![Millis::new(4)]);
+{
+    let read_guard = values.borrow();
+    println!("first: {:?}", read_guard.first());
+}
+values.borrow_mut().push(Millis::new(9));</code></pre>
+        </div>
+      </div>
+      <p>The left block keeps <code>_read_guard</code> alive while requesting an exclusive borrow on the next line; <code>RefCell</code> catches that at runtime instead of allowing the aliasing violation. The same discipline applies inside <code>AlertGroup::add_child</code>: each <code>borrow_mut()</code> call is a single, short-lived statement.</p>
+      <p>Not every borrowed string needs an owned copy. <code>Cow&lt;'a, str&gt;</code> ("clone on write") borrows when possible and only allocates when a value must actually change:</p>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/label.rs</code> — create.</p>
+      <pre class="large-code"><code>use std::borrow::Cow;
+
+pub fn normalize_label(label: &amp;str) -&gt; Cow&lt;'_, str&gt; {
+    if label.chars().all(|c| c.is_ascii_lowercase() || c == '-') {
+        Cow::Borrowed(label)
+    } else {
+        Cow::Owned(label.to_ascii_lowercase().replace(' ', "-"))
+    }
+}</code></pre>
+      <p>A label already written as <code>cpu-load</code> costs nothing extra; a label like <code>"CPU Load"</code> allocates exactly once to produce the normalized owned version.</p>
+
+      <h2>Part 4: one minimal, audited unsafe boundary</h2>
+      <p>Pulsewatch occasionally ingests a byte buffer handed over by a legacy native probe as a raw pointer and length. The safe wrapper accepts that shape only at this one edge, checks everything it can, and never invents ownership over memory it does not control:</p>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/unsafe_probe.rs</code> — create.</p>
+      <pre class="large-code"><code>#[derive(Debug, PartialEq, Eq)]
+pub enum BufferError {
+    NullWithData,
+}
+
+/// # Safety
+/// For a nonzero `len`, `ptr` must point to `len` initialized, readable
+/// bytes for the duration of this call. This function does not take
+/// ownership of, or free, the pointed-to memory.
+pub unsafe fn copy_probe_bytes(ptr: *const u8, len: usize) -&gt; Result&lt;Vec&lt;u8&gt;, BufferError&gt; {
+    if len == 0 {
+        return Ok(Vec::new());
+    }
+    if ptr.is_null() {
+        return Err(BufferError::NullWithData);
+    }
+    // SAFETY: `len` is nonzero, `ptr` was just checked non-null, and the
+    // caller's documented contract guarantees `len` readable initialized bytes.
+    let view = unsafe { std::slice::from_raw_parts(ptr, len) };
+    Ok(view.to_vec())
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>New syntax</th><th>Meaning for a C++ programmer</th></tr></thead>
+        <tbody>
+          <tr><td><code>*const u8</code></td><td>A raw pointer: it may be null, may dangle, and is never automatically dereferenced. Closest to a bare <code>const unsigned char*</code> with no attached lifetime.</td></tr>
+          <tr><td><code>/// # Safety</code></td><td>A documentation convention, not a compiler-checked contract: it states the obligations a caller of an <code>unsafe fn</code> must uphold.</td></tr>
+          <tr><td><code>pub unsafe fn ...</code></td><td>Marks the function itself as carrying unchecked preconditions. In current Rust editions, the function body still must wrap any actual unsafe operation in its own <code>unsafe { ... }</code> block.</td></tr>
+          <tr><td><code>std::slice::from_raw_parts</code></td><td>Builds a borrowed view over raw memory with no validation. Every precondition &mdash; non-null, aligned, readable, initialized, and not concurrently mutated &mdash; is the caller's responsibility.</td></tr>
+          <tr><td><code>view.to_vec()</code></td><td>Copies the bytes into an owned, safe <code>Vec&lt;u8&gt;</code> immediately, so nothing downstream needs to reason about raw-pointer lifetime rules.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Stability and production boundary</strong>
+          <p>Every container in Parts 1–3 is stable Rust. Miri is a dynamic interpreter, normally run through a nightly toolchain component, that can detect many classes of undefined behavior on the exact paths a test exercises. It is not a proof that unsafe code is correct: a path Miri never executes is a path it never checked. Raw-pointer preconditions remain the caller's obligation regardless of how many tests currently pass.</p>
+        </div>
+      </div>
+
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/lib.rs</code> — replace with the full file below (adds this lesson's four modules to Lesson 7's file).</p>
+      <pre class="large-code"><code>// crates/pulsewatch-core/src/lib.rs
+mod probe;
+mod alert_group;
+mod hit_counter;
+mod label;
+mod unsafe_probe;
+
+pub use probe::{FixedProbe, Millis, Probe, Sample};
+pub use alert_group::AlertGroup;
+pub use hit_counter::HitCounter;
+pub use label::normalize_label;
+pub use unsafe_probe::{copy_probe_bytes, BufferError};</code></pre>
+
+      <h2>Active exercise</h2>
+      <ol>
+        <li>Create <code>crates/pulsewatch-core/src/alert_group.rs</code>, <code>src/hit_counter.rs</code>, <code>src/label.rs</code>, and <code>src/unsafe_probe.rs</code> with the Part 2–4 listings above, in that order.</li>
+        <li>Replace <code>crates/pulsewatch-core/src/lib.rs</code> with the listing directly above this exercise.</li>
+        <li>Append this test module to <code>crates/pulsewatch-core/src/unsafe_probe.rs</code>:
+          <pre class="large-code"><code>#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn zero_length_returns_an_empty_vec() {
+        let result = unsafe { copy_probe_bytes(std::ptr::null(), 0) };
+        assert_eq!(result, Ok(Vec::new()));
+    }
+
+    #[test]
+    fn null_pointer_with_nonzero_length_is_rejected() {
+        let result = unsafe { copy_probe_bytes(std::ptr::null(), 4) };
+        assert_eq!(result, Err(BufferError::NullWithData));
+    }
+
+    #[test]
+    fn a_real_buffer_is_copied_correctly() {
+        let bytes = [1u8, 2, 3, 4];
+        // SAFETY: `bytes` is a live, initialized, 4-byte local array for
+        // the entire duration of this call.
+        let result = unsafe { copy_probe_bytes(bytes.as_ptr(), bytes.len()) };
+        assert_eq!(result, Ok(vec![1, 2, 3, 4]));
+    }
+}</code></pre>
+        </li>
+        <li>Append this test module to <code>crates/pulsewatch-core/src/alert_group.rs</code>:
+          <pre class="large-code"><code>#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn child_loses_its_parent_link_after_the_parent_is_dropped() {
+        let parent = AlertGroup::new("root");
+        let child = AlertGroup::new("leaf");
+        AlertGroup::add_child(&amp;parent, Rc::clone(&amp;child));
+
+        assert!(child.parent().is_some());
+        drop(parent);
+        assert!(child.parent().is_none());
+    }
+}</code></pre>
+        </li>
+        <li>From <code>pulsewatch/</code> (the workspace root), run <code>cargo test -p pulsewatch-core</code>. Expected output: two test binaries reported — the library unit tests pass with <code>test result: ok. 5 passed</code> (Lesson 7's <code>fixed_probe_reports_configured_latency</code> plus this lesson's three buffer tests and one ownership test), and the <code>public_api</code> integration test passes with <code>test result: ok. 1 passed</code>.</li>
+        <li>(Optional) If a nightly toolchain with the Miri component is installed, from <code>pulsewatch/</code> run <code>cargo +nightly miri test -p pulsewatch-core</code>. Expected output: the same tests pass under Miri's interpreter, which additionally checks the <code>copy_probe_bytes</code> path for undefined behavior on every executed input. If Miri is not installed, skip this step and note in your own words which invariant in <code>copy_probe_bytes</code> Miri would have exercised (that <code>ptr</code> genuinely points to <code>len</code> readable, initialized bytes).</li>
+        <li>(Optional) To see the <code>RefCell</code> panic from Part 3 actually run: temporarily replace the body of <code>fn main</code> in <code>crates/pulsewatch-cli/src/main.rs</code> with the "Panics" listing from Part 3 — <code>Millis</code> resolves correctly there because <code>main.rs</code> already imports it via <code>use pulsewatch_core::{FixedProbe, Millis, Probe};</code>. From <code>pulsewatch/</code>, run <code>cargo run -p pulsewatch-cli</code>. Expected output: the program panics with a message containing <code>already borrowed: BorrowMutError</code>. Afterward, restore <code>main.rs</code> to the Lesson 7 Part 3 listing so later lessons build on the working CLI.</li>
+      </ol>
+      <p><strong>Expected evidence:</strong> <code>cargo test -p pulsewatch-core</code> passes with 5 unit tests and 1 integration test as described in step 5, including the rejected-null buffer case; the ownership test shows <code>child.parent()</code> flipping from <code>Some</code> to <code>None</code> after the parent is dropped, with no leaked cycle; and the only unchecked operation anywhere in the crate is the single documented <code>from_raw_parts</code> call inside <code>copy_probe_bytes</code>.</p>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=8O0Nt9qY_vo">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">2:03:04 · ADVANCED</span><h3>Crust of Rust: Smart Pointers and Interior Mutability</h3><p>Jon Gjengset. A deep, live-coded walkthrough of Box, Rc, RefCell, Cell, and Cow internals.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=9E2v8pCUc48">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">15:26 · INTERMEDIATE</span><h3>Writing Unsafe Rust</h3><p>Let's Get Rusty. A focused introduction to unsafe blocks, raw pointers, and safety obligations.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=9A8ZeDIStAs">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">24:40 · ADVANCED</span><h3>Miri: Practical Undefined Behavior Detection for Rust</h3><p>ACM SIGPLAN (POPL 2026 conference talk). Explains what Miri checks dynamically and what it cannot guarantee.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the smart-pointers video, read <a href="https://doc.rust-lang.org/book/ch15-00-smart-pointers.html">Smart Pointers</a> and work through the <code>AlertGroup</code> cycle example in Part 2 by hand.</li>
+        <li>Instead of the Miri talk, read the <a href="https://github.com/rust-lang/miri">Miri</a> project README and re-read the stability callout above before running the exercise.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why can <code>Rc&lt;T&gt;</code> not be sent to a worker thread the way <code>Arc&lt;T&gt;</code> can?</summary><p><strong>Answer:</strong> <code>Rc</code>'s strong count is a plain, non-atomic update, so <code>Rc&lt;T&gt;</code> is neither <code>Send</code> nor <code>Sync</code>. <code>Arc</code> pays for an atomic count specifically so sharing ownership across threads is safe.</p></details>
+      <details class="quiz"><summary>2. In the <code>AlertGroup</code> tree, which link is <code>Weak</code>, and why does that matter?</summary><p><strong>Answer:</strong> The child-to-parent link is <code>Weak</code>. Because it does not add to the parent's strong count, dropping the parent's last strong owner actually frees it instead of leaving a cycle that never reaches zero.</p></details>
+      <details class="quiz"><summary>3. What does a <code>RefCell</code> do when its borrowing rule is violated, and how does that differ from a compile-time borrow error?</summary><p><strong>Answer:</strong> It panics at runtime with a <code>BorrowError</code> or <code>BorrowMutError</code>. The compiler cannot catch this ahead of time because <code>RefCell</code> intentionally defers the check to when the borrows actually happen.</p></details>
+      <details class="quiz"><summary>4. Does passing Miri's test suite prove <code>copy_probe_bytes</code> has no undefined behavior?</summary><p><strong>Answer:</strong> No. Miri is a dynamic interpreter: it can catch many undefined-behavior classes on paths a test actually exercises, but it says nothing about inputs or call patterns no test in the suite ever runs.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>One heap owner?                      Box&lt;T&gt;
+Shared ownership, one thread?        Rc&lt;T&gt;; back-edge in a tree? Weak&lt;T&gt;
+Shared ownership across threads?     Arc&lt;T&gt; (the inner T still must itself be thread-safe)
+Usually borrowed, rarely changed?    Cow&lt;'a, T&gt;
+Small Copy value, mutated via &amp;self? Cell&lt;T&gt;
+Larger value, mutated via &amp;self?     RefCell&lt;T&gt;, one short-lived borrow at a time
+Building new interior mutability?    UnsafeCell&lt;T&gt; plus a proven, written rule on top
+Touching a raw pointer?              One small unsafe fn, one written Safety section, one safe return type</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/book/ch15-00-smart-pointers.html">Smart Pointers</a>, <em>The Rust Programming Language</em>, Rust Project. Box, Rc, RefCell, Weak, and reference cycles. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/rc/struct.Weak.html">Weak</a>, Rust standard library documentation, Rust Project. Non-owning observation of Rc/Arc values and upgrade semantics. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/cell/struct.Cell.html">Cell</a>, Rust standard library documentation, Rust Project. Whole-value interior mutability for Copy types. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/cell/struct.RefCell.html">RefCell</a>, Rust standard library documentation, Rust Project. Runtime-checked borrowing rules and panics. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/borrow/enum.Cow.html">Cow</a>, Rust standard library documentation, Rust Project. Clone-on-write borrowed-or-owned values. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/cell/struct.UnsafeCell.html">UnsafeCell</a>, Rust standard library documentation, Rust Project. The core interior-mutability primitive beneath Cell, RefCell, and synchronization types. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/reference/unsafe-keyword.html">The unsafe keyword</a>, Rust Reference, Rust Project. Unsafe functions, unsafe blocks, and caller obligations. Accessed September 17, 2026.</li>
+        <li><a href="https://github.com/rust-lang/miri">Miri</a>, Rust Project (GitHub repository). An interpreter that detects many classes of undefined behavior dynamically. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=8O0Nt9qY_vo">Crust of Rust: Smart Pointers and Interior Mutability</a>, Jon Gjengset, 2:03:04. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=9E2v8pCUc48">Writing Unsafe Rust</a>, Let's Get Rusty, 15:26. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=9A8ZeDIStAs">Miri: Practical Undefined Behavior Detection for Rust</a>, ACM SIGPLAN, 24:40. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="07-production-workspaces-modules-api-design.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 7: Production Workspaces &amp; APIs</span></a>
+        <a href="09-native-threads-channels.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 9: Native Threads &amp; Channels</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

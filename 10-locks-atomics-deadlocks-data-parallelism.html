@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Locks, Atomics, Deadlocks, and Data Parallelism — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html" class="active"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 10 · 30 minutes</span>
+      <h1>Locks, Atomics, Deadlocks, and Data Parallelism</h1>
+      <p class="lesson-subtitle">Guard shared Pulsewatch state with <code>Mutex</code> and <code>RwLock</code>, understand poisoning, avoid deadlocks by construction, add plain atomic counters where they fit, stay aware of false sharing, and reach for Rayon when the work is an embarrassingly parallel batch.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can pick <code>Mutex</code> or <code>RwLock</code> for a piece of shared state, explain what a poisoned lock means and choose a recovery policy, prevent a two-lock deadlock by construction, decide when a plain atomic is enough versus when a lock is required, describe false sharing at a boundary level, and parallelize an independent batch of Pulsewatch probes with Rayon.
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">📁</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p><strong>Starting state:</strong> the <code>pulsewatch</code> workspace exactly as Lesson 9's exercise left it, including <code>crates/pulsewatch-core/src/worker_pool.rs</code> and the six-module <code>lib.rs</code> from that lesson. <strong>Working directory:</strong> <code>cd path/to/pulsewatch</code> — the folder you created in Lesson 7. Unless a step says otherwise, every command below runs from that <code>pulsewatch/</code> workspace root. This lesson creates two new files, <code>crates/pulsewatch-core/src/stats.rs</code> and <code>src/parallel.rs</code>, edits <code>lib.rs</code> to declare and re-export both, and edits <code>crates/pulsewatch-core/Cargo.toml</code> to add the <code>rayon</code> dependency.</p>
+        </div>
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="5"><td>5 min</td><td><code>Mutex</code>/<code>RwLock</code> guards and lock poisoning</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Deadlock prevention through lock ordering and narrow scope</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Atomics and the memory-ordering boundary you need today</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>False sharing: what it is and how to avoid it without measuring it yet</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Rayon data parallelism for a batch of independent probes</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Knowledge check and benchmark-informed recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: Mutex and RwLock guards, and what poisoning means</h2>
+      <p><code>Mutex&lt;T&gt;</code> and <code>RwLock&lt;T&gt;</code> both wrap the data they protect, the same way lesson 8's <code>Cell</code> and <code>RefCell</code> wrapped a value. Calling <code>lock()</code> or <code>read()</code>/<code>write()</code> returns a guard: a value that derefs to the protected data and releases the lock automatically when it is dropped, the same RAII shape as C++'s <code>std::lock_guard</code>, <code>std::unique_lock</code>, or <code>std::shared_mutex</code>.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Type</th><th>Access pattern</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>Mutex&lt;T&gt;</code></td><td>One holder at a time, whether reading or writing.</td><td><code>std::mutex</code> + <code>std::lock_guard</code>.</td></tr>
+          <tr><td><code>RwLock&lt;T&gt;</code></td><td>Many concurrent readers, or exactly one writer, never both.</td><td><code>std::shared_mutex</code> with <code>shared_lock</code>/<code>unique_lock</code>.</td></tr>
+        </tbody>
+      </table>
+      <p>Both return a <code>Result</code> from their locking methods, not the guard directly. If a thread panics while holding the guard, the lock becomes <strong>poisoned</strong>: every later <code>lock()</code> call returns <code>Err(PoisonError)</code> instead of quietly succeeding. A plain OS mutex has no such concept and hands the lock to the next thread as if nothing happened, even though the panicking thread may have left the protected data half-updated.</p>
+      <p><em>Conceptual example — a generic recovery pattern, not tied to one specific file. <code>counters</code> stands for any <code>Mutex</code>-guarded value; Part 6 below applies the same pattern inside <code>PulsewatchStats::record_failure</code>.</em></p>
+      <pre class="large-code"><code>let guard = match counters.lock() {
+    Ok(guard) =&gt; guard,
+    Err(poisoned) =&gt; {
+        // A previous holder panicked while updating this data.
+        // Decide deliberately: recover the (possibly inconsistent)
+        // data, or propagate as a hard failure.
+        poisoned.into_inner()
+    }
+};</code></pre>
+      <p>Recovering with <code>into_inner()</code> is reasonable for data whose invariants cannot be broken by a partial update, such as an independent counter. It is the wrong choice for data with cross-field invariants that a panic could have left half-applied; there, propagating the panic (<code>.lock().unwrap()</code>) is safer than silently continuing on corrupted state.</p>
+
+      <h2>Part 2: deadlocks are not data races, and Rust does not stop them</h2>
+      <p>Data races are prevented by the type system through <code>Send</code>/<code>Sync</code>. Deadlocks are not: two threads can each correctly hold one lock while correctly waiting for the other, and the compiler has no way to see that. Prevention is a discipline, not a guarantee.</p>
+      <p><em>Conceptual example — illustrates lock-ordering discipline in the abstract; not part of the <code>pulsewatch-core</code> crate.</em></p>
+      <div class="code-compare">
+        <div class="bad">
+          <span class="code-label">Deadlock-prone: order depends on argument order</span>
+          <pre><code>fn transfer(from: &amp;Mutex&lt;u64&gt;, to: &amp;Mutex&lt;u64&gt;, amount: u64) {
+    let mut from = from.lock().unwrap();
+    let mut to = to.lock().unwrap();
+    *from -= amount;
+    *to += amount;
+}
+// Thread A: transfer(&amp;x, &amp;y, 10)
+// Thread B: transfer(&amp;y, &amp;x, 5)
+// A holds x, waits for y. B holds y, waits for x. Neither ever proceeds.</code></pre>
+        </div>
+        <div class="good">
+          <span class="code-label">Fixed: always lock in one global order</span>
+          <pre><code>fn transfer(a: (&amp;Mutex&lt;u64&gt;, u32), b: (&amp;Mutex&lt;u64&gt;, u32), amount: u64) {
+    let ((first, _), (second, _)) = if a.1 &lt; b.1 { (a, b) } else { (b, a) };
+    let mut first = first.lock().unwrap();
+    let mut second = second.lock().unwrap();
+    if a.1 &lt; b.1 {
+        *first -= amount;
+        *second += amount;
+    } else {
+        *second -= amount;
+        *first += amount;
+    }
+}
+// Every caller locks the lower-id account first, so a circular wait
+// between two threads is no longer possible.</code></pre>
+        </div>
+      </div>
+      <p>A narrower fix that avoids the problem entirely: hold no more than one lock at a time by keeping critical sections short, or merge the two related values into a single <code>Mutex&lt;(u64, u64)&gt;</code> so there is only ever one lock to take. Lesson 9's worker loop follows the "narrow scope" version of this rule: the queue lock is dropped before the probe's own work begins.</p>
+
+      <h2>Part 3: atomics, and the memory-ordering boundary for this lesson</h2>
+      <p><code>std::sync::atomic</code> types such as <code>AtomicU64</code> and <code>AtomicBool</code> let independent, simple values change safely without any lock: no guard, no possibility of poisoning, no possibility of blocking. Every operation takes an <code>Ordering</code> that describes what other memory effects are guaranteed to be visible around it.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Ordering</th><th>Guarantee</th><th>When this lesson uses it</th></tr></thead>
+        <tbody>
+          <tr><td><code>Relaxed</code></td><td>Atomicity only: the operation cannot tear, but carries no guarantee about the visible order of other memory accesses around it.</td><td>Independent counters, such as a total-samples tally, where no other value's correctness depends on the counter's exact timing.</td></tr>
+          <tr><td><code>SeqCst</code></td><td>The strongest and simplest ordering: a single total order that every thread agrees on for all <code>SeqCst</code> operations.</td><td>The default to reach for whenever the interaction between an atomic and other shared state is not obviously safe under <code>Relaxed</code>.</td></tr>
+        </tbody>
+      </table>
+      <p>The Rustonomicon is explicit that choosing a weaker ordering than <code>SeqCst</code> is only for code that has actually reasoned through the hardware and compiler guarantees involved; this lesson's boundary is to use <code>Relaxed</code> only for counters with no dependency on other data, and <code>SeqCst</code> — or a <code>Mutex</code> — everywhere else. Designing lock-free algorithms with <code>Acquire</code>/<code>Release</code> pairing is out of scope here.</p>
+
+      <h2>Part 4: false sharing, by name, not yet by measurement</h2>
+      <p>Modern CPUs move memory between cores in fixed-size cache lines, commonly 64 bytes on widely deployed x86_64 hardware. Two unrelated atomics that happen to sit in the same cache line will bounce that line between cores every time either one is updated from a different core, even though the two values have no logical relationship — this is <strong>false sharing</strong>. It costs real throughput without ever showing up as a correctness bug, so it is easy to miss.</p>
+      <p>The accepted fix is padding each independently-updated value out to its own cache line. The <code>crossbeam-utils</code> crate's <a href="https://docs.rs/crossbeam-utils/latest/crossbeam_utils/struct.CachePadded.html"><code>CachePadded&lt;T&gt;</code></a> wrapper does exactly this. This lesson only asks you to recognize the shape of the problem — profiling for it is deferred to Lesson 18.</p>
+
+      <h2>Part 5: Rayon for embarrassingly parallel batches</h2>
+      <p>Lesson 9's <code>WorkerPool</code> is the right tool for long-lived, heterogeneous work with explicit lifecycle and backpressure. A different, common shape is a finite batch of independent, similar, CPU-bound items that all need to run once — Pulsewatch sampling every configured probe on a tick, for example. <a href="https://docs.rs/rayon/latest/rayon/">Rayon</a> is a widely used external crate (not part of the standard library) that turns an iterator into parallel work across a managed thread pool with one method call.</p>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/Cargo.toml</code> — edit. Add under <code>[dependencies]</code>:</p>
+      <pre class="large-code"><code>rayon = "1"</code></pre>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/parallel.rs</code> — create.</p>
+      <pre class="large-code"><code>use rayon::prelude::*;
+
+use crate::{BoxedProbe, Probe, Sample};
+
+pub fn sample_all(probes: &amp;mut [BoxedProbe]) -&gt; Vec&lt;Sample&gt; {
+    probes
+        .par_iter_mut()
+        .map(|probe| probe.sample())
+        .collect()
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Choice</th><th>Use when</th></tr></thead>
+        <tbody>
+          <tr><td>Lesson 9's <code>WorkerPool</code></td><td>Work arrives continuously over time, items may differ in kind, and you need explicit shutdown, backpressure, or panic accounting per job.</td></tr>
+          <tr><td>Rayon's <code>par_iter_mut()</code></td><td>You already have a finite collection of similar, independent, CPU-bound items and want them processed in parallel, then collected once, with no manual thread or channel management.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 6: worked Pulsewatch increment — counters that match their invariants</h2>
+      <p>The deciding question is not "lock or atomic," but "does this value have an invariant that spans more than one field?" A lone counter does not; a pair of fields that must describe the same event does.</p>
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/stats.rs</code> — create.</p>
+      <pre class="large-code"><code>use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
+
+use crate::Millis;
+
+/// No cross-field invariant: each counter is independently meaningful,
+/// so plain atomics are correct and avoid all lock overhead.
+#[derive(Default)]
+pub struct SampleCounters {
+    pub total_samples: AtomicU64,
+    pub total_panics: AtomicU64,
+}
+
+impl SampleCounters {
+    pub fn record_sample(&amp;self) {
+        self.total_samples.fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub fn record_panic(&amp;self) {
+        self.total_panics.fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub fn snapshot(&amp;self) -&gt; (u64, u64) {
+        (
+            self.total_samples.load(Ordering::Relaxed),
+            self.total_panics.load(Ordering::Relaxed),
+        )
+    }
+}
+
+/// Cross-field invariant: last_failure_reason always describes
+/// last_failure_at. These two fields must change together, so one
+/// Mutex-guarded struct is correct -- two separate atomics could be
+/// observed in a mismatched, half-updated state.
+#[derive(Default)]
+struct FailureState {
+    last_failure_at: Option&lt;Millis&gt;,
+    last_failure_reason: Option&lt;String&gt;,
+}
+
+pub struct PulsewatchStats {
+    pub counters: SampleCounters,
+    failure: Mutex&lt;FailureState&gt;,
+}
+
+impl PulsewatchStats {
+    pub fn new() -&gt; Arc&lt;Self&gt; {
+        Arc::new(Self {
+            counters: SampleCounters::default(),
+            failure: Mutex::new(FailureState::default()),
+        })
+    }
+
+    pub fn record_failure(&amp;self, at: Millis, reason: String) {
+        self.counters.record_panic();
+        let mut guard = self
+            .failure
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        guard.last_failure_at = Some(at);
+        guard.last_failure_reason = Some(reason);
+    } // guard dropped here: lock released before this function returns
+}</code></pre>
+      <p>Wiring this in is a one-line addition per branch, wherever code already handles <code>WorkerEvent</code> values — for example, the loop that drains Lesson 9's <code>outcomes</code> channel after a pool run: call <code>stats.counters.record_sample()</code> for each <code>WorkerEvent::Sampled</code>, and <code>stats.record_failure(now, probe_name)</code> for each <code>WorkerEvent::Panicked</code>. Neither call happens while the job-queue lock from Lesson 9 is held, since that lock is released inside <code>worker_loop</code> before a result is ever sent.</p>
+
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Stability and production boundary</strong>
+          <p><code>Mutex</code>, <code>RwLock</code>, and <code>std::sync::atomic</code> are all stable standard-library APIs. Rayon is a mature, widely used external crate but is not part of the standard library and must be added as a dependency deliberately. This lesson's atomics usage is deliberately narrow: independent counters with <code>Relaxed</code>, or <code>SeqCst</code>/a lock otherwise. It does not cover designing new lock-free data structures, compare-and-swap retry loops, or `Acquire`/`Release` hand-off protocols — those require the kind of careful, hardware-aware reasoning the Nomicon insists on before dropping below `SeqCst`.</p>
+        </div>
+      </div>
+
+      <p><strong>File:</strong> <code>crates/pulsewatch-core/src/lib.rs</code> — replace with the full file below (adds <code>stats</code> and <code>parallel</code> to Lesson 9's file).</p>
+      <pre class="large-code"><code>// crates/pulsewatch-core/src/lib.rs
+mod probe;
+mod alert_group;
+mod hit_counter;
+mod label;
+mod unsafe_probe;
+mod worker_pool;
+mod stats;
+mod parallel;
+
+pub use probe::{FixedProbe, Millis, Probe, Sample};
+pub use alert_group::AlertGroup;
+pub use hit_counter::HitCounter;
+pub use label::normalize_label;
+pub use unsafe_probe::{copy_probe_bytes, BufferError};
+pub use worker_pool::{BoxedProbe, WorkerEvent, WorkerPool};
+pub use stats::PulsewatchStats;
+pub use parallel::sample_all;</code></pre>
+
+      <h2>Active exercise</h2>
+      <ol>
+        <li>Edit <code>crates/pulsewatch-core/Cargo.toml</code>: add the <code>rayon = "1"</code> line shown in Part 5 under <code>[dependencies]</code>.</li>
+        <li>Create <code>crates/pulsewatch-core/src/stats.rs</code> with the Part 6 listing, and <code>crates/pulsewatch-core/src/parallel.rs</code> with the Part 5 listing.</li>
+        <li>Replace <code>crates/pulsewatch-core/src/lib.rs</code> with the listing directly above this exercise.</li>
+        <li>Create <code>crates/pulsewatch-core/tests/pool_and_stats.rs</code> with the following contents:
+          <pre class="large-code"><code>// crates/pulsewatch-core/tests/pool_and_stats.rs
+use std::sync::mpsc;
+
+use pulsewatch_core::{
+    BoxedProbe, FixedProbe, Millis, Probe, PulsewatchStats, Sample, WorkerEvent, WorkerPool,
+    sample_all,
+};
+
+struct PanicProbe;
+
+impl Probe for PanicProbe {
+    type Output = Sample;
+
+    fn name(&amp;self) -&gt; &amp;str {
+        "panic-probe"
+    }
+
+    fn sample(&amp;mut self) -&gt; Sample {
+        panic!("simulated probe failure")
+    }
+}
+
+#[test]
+fn pool_and_rayon_batches_agree_with_the_shared_counters() {
+    let stats = PulsewatchStats::new();
+
+    // 20 probes through the worker pool: 18 succeed, 2 panic.
+    let (outcome_tx, outcome_rx) = mpsc::channel();
+    let pool = WorkerPool::new(4, outcome_tx);
+    for i in 0..18 {
+        pool.submit(Box::new(FixedProbe::new(format!("pool-{i}"), Millis::new(1))));
+    }
+    pool.submit(Box::new(PanicProbe));
+    pool.submit(Box::new(PanicProbe));
+    pool.shutdown();
+
+    for event in outcome_rx.try_iter() {
+        match event {
+            WorkerEvent::Sampled(_) =&gt; stats.counters.record_sample(),
+            WorkerEvent::Panicked { probe_name } =&gt; {
+                stats.record_failure(Millis::new(0), probe_name)
+            }
+        }
+    }
+
+    // A disjoint batch of 5 probes sampled with Rayon, outside the pool.
+    let mut batch: Vec&lt;BoxedProbe&gt; = (0..5)
+        .map(|i| {
+            Box::new(FixedProbe::new(format!("rayon-{i}"), Millis::new(2))) as BoxedProbe
+        })
+        .collect();
+    let rayon_samples = sample_all(&amp;mut batch);
+    for _ in &amp;rayon_samples {
+        stats.counters.record_sample();
+    }
+
+    let (total_samples, total_panics) = stats.counters.snapshot();
+    assert_eq!(total_samples, 18 + 5);
+    assert_eq!(total_panics, 2);
+    assert_eq!(rayon_samples.len(), 5);
+}</code></pre>
+        </li>
+        <li>From <code>pulsewatch/</code> (the workspace root), run <code>cargo test -p pulsewatch-core</code>. Expected output: the library unit tests still pass with <code>test result: ok. 6 passed</code>, and two integration test binaries pass — <code>public_api</code> with <code>test result: ok. 1 passed</code> and <code>pool_and_stats</code> with <code>test result: ok. 1 passed</code>.</li>
+        <li>From <code>pulsewatch/</code>, run <code>cargo test -p pulsewatch-core -- --test-threads=1</code>. Expected output: the same tests pass again, confirming the result does not depend on how Cargo schedules test threads.</li>
+      </ol>
+      <p><strong>Expected evidence:</strong> <code>cargo test -p pulsewatch-core</code> passes reliably across repeated runs (<code>cargo test -p pulsewatch-core -- --test-threads=1</code> and the default parallel mode both agree), the snapshot totals in <code>pool_and_stats.rs</code> are exact with no lost updates (23 samples, 2 panics), and the test never hangs — demonstrating both correct atomic counting under concurrency and the absence of the two-lock deadlock pattern from Part 2.</p>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=rMGWeSjctlY">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">2:39:20 · ADVANCED</span><h3>Crust of Rust: Atomics and Memory Ordering</h3><p>Jon Gjengset. A live-coded deep dive into atomic operations and the meaning of each memory ordering.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=ZC6UWzX3Xug">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">13:21 · INTERMEDIATE</span><h3>Rust Parallelism with Rayon - Use ALL CPUs</h3><p>Code to the Moon. par_iter and Rayon's work-stealing thread pool for batch parallelism.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=HROHHmvOiuM">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">3:56 · INTERMEDIATE</span><h3>False Sharing: The Hidden Parallel Programming Bug Explained</h3><p>CodeLucky. A short, focused explanation of cache-line false sharing and padding as the fix.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the atomics video, read <a href="https://doc.rust-lang.org/nomicon/atomics.html">Atomics</a> in the Rustonomicon and re-read the ordering table in Part 3.</li>
+        <li>Instead of the Rayon video, read the <a href="https://docs.rs/rayon/latest/rayon/">rayon crate documentation</a> front page and re-read the worked example in Part 5.</li>
+        <li>Instead of the false-sharing video, read the <a href="https://docs.rs/crossbeam-utils/latest/crossbeam_utils/struct.CachePadded.html">CachePadded</a> documentation, whose introduction explains the same cache-line effect in text.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why does a poisoned <code>Mutex</code> return <code>Err</code> from <code>lock()</code> instead of silently handing the lock to the next caller?</summary><p><strong>Answer:</strong> A panic while holding the guard may have left the protected data mid-update. Returning <code>Err(PoisonError)</code> forces the next caller to decide, explicitly, whether it is safe to keep using that data — a plain OS mutex has no equivalent signal.</p></details>
+      <details class="quiz"><summary>2. When is <code>RwLock</code> a better fit than <code>Mutex</code>?</summary><p><strong>Answer:</strong> When reads vastly outnumber writes and each read does enough work that letting readers run concurrently is worth the extra bookkeeping an <code>RwLock</code> carries versus a plain <code>Mutex</code>.</p></details>
+      <details class="quiz"><summary>3. What specifically causes the deadlock in the <code>transfer</code> example, and what removes it?</summary><p><strong>Answer:</strong> Two threads acquire the same two locks in opposite order, so each ends up waiting for a lock the other already holds — a circular wait. Always acquiring the locks in one fixed, shared order removes the possibility of that cycle.</p></details>
+      <details class="quiz"><summary>4. Why does <code>SampleCounters</code> use two separate atomics, while <code>FailureState</code> uses one <code>Mutex</code>-guarded struct?</summary><p><strong>Answer:</strong> The two counters have no invariant linking them, so updating each independently and atomically is correct and cheaper. <code>last_failure_at</code> and <code>last_failure_reason</code> must always describe the same event, so they must change together under one lock; separate atomics could be read in a mismatched, half-updated combination.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Data has no cross-field invariant, single value?    plain atomic (AtomicU64, AtomicBool, ...)
+Data has an invariant spanning 2+ fields?            one Mutex&lt;Struct&gt; around all of them together
+Reads vastly outnumber writes, reads do real work?   RwLock over Mutex
+A previous holder might have panicked mid-update?    match on lock()'s Result; decide recover vs propagate
+Two locks needed together?                           acquire in one fixed global order, or merge into one lock
+Unsure which memory Ordering is correct?              SeqCst, or a lock -- never guess a weaker one
+Several unrelated atomics updated from different threads? consider cache-line padding to avoid false sharing
+Finite batch of independent, similar, CPU-bound work?  Rayon par_iter, not a hand-rolled worker pool
+Long-lived, heterogeneous work needing lifecycle mgmt? Lesson 9's WorkerPool, not Rayon</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/std/sync/struct.Mutex.html">Mutex</a>, Rust standard library documentation, Rust Project. Guard-based locking and poisoning semantics. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/sync/struct.RwLock.html">RwLock</a>, Rust standard library documentation, Rust Project. Concurrent-reader, exclusive-writer locking. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/sync/struct.PoisonError.html">PoisonError</a>, Rust standard library documentation, Rust Project. Recovering or propagating a poisoned lock. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch16-03-shared-state.html">Shared-State Concurrency</a>, <em>The Rust Programming Language</em>, Rust Project. Mutex fundamentals and Arc-shared state. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/sync/atomic/index.html">std::sync::atomic</a>, Rust standard library documentation, Rust Project. Atomic types and their operations. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/sync/atomic/enum.Ordering.html">Ordering</a>, Rust standard library documentation, Rust Project. The meaning of each memory ordering variant. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/nomicon/atomics.html">Atomics</a>, <em>The Rustonomicon</em>, Rust Project. When a weaker-than-SeqCst ordering is and is not appropriate. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/crossbeam-utils/latest/crossbeam_utils/struct.CachePadded.html">CachePadded</a>, crossbeam-utils crate documentation, docs.rs. Cache-line padding to avoid false sharing. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/rayon/latest/rayon/">rayon</a>, rayon crate documentation, docs.rs. Data-parallel iterators over a work-stealing thread pool. Accessed September 17, 2026.</li>
+        <li><a href="https://github.com/rayon-rs/rayon">rayon-rs/rayon</a>, GitHub repository, Rayon maintainers. Source, design notes, and issue history for the crate cited above. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=rMGWeSjctlY">Crust of Rust: Atomics and Memory Ordering</a>, Jon Gjengset, 2:39:20. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=ZC6UWzX3Xug">Rust Parallelism with Rayon - Use ALL CPUs</a>, Code to the Moon, 13:21. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=HROHHmvOiuM">False Sharing: The Hidden Parallel Programming Bug Explained</a>, CodeLucky, 3:56. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="09-native-threads-channels.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 9: Native Threads &amp; Channels</span></a>
+        <a href="11-blocking-tcp-networking.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 11: Blocking TCP Networking</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

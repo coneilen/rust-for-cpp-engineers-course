@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swift Bindings &amp; Apple Packaging — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html" class="active"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 22 · 30 minutes</span>
+      <h1>Swift Bindings &amp; Apple Packaging</h1>
+      <p class="lesson-subtitle">Finish the Pulsewatch migration arc: generate Swift bindings with UniFFI on the same C ABI foundation from Lesson 19, assemble an XCFramework across iOS targets, and apply a migration decision rubric to the whole course.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can generate and use UniFFI Swift bindings including async and error mapping, explain Swift 6's partial Sendable checking, build a three-target XCFramework and wire it into SwiftPM, and walk through a repeatable decision rubric for choosing a migration and interop path.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td>Same C ABI foundation, new binding target: UniFFI Swift</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Async, callbacks, and error mapping across the Swift boundary</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Swift 6 and the partial-Sendable caveat</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Building an XCFramework from three cargo targets</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>SwiftPM <code>binaryTarget</code>, code signing, and who owns what</td></tr>
+          <tr data-minutes="2"><td>2 min</td><td>Exercise: package and consume the Pulsewatch XCFramework</td></tr>
+          <tr data-minutes="1"><td>1 min</td><td>Knowledge check and capstone rubric</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Follow-along setup</h2>
+      <div class="callout note">
+        <span class="callout-icon">🗂️</span>
+        <div class="callout-content">
+          <strong>Same checkout, a third target platform</strong>
+          <p><code>path/to/pulsewatch/</code> is still the same workspace root, and <code>crates/pulsewatch-scoring/</code> the same crate root, and Android app tree from Lessons 19-21; <code>path/to/pulsewatch</code> remains a placeholder for your actual checkout, not a literal directory name. For this course, the SwiftPM package lives directly alongside the workspace-root <code>Cargo.toml</code> at that same root — <code>Package.swift</code> and <code>Sources/PulsewatchScoring/</code> are new subpaths under <code>path/to/pulsewatch/</code>, not a separate checkout, and not under <code>crates/pulsewatch-scoring/</code>.</p>
+          <ul>
+            <li><strong>Already exists (from Lessons 19-21):</strong> <code>crates/pulsewatch-scoring/Cargo.toml</code>, <code>crates/pulsewatch-scoring/src/lib.rs</code>, <code>crates/pulsewatch-scoring/src/mobile.rs</code> (the <code>MobileScorer</code> UniFFI object and its <code>uniffi::setup_scaffolding!()</code> call and crate-type list), and <code>crates/pulsewatch-scoring/uniffi-bindgen.rs</code> (the local bindgen binary from Lesson 21, Part 4).</li>
+            <li><strong>Created in this lesson:</strong> the <code>score_batch_async</code> addition to <code>crates/pulsewatch-scoring/src/mobile.rs</code> (Part 2), <code>ios/generated/</code> and <code>Sources/PulsewatchScoring/</code> (generated and copied Swift source, Part 4), <code>PulsewatchScoringFFI.xcframework</code> (Part 4), and <code>Package.swift</code> (Part 5).</li>
+            <li><strong>Prerequisites:</strong> everything from Lessons 19-21, plus Xcode (with its command-line tools, for <code>xcodebuild</code>, <code>lipo</code>, and <code>swift test</code>) and the three iOS Rust targets added with <code>rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios</code>. This lesson assumes a macOS host — Apple's toolchain does not run elsewhere.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Part 1: the same foundation, a new binding target</h2>
+      <p>Lesson 19 established that Rust's own ABI and layout are not a stable foreign contract — every foreign binding, C, Kotlin, or Swift, has to cross through a deliberately narrow, stable surface. UniFFI's Swift support is built on exactly that discipline: it generates Swift bindings on top of a C-compatible scaffolding layer, the same category of foundation as the raw <code>extern "C"</code> boundary from Lesson 19, not a separate ABI story. Pulsewatch does not need a second UniFFI object for iOS — the exact <code>MobileScorer</code> object and <code>MobileScoringError</code> type exported for Kotlin in Lesson 21 is the same <code>#[uniffi::export]</code> surface Part 4's <code>uniffi-bindgen generate --language swift</code> step reads to emit Swift bindings.</p>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/mobile.rs</code> — excerpt only, reminding you what already exists there; the bodies below are elided with a comment, they are not re-typed here:</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/mobile.rs (excerpt, already present from Lesson 21 -- not re-created)
+// One `impl MobileScorer` block, two generated languages.
+#[uniffi::export]
+impl MobileScorer {
+    #[uniffi::constructor]
+    pub fn new(baseline_window_secs: f64, sensitivity: f32) -&gt; Result&lt;Self, MobileScoringError&gt; { /* Lesson 21, Part 4 */ }
+
+    pub fn score(&amp;self, shard_label: String, value: f64, timestamp_unix_ms: i64)
+        -&gt; Result&lt;f32, MobileScoringError&gt; { /* Lesson 21, Part 4 */ }
+}</code></pre>
+      <pre class="large-code"><code>// Generated Swift usage looks like ordinary Swift
+let scorer = try MobileScorer(baselineWindowSecs: 300.0, sensitivity: 0.62)
+
+do {
+    let score = try scorer.score(shardLabel: "shard-42", value: 0.87, timestampUnixMs: 1_726_600_000_000)
+} catch MobileScoringError.nonFiniteValue {
+    // handle
+}</code></pre>
+      <p>Unlike the Kotlin binding in Lesson 21, there is no <code>scorer.close()</code> to call here, and none should be invented: UniFFI's Swift object support represents <code>MobileScorer</code> as a concrete Swift class holding a reference to the underlying Rust object, so its lifetime follows ordinary Swift ARC. The class's <code>deinit</code> — run automatically once the last Swift reference to <code>scorer</code> goes out of scope — is what releases that reference, with no explicit dispose call for app code to remember. Kotlin needs an explicit <code>close()</code> specifically because the JVM has no reliable, timely finalizer; Swift's deterministic reference counting does not share that problem.</p>
+
+      <h2>Part 2: async, callbacks, and error mapping</h2>
+      <p>UniFFI documents direct support for exporting <code>async fn</code> Rust functions, generating a Swift <code>async</code> function on the other side, so an iOS app can <code>await</code> a Pulsewatch scoring call without hand-rolled callback plumbing. A Rust <code>Result::Err</code> maps to a thrown Swift error, matching the <code>catch</code> pattern shown above — the same declared-error mapping approach as the <code>cxx</code> bridge in Lesson 20, applied through UniFFI's own scaffolding instead. An async batch method belongs on the very same <code>MobileScorer</code> object, calling back into its own synchronous <code>score</code> method per sample rather than a separate free function. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/mobile.rs</code> (append):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/mobile.rs -- append to the existing `impl MobileScorer` block from
+// Lesson 21, or add this as a second #[uniffi::export] impl block for the
+// same type; same struct, same MobileScoringError, no new type.
+#[uniffi::export]
+impl MobileScorer {
+    pub async fn score_batch_async(
+        &amp;self,
+        shard_label: String,
+        values: Vec&lt;f64&gt;,
+        timestamps_unix_ms: Vec&lt;i64&gt;,
+    ) -&gt; Result&lt;Vec&lt;f32&gt;, MobileScoringError&gt; {
+        let mut scores = Vec::with_capacity(values.len());
+        for (value, timestamp_unix_ms) in values.into_iter().zip(timestamps_unix_ms) {
+            scores.push(self.score(shard_label.clone(), value, timestamp_unix_ms)?);
+        }
+        Ok(scores)
+    }
+}</code></pre>
+      <p>An empty <code>values</code> batch is not an error here: the loop simply does not run and <code>score_batch_async</code> returns <code>Ok(vec![])</code> — a genuinely empty input is different from Lesson 19's <code>ScoringError::EmptyWindow</code>, which means the scorer's own sliding window has no samples after eviction, not that the caller sent a short batch.</p>
+      <pre class="large-code"><code>// Swift caller
+let scores = try await scorer.scoreBatchAsync(shardLabel: "shard-42", values: samples, timestampsUnixMs: timestamps)</code></pre>
+
+      <h2>Part 3: Swift 6 and the partial-Sendable caveat</h2>
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong>Swift 6's data-race checking rolls out module by module</strong>
+          <p>Swift's own migration guide describes enabling complete data-race safety checking incrementally, one module at a time, rather than as an all-or-nothing switch. Types generated by UniFFI for the Pulsewatch scoring API are not automatically, fully <code>Sendable</code>-verified against Swift 6's strict concurrency model — treat cross-boundary concurrency claims for generated bindings as something to verify per type, not assume.</p>
+        </div>
+      </div>
+      <p>In practice: keep the generated Pulsewatch Swift API's async entry points behind a small isolation boundary (an actor, or a serial dispatch queue) until each crossed type has been explicitly checked under Swift 6's strict-concurrency build settings.</p>
+
+      <h2>Part 4: building an XCFramework from three cargo targets</h2>
+      <p>iOS apps run on-device (arm64) and in the Simulator (both Apple Silicon and Intel hosts), so the same Rust crate must be built three times and merged into one distributable framework bundle. UniFFI's own tutorial is explicit that <code>generate --library</code> reads the bindings' metadata out of a <em>cdylib</em> built for the library — and a cross-compiled iOS artifact is never loadable by the host <code>uniffi-bindgen</code> process, whether it is a staticlib or a dylib. That means two separate build outputs, for two separate purposes: a host cdylib purely to generate Swift source from, and the real iOS staticlibs that ship inside the XCFramework. This is the same crate that shipped the Android <code>.so</code> in Lesson 21, so its <code>crate-type</code>, dependencies, and <code>uniffi::setup_scaffolding!()</code> call are already in place from that lesson — recapped here only for reference, not introduced fresh:</p>
+      <pre class="large-code"><code># crates/pulsewatch-scoring/Cargo.toml -- unchanged from Lesson 21, Part 4
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+uniffi = { version = "0.32", features = ["cli"] }
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+
+# crates/pulsewatch-scoring/src/lib.rs -- unchanged from Lesson 21, Part 4
+uniffi::setup_scaffolding!();</code></pre>
+      <p>Run every step below from <code>path/to/pulsewatch/</code>, the workspace root used in Lessons 19-21 (the crate itself lives one level down, at <code>crates/pulsewatch-scoring/</code>, but the shared <code>target/</code> output directory and this lesson's new <code>ios/</code>, <code>Sources/</code>, and <code>Package.swift</code> paths all stay at this workspace root):</p>
+      <ol>
+        <li>Build the host cdylib, for bindgen only — <code>cargo build --release -p pulsewatch-scoring</code>. <strong>Expected evidence:</strong> <code>target/release/libpulsewatch_scoring.dylib</code> exists; this file is never shipped to a device.</li>
+        <li>Generate the Swift bindings from that host cdylib — <code>cargo run --features=uniffi/cli -p pulsewatch-scoring --bin uniffi-bindgen -- generate --library target/release/libpulsewatch_scoring.dylib --language swift --out-dir ios/generated</code>. <strong>Expected evidence:</strong> <code>ios/generated/pulsewatch_scoring.swift</code> and <code>ios/generated/pulsewatch_scoringFFI.h</code>/<code>.modulemap</code> now exist.</li>
+        <li>Create the SwiftPM source directory Part 5's package target expects, then copy the generated Swift source into it — <code>mkdir -p Sources/PulsewatchScoring</code>, then <code>cp ios/generated/pulsewatch_scoring.swift Sources/PulsewatchScoring/pulsewatch_scoring.swift</code>. Both are explicit, repeatable build steps, not a one-time hand copy, so re-running them after any Rust API change can never silently go stale. <strong>Expected evidence:</strong> <code>Sources/PulsewatchScoring/pulsewatch_scoring.swift</code> exists and matches the file generated in the previous step.</li>
+        <li>Add the three iOS/Simulator Rust targets, once per machine — <code>rustup target add aarch64-apple-ios aarch64-apple-ios-sim x86_64-apple-ios</code>. <strong>Expected evidence:</strong> <code>rustup target list --installed</code> includes all three.</li>
+        <li>Build the real iOS static libraries that ship inside the XCFramework — run <code>cargo build --release --target aarch64-apple-ios -p pulsewatch-scoring</code>, then <code>cargo build --release --target aarch64-apple-ios-sim -p pulsewatch-scoring</code>, then <code>cargo build --release --target x86_64-apple-ios -p pulsewatch-scoring</code>. <strong>Expected evidence:</strong> <code>target/&lt;triple&gt;/release/libpulsewatch_scoring.a</code> exists for all three triples.</li>
+        <li>Merge the two Simulator slices (Apple Silicon and Intel hosts) into one fat binary — <code>mkdir -p target/ios-sim</code>, then <code>lipo -create target/aarch64-apple-ios-sim/release/libpulsewatch_scoring.a target/x86_64-apple-ios/release/libpulsewatch_scoring.a -output target/ios-sim/libpulsewatch_scoring.a</code>. <strong>Expected evidence:</strong> <code>lipo -info target/ios-sim/libpulsewatch_scoring.a</code> reports both <code>arm64</code> and <code>x86_64</code> architectures.</li>
+        <li>Assemble the XCFramework from the device slice and the merged Simulator slice — <code>xcodebuild -create-xcframework -library target/aarch64-apple-ios/release/libpulsewatch_scoring.a -headers ios/generated -library target/ios-sim/libpulsewatch_scoring.a -headers ios/generated -output PulsewatchScoringFFI.xcframework</code>. <strong>Expected evidence:</strong> <code>PulsewatchScoringFFI.xcframework/Info.plist</code> lists both a device and a simulator library entry.</li>
+      </ol>
+      <table class="comparison-table">
+        <thead><tr><th>Step</th><th>Why it's needed</th></tr></thead>
+        <tbody>
+          <tr><td><code>crate-type = ["staticlib", "cdylib", "rlib"]</code></td><td>Configured once in Lesson 21: <code>cdylib</code> for the host build bindgen reads (and for Android's <code>.so</code>), <code>staticlib</code> for every real iOS build, <code>rlib</code> so <code>cargo test</code> keeps working. Recapped here, not redeclared.</td></tr>
+          <tr><td><code>uniffi::setup_scaffolding!()</code></td><td>Also from Lesson 21: required once for a proc-macro-only crate (no UDL file) so the compiled library carries the metadata <code>generate --library</code> depends on.</td></tr>
+          <tr><td><code>mkdir -p Sources/PulsewatchScoring</code></td><td>The directory does not exist until this step creates it — copying into a missing directory would fail, so creation always precedes the copy.</td></tr>
+          <tr><td><code>cp ios/generated/pulsewatch_scoring.swift Sources/PulsewatchScoring/</code></td><td>Closes the gap between where <code>uniffi-bindgen</code> writes its output and where the Part 5 SwiftPM source target expects real files to compile; without this step the source target's directory would be empty.</td></tr>
+          <tr><td>Host <code>cargo build --release</code> + <code>generate --library ....dylib</code></td><td>Runs on the Mac doing the build, so the host-arch cdylib is loadable; an iOS-target build never is.</td></tr>
+          <tr><td>Three separate iOS <code>cargo build</code> targets</td><td>Device and Simulator use different architectures/ABIs; one binary cannot serve both.</td></tr>
+          <tr><td><code>lipo -create</code></td><td>Combines the two Simulator architectures (Apple Silicon and Intel hosts) into one universal Simulator slice.</td></tr>
+          <tr><td><code>xcodebuild -create-xcframework</code></td><td>Apple's own multi-platform bundle format, letting Xcode pick the right slice per build target automatically.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 5: SwiftPM <code>binaryTarget</code>, signing, and who owns what</h2>
+      <div class="callout note">
+        <span class="callout-icon">📦</span>
+        <div class="callout-content">
+          <strong>UniFFI generates bindings; it does not package or sign anything</strong>
+          <p>UniFFI's own documentation is explicit that it produces the Swift binding source and the C scaffolding it depends on — assembling the XCFramework, wiring SwiftPM, and code signing all remain the app team's responsibility, exactly as with the Kotlin/Android packaging step in Lesson 21.</p>
+        </div>
+      </div>
+      <p>A SwiftPM <code>binaryTarget</code> can only vend a precompiled artifact — the XCFramework built in Part 4 — it cannot compile the generated <code>pulsewatch_scoring.swift</code> source itself. That file needs an ordinary source target that depends on the binary target, pointed at the exact directory Part 4's <code>cp</code> step copied the generated source into. A <code>testTarget</code> is included too, so this package can validate itself end to end without depending on any separate app project or manually configured Xcode scheme — Xcode derives a test-runnable scheme named after this package automatically from <code>Package.swift</code> itself. <strong>File:</strong> <code>path/to/pulsewatch/Package.swift</code> (new file, complete):</p>
+      <pre class="large-code"><code>// swift-tools-version:5.9
+import PackageDescription
+
+let package = Package(
+    name: "PulsewatchScoring",
+    platforms: [.iOS(.v15)], // the XCFramework only ships iOS device/simulator slices
+    products: [
+        .library(name: "PulsewatchScoring", targets: ["PulsewatchScoring"]),
+    ],
+    targets: [
+        // The precompiled XCFramework from Part 4 -- binary only, no source.
+        .binaryTarget(
+            name: "PulsewatchScoringFFI",
+            path: "PulsewatchScoringFFI.xcframework"
+        ),
+        // The uniffi-bindgen-generated Swift source, copied here by Part 4's
+        // cp step, wrapping the binary target.
+        .target(
+            name: "PulsewatchScoring",
+            dependencies: ["PulsewatchScoringFFI"],
+            path: "Sources/PulsewatchScoring" // contains pulsewatch_scoring.swift
+        ),
+        // Exercises MobileScorer through the generated Swift bindings --
+        // this is what Part 6's exercise actually runs.
+        .testTarget(
+            name: "PulsewatchScoringTests",
+            dependencies: ["PulsewatchScoring"],
+            path: "Tests/PulsewatchScoringTests"
+        ),
+    ]
+)</code></pre>
+      <p>App code depends on the <code>PulsewatchScoring</code> product — the source target — never directly on <code>PulsewatchScoringFFI</code>. Apple's packaging documentation describes a <code>binaryTarget</code> pointing at a local or remote XCFramework, and separately documents notarizing macOS software before distribution — for iOS-only frameworks embedded in an app, Xcode's normal app-signing step covers the framework, but any macOS-distributed binary needs the explicit notarization flow.</p>
+
+      <h2>Part 6: exercise — package and consume the XCFramework</h2>
+      <p>Run every command below from <code>path/to/pulsewatch/</code> (the workspace root), repeating Part 4's steps end to end and then consuming the result:</p>
+      <ol>
+        <li>Build the host cdylib and generate Swift bindings from it — <code>cargo build --release -p pulsewatch-scoring</code>, then <code>cargo run --features=uniffi/cli -p pulsewatch-scoring --bin uniffi-bindgen -- generate --library target/release/libpulsewatch_scoring.dylib --language swift --out-dir ios/generated</code>. <strong>Expected evidence:</strong> <code>ios/generated/pulsewatch_scoring.swift</code> exists.</li>
+        <li>Create the SwiftPM source directory and copy the generated source into it — <code>mkdir -p Sources/PulsewatchScoring</code>, then <code>cp ios/generated/pulsewatch_scoring.swift Sources/PulsewatchScoring/pulsewatch_scoring.swift</code>. <strong>Expected evidence:</strong> <code>Sources/PulsewatchScoring/pulsewatch_scoring.swift</code> exists.</li>
+        <li>Build all three iOS/Simulator static libraries — <code>cargo build --release --target aarch64-apple-ios -p pulsewatch-scoring</code>, <code>cargo build --release --target aarch64-apple-ios-sim -p pulsewatch-scoring</code>, <code>cargo build --release --target x86_64-apple-ios -p pulsewatch-scoring</code>. <strong>Expected evidence:</strong> a <code>libpulsewatch_scoring.a</code> under each of the three <code>target/&lt;triple&gt;/release/</code> directories.</li>
+        <li>Merge the Simulator slices and assemble the XCFramework — <code>mkdir -p target/ios-sim</code>, then <code>lipo -create target/aarch64-apple-ios-sim/release/libpulsewatch_scoring.a target/x86_64-apple-ios/release/libpulsewatch_scoring.a -output target/ios-sim/libpulsewatch_scoring.a</code>, then <code>xcodebuild -create-xcframework -library target/aarch64-apple-ios/release/libpulsewatch_scoring.a -headers ios/generated -library target/ios-sim/libpulsewatch_scoring.a -headers ios/generated -output PulsewatchScoringFFI.xcframework</code>. <strong>Expected evidence:</strong> <code>PulsewatchScoringFFI.xcframework/Info.plist</code> lists both a device and a simulator library entry.</li>
+        <li>Create the test directory and add the test file. <strong>File:</strong> <code>path/to/pulsewatch/Tests/PulsewatchScoringTests/PulsewatchScoringTests.swift</code> (new file, complete) — mirrors Lesson 21's Kotlin instrumented test, but against the Swift bindings generated above:
+          <pre class="large-code"><code>// Tests/PulsewatchScoringTests/PulsewatchScoringTests.swift
+import XCTest
+import PulsewatchScoring
+
+final class PulsewatchScoringTests: XCTestCase {
+    func testScoresFortySamplesWithoutCrashing() throws {
+        let scorer = try MobileScorer(baselineWindowSecs: 300.0, sensitivity: 0.62)
+        var scored = 0
+        var t: Int64 = 1_758_067_200_000
+
+        // Warm-up: the first sample only seeds the baseline window
+        // (Lesson 19's EmptyWindow rule) and is expected to throw.
+        do {
+            _ = try scorer.score(shardLabel: "fleet-a", value: 100.0, timestampUnixMs: t)
+            XCTFail("expected emptyWindow on the warm-up sample")
+        } catch MobileScoringError.emptyWindow {
+            // expected exactly once, for the warm-up sample
+        }
+
+        for i in 0..&lt;40 {
+            t += 1_000
+            let value = (i == 20) ? 500.0 : 100.0
+            _ = try scorer.score(shardLabel: "fleet-a", value: value, timestampUnixMs: t)
+            scored += 1
+        }
+
+        XCTAssertEqual(scored, 40)
+        print("scored \(scored)/40 offline samples on iOS, 0 crashes")
+    }
+}</code></pre>
+          <strong>Expected evidence:</strong> <code>mkdir -p Tests/PulsewatchScoringTests</code> followed by creating the file above leaves <code>Tests/PulsewatchScoringTests/PulsewatchScoringTests.swift</code> present alongside <code>Sources/PulsewatchScoring/</code>.
+        </li>
+        <li>Run the package's own test target against the packaged framework — <code>xcodebuild test -scheme PulsewatchScoring -destination "platform=iOS Simulator,name=iPhone 15"</code>. This <code>PulsewatchScoring</code> scheme is not something you configure by hand: Xcode derives it directly from the <code>Package.swift</code> written in Part 5, the moment it opens a directory containing that file, because Part 5's <code>products</code> array names a <code>PulsewatchScoring</code> library. <strong>Expected evidence:</strong> the test run passes and prints <code>scored 40/40 offline samples on iOS, 0 crashes</code>.</li>
+      </ol>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=DfSBBOlFTeE">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">1:03:36 · ADVANCED</span><h3>Combining Swift and Rust: How to Have your Cake &amp; Eat it Too</h3><p>Seoul iOS Meetup (Ian Wagner). Practical patterns for shipping Rust inside Swift apps.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=cWCZms92-1g">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">59:43 · INTERMEDIATE</span><h3>iOS, Android and Web applications that share a single Rust core</h3><p>Rust Nation UK (Stuart Harris). Cross-platform architecture for a shared Rust core, including iOS and Android bindings.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the Seoul iOS Meetup talk, read UniFFI's <a href="https://mozilla.github.io/uniffi-rs/latest/swift/overview.html">Swift overview</a> covering the same binding-generation model used in Part 1.</li>
+        <li>Instead of the Rust Nation UK talk, work through the XCFramework build sequence in Part 4 alongside Apple's <a href="https://developer.apple.com/documentation/xcode/creating-a-multi-platform-binary-framework-bundle">multi-platform binary framework bundle</a> guide.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why does UniFFI's Swift support rely on the same kind of C-compatible foundation as Lesson 19's raw ABI?</summary><p><strong>Answer:</strong> Rust's own ABI and layout are not a stable foreign contract, so every language binding — C, Kotlin, or Swift — has to cross through a deliberately narrow, stable scaffolding layer instead of relying on Rust's internal representation directly.</p></details>
+      <details class="quiz"><summary>2. Should generated Pulsewatch Swift types be assumed fully Sendable-safe under Swift 6?</summary><p><strong>Answer:</strong> No. Swift 6's data-race checking is enabled incrementally per module, so generated bindings need to be checked per type under strict concurrency rather than assumed safe by default.</p></details>
+      <details class="quiz"><summary>3. Why are three separate <code>cargo build --target</code> invocations needed before <code>xcodebuild -create-xcframework</code>?</summary><p><strong>Answer:</strong> Device and Simulator use different architectures/ABIs (device arm64, Simulator arm64 and x86_64), so the crate must be compiled once per target and the two Simulator slices merged with <code>lipo</code> before assembling the XCFramework.</p></details>
+      <details class="quiz"><summary>4. Why does generating the Swift bindings need a separate host <code>cargo build --release</code>, instead of reading metadata straight from one of the iOS static libraries built for the XCFramework?</summary><p><strong>Answer:</strong> <code>uniffi-bindgen generate --library</code> reads its metadata from a cdylib the host machine can load; an iOS-target build, static or dynamic, is cross-compiled for a different architecture/ABI and is never loadable by the host process running the tool. The host cdylib exists purely to generate bindings from — the iOS staticlibs, built separately, are what actually ship inside the XCFramework.</p></details>
+      <details class="quiz"><summary>5. Can a SwiftPM <code>binaryTarget</code> directly contain the generated <code>pulsewatch_scoring.swift</code> source file, and does UniFFI assemble or sign the XCFramework for you?</summary><p><strong>Answer:</strong> No to both. A <code>binaryTarget</code> only vends a precompiled artifact (the XCFramework); the generated Swift source needs an ordinary source target that depends on it. UniFFI itself only generates the Swift binding source and C scaffolding — assembling the XCFramework, wiring the two SwiftPM targets, and code signing all remain the app team's responsibility.</p></details>
+      <details class="quiz"><summary>6. Does the generated Swift <code>MobileScorer</code> need an explicit <code>.close()</code> call the way Lesson 21's Kotlin binding does?</summary><p><strong>Answer:</strong> No. UniFFI represents a Swift object as a concrete class holding a reference to the underlying Rust object; ordinary Swift ARC releases that reference through the class's <code>deinit</code> once the last reference goes out of scope. Kotlin needs an explicit <code>close()</code> specifically because the JVM lacks a reliable, timely finalizer — Swift's deterministic reference counting does not have that gap.</p></details>
+
+      <h2>Recap: migration decision rubric</h2>
+      <p>Across Lessons 19-22, one repeatable rubric applies whenever a C++ module needs a foreign caller:</p>
+      <ol>
+        <li><strong>Characterize before you translate.</strong> Capture existing behavior with characterization tests (Lesson 19) so any port has a pass/fail oracle.</li>
+        <li><strong>Choose the narrowest seam that solves the real problem.</strong> A wider seam is not automatically better; it's more ABI surface to keep stable.</li>
+        <li><strong>Translate invariants and ownership deliberately, not mechanically.</strong> No tool surveyed in this course (bindgen, cxx, autocxx, Crubit, UniFFI) claims full, automatic conversion of arbitrary C++ or Rust semantics.</li>
+        <li><strong>Match the tool to the boundary, not the other way around.</strong> Raw <code>extern "C"</code> for a minimal stable contract; <code>cxx</code> for a rich bidirectional native bridge; UniFFI for a mobile product API in Kotlin or Swift.</li>
+        <li><strong>Verify tool status before you depend on it.</strong> autocxx now points new users elsewhere; Crubit and UniFFI both publish their own coverage gaps — check them per use case.</li>
+        <li><strong>Prove parity continuously.</strong> Differential and characterization tests (Lesson 19) stay in the suite after the port, not just during it.</li>
+        <li><strong>Roll out staged, with a real rollback path.</strong> Canary, ramp, flag-flip rollback, and only delete the legacy path after a full soak — the same discipline whether the new caller is C, Kotlin, or Swift.</li>
+      </ol>
+      <pre class="large-code"><code>Raw extern "C", one narrow caller?      Lesson 19 pattern: repr(C), opaque handle, catch_unwind
+Rich native C++ bridge, both ways?      Lesson 20: cxx bridge, Pin for C++ types
+Android/Kotlin product API?             Lesson 21: UniFFI Kotlin, close()/AutoCloseable
+iOS/Swift product API?                 Lesson 22: UniFFI Swift, host cdylib for bindgen + iOS staticlib XCFramework
+Any of the above?                       Characterize -> translate -> verify -> stage -> roll back</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://mozilla.github.io/uniffi-rs/latest/swift/overview.html">Swift</a>, UniFFI user guide, Mozilla. Swift binding generation on the C-compatible scaffolding layer. Accessed September 17, 2026.</li>
+        <li><a href="https://mozilla.github.io/uniffi-rs/latest/futures.html">Async/Futures support</a>, UniFFI user guide, Mozilla. Exporting <code>async fn</code> and generated Swift <code>async</code> calls. Accessed September 17, 2026.</li>
+        <li><a href="https://mozilla.github.io/uniffi-rs/latest/swift/xcode.html">Xcode integration</a>, UniFFI user guide, Mozilla. Confirms binary packaging is not handled by UniFFI itself. Accessed September 17, 2026.</li>
+        <li><a href="https://mozilla.github.io/uniffi-rs/latest/tutorial/foreign_language_bindings.html">Foreign-language bindings</a>, UniFFI user guide, Mozilla. <code>generate --library</code> reads metadata from a cdylib built for the library. Accessed September 17, 2026.</li>
+        <li><a href="https://mozilla.github.io/uniffi-rs/latest/proc_macro/index.html">Procedural Macros: Attributes and Derives</a>, UniFFI user guide, Mozilla. <code>uniffi::setup_scaffolding!()</code> for proc-macro-only crates and the library-mode requirement it implies. Accessed September 17, 2026.</li>
+        <li><a href="https://www.swift.org/migration/documentation/swift-6-concurrency-migration-guide/enabledataracesafety/">Enabling Complete Concurrency Checking</a>, Swift.org Migration Guide, Swift.org. Incremental, module-by-module Swift 6 data-race safety adoption. Accessed September 17, 2026.</li>
+        <li><a href="https://developer.apple.com/documentation/xcode/creating-a-multi-platform-binary-framework-bundle">Creating a multi-platform binary framework bundle</a>, Apple Developer Documentation, Apple. XCFramework assembly across device and Simulator slices. Accessed September 17, 2026.</li>
+        <li><a href="https://developer.apple.com/documentation/packagedescription/target/binarytarget(name:path:)">Target.binaryTarget(name:path:)</a>, Apple Developer Documentation, Apple. SwiftPM binary target declaration for a local XCFramework. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=DfSBBOlFTeE">Combining Swift and Rust: How to Have your Cake &amp; Eat it Too</a>, Seoul iOS Meetup, 1:03:36. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=cWCZms92-1g">iOS, Android and Web applications that share a single Rust core</a>, Rust Nation UK, 59:43. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="21-kotlin-java-bindings.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 21: Kotlin &amp; Java Bindings</span></a>
+        <a href="./" class="next"><span class="nav-label">Finish →</span><span class="nav-title">Course Overview</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

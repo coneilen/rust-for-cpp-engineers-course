@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kotlin &amp; Java Bindings — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html" class="active"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 21 · 30 minutes</span>
+      <h1>Kotlin &amp; Java Bindings for Mobile</h1>
+      <p class="lesson-subtitle">Give the Pulsewatch Android app its own on-device alert-scoring API: JNI fundamentals, the <code>jni</code> crate for hand-written glue, and a product-ready UniFFI Kotlin binding.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can explain <code>JNIEnv</code>, local versus global references, and thread rules; call Rust from Java/Kotlin through the <code>jni</code> crate; generate a product-facing Kotlin API with UniFFI; and package the native library correctly for Android's per-ABI <code>loadLibrary</code> model.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="5"><td>5 min</td><td>Why Pulsewatch mobile wants on-device scoring, and the two ladder rungs</td></tr>
+          <tr data-minutes="7"><td>7 min</td><td>JNI fundamentals: <code>JNIEnv</code>, local/global references, threads, strings, exceptions</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>The <code>jni</code> crate: a safer Rust-side JNI wrapper</td></tr>
+          <tr data-minutes="8"><td>8 min</td><td>UniFFI Kotlin: generating the product-facing Pulsewatch API</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Android packaging: per-ABI <code>.so</code> layout and <code>loadLibrary</code></td></tr>
+          <tr data-minutes="2"><td>2 min</td><td>Exercise: wire UniFFI Kotlin bindings into an Android module</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: two ladder rungs for one goal</h2>
+      <p>The Pulsewatch Android app wants offline alert triage — scoring recent samples without a network round trip — using the same <code>pulsewatch-scoring</code> Rust core built in Lessons 19 and 20. Kotlin compiles to the same JVM/ART bytecode as Java and calls native code through the identical Java Native Interface, so everything here applies to both languages. There are two ladder rungs: understand raw JNI first, because it explains what is really happening at the boundary, then generate the actual product API with UniFFI rather than hand-writing it.</p>
+
+      <h2>Follow-along setup</h2>
+      <div class="callout note">
+        <span class="callout-icon">🗂️</span>
+        <div class="callout-content">
+          <strong>Continuing the same checkout, now with a mobile side</strong>
+          <p><code>path/to/pulsewatch/</code> is still the workspace root from Lessons 19-20, and <code>crates/pulsewatch-scoring/</code> inside it is still the crate root; <code>path/to/pulsewatch</code> is still a placeholder for your actual checkout, not a literal directory name. This lesson adds a second, separate directory tree for the Android app, alongside the Rust workspace.</p>
+          <ul>
+            <li><strong>Already exists (from Lessons 19-20):</strong> <code>crates/pulsewatch-scoring/Cargo.toml</code> (its <code>[dependencies]</code> table currently has just <code>cxx = "1"</code>), <code>crates/pulsewatch-scoring/src/lib.rs</code> (the <code>AlertScorer</code> core), and the workspace-root <code>Cargo.toml</code>.</li>
+            <li><strong>Scaffold once, before Part 3 (Android Studio, not a command this lesson runs):</strong> open Android Studio and choose <strong>File → New → New Project → Empty Activity</strong>. In the wizard, set <strong>Name</strong> to <code>Pulsewatch</code>, <strong>Package name</strong> to <code>com.pulsewatch.scoring</code>, <strong>Save location</strong> to <code>path/to/pulsewatch/android</code> (your actual checkout path, plus <code>/android</code>), <strong>Language</strong> to Kotlin, and <strong>Minimum SDK</strong> to API 26, then click <strong>Finish</strong>. Android Studio generates the Gradle wrapper (<code>android/gradlew</code>, <code>android/gradlew.bat</code>, <code>android/gradle/wrapper/</code>), <code>android/settings.gradle.kts</code>, the root <code>android/build.gradle.kts</code>, and the app module's <code>android/app/build.gradle.kts</code> automatically — this lesson never hand-authors any of those files, only the Kotlin/Rust source and test files listed below, which land inside the app module the wizard already created. The default template's <code>android/app/build.gradle.kts</code> already declares the <code>androidx.test.ext:junit</code> and <code>junit</code> dependencies <code>ScoringBridgeTest.kt</code> (Part 6) needs and already treats <code>app/src/main/jniLibs/</code> as the native-library source set the Android Gradle Plugin packages automatically, so no manual Gradle edits are required for this lesson's source, test, or <code>jniLibs</code> wiring. If your own scaffold uses different names, substitute them throughout this lesson.</li>
+            <li><strong>Created in this lesson:</strong> <code>crates/pulsewatch-scoring/src/jni_bridge.rs</code> and <code>crates/pulsewatch-scoring/src/mobile.rs</code> (Rust, Parts 3-4), <code>android/app/src/main/kotlin/com/pulsewatch/scoring/NativeScorer.kt</code> (Part 3), <code>crates/pulsewatch-scoring/uniffi-bindgen.rs</code> plus Cargo.toml additions (Part 4), and <code>android/app/src/androidTest/kotlin/com/pulsewatch/scoring/ScoringBridgeTest.kt</code> (Part 6).</li>
+            <li><strong>Prerequisites:</strong> everything from Lessons 19-20, plus a JDK (17+), the Android SDK/NDK components Android Studio installs, the Gradle wrapper the wizard above generates in <code>android/</code>, the <code>aarch64-linux-android</code> Rust target (<code>rustup target add aarch64-linux-android</code>), and <code>cargo-ndk</code> (<code>cargo install cargo-ndk</code>) for Part 5's cross-compilation.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Part 2: JNI fundamentals</h2>
+      <table class="comparison-table">
+        <thead><tr><th>JNI concept</th><th>What it means</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>JNIEnv*</code></td><td>A per-thread interface pointer into the JVM, valid only on the thread that received it.</td><td>No direct C++ equivalent — closest to a thread-local capability object you must never share across threads.</td></tr>
+          <tr><td>Local reference</td><td>Valid only for the duration of one native method call; the JVM manages a bounded table of them per call.</td><td>Loosely like a scope-limited handle the runtime frees for you, not RAII you control.</td></tr>
+          <tr><td>Global reference</td><td>Survives across calls and threads once created with <code>NewGlobalRef</code>, but must be explicitly released with <code>DeleteGlobalRef</code> or it leaks.</td><td>Closest to a manually paired <code>new</code>/<code>delete</code> — no destructor frees it for you.</td></tr>
+          <tr><td>Strings and arrays</td><td><code>jstring</code>/array types require <code>Get*</code>/<code>Release*</code> pairs that copy or pin data; there is no direct pointer into Kotlin's managed string.</td><td>Comparable to copying out of an opaque handle rather than borrowing through a reference.</td></tr>
+          <tr><td>Exceptions</td><td>JNI has no automatic propagation; a pending exception must be checked after any JNI call that can throw, and no further JNI calls are safe until it is cleared or handled.</td><td>Unlike C++ exceptions, nothing unwinds the native stack for you — you poll for the pending state explicitly.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout note">
+        <span class="callout-icon">🧵</span>
+        <div class="callout-content">
+          <strong>Threads need to attach before they can use <code>JNIEnv</code></strong>
+          <p>If Rust spawns its own OS thread that later needs to call back into the JVM, it must call <code>AttachCurrentThread</code> first and <code>DetachCurrentThread</code> before the thread exits. Only attach threads that genuinely need JVM access — attach/detach carries real overhead.</p>
+        </div>
+      </div>
+
+      <h2>Part 3: the <code>jni</code> crate — a safer Rust-side wrapper</h2>
+      <p>The <code>jni</code> crate is not a dependency yet — Lesson 20 added a <code>[dependencies]</code> table containing only <code>cxx = "1"</code>, and this lesson appends to that same table rather than declaring a second one. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/Cargo.toml</code> (replace — add one line to the existing <code>[dependencies]</code> table from Lesson 20; <code>[build-dependencies]</code>, with <code>bindgen</code> and <code>cxx-build</code> from Lesson 20, is untouched; Part 4 below adds one more line to this same <code>[dependencies]</code> table rather than replacing it again):</p>
+      <pre class="large-code"><code># crates/pulsewatch-scoring/Cargo.toml (replace — excerpt: append to the existing [dependencies] table)
+[dependencies]
+cxx = "1"   # from Lesson 20, unchanged
+jni = "0.21"   # new</code></pre>
+      <p>The JNI glue must reuse Lesson 19's stateful <code>AlertScorer</code>, not recompute a stateless score — a per-shard sliding window only works if the same scorer instance persists across calls. Rather than boxing a raw pointer into the <code>jlong</code> handle (Lesson 19's <code>PwScorer</code> pattern), the adapter below keeps every live scorer in a single mutex-guarded registry keyed by a monotonically generated ID. A raw boxed pointer would let one thread call <code>nativeFree</code> while another concurrently calls <code>nativeScore</code> on the same handle — a use-after-free. Looking the handle up in a locked map instead makes concurrent calls serialize, and a handle removed by <code>nativeFree</code> simply stops resolving, so a stale handle reaching <code>nativeScore</code> gets a clean exception instead of touching freed memory. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/jni_bridge.rs</code> (new file, complete):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/jni_bridge.rs
+use jni::JNIEnv;
+use jni::objects::{JClass, JString};
+use jni::sys::{jdouble, jfloat, jlong};
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::{Mutex, OnceLock};
+use std::time::Duration;
+use crate::{AlertScorer, Sample, ScoringError};
+
+/// Every live scorer lives here, keyed by a monotonically generated handle.
+/// One process-wide mutex means nativeScore/nativeFree calls serialize --
+/// exactly the exclusivity AlertScorer::score's `&amp;mut self` already
+/// requires -- and removing an entry from the map (nativeFree) is enough
+/// to make a stale handle fail cleanly instead of dereferencing freed
+/// memory, the way a raw `Box::into_raw`/`Box::from_raw` handle would.
+static SCORERS: OnceLock&lt;Mutex&lt;HashMap&lt;jlong, AlertScorer&gt;&gt;&gt; = OnceLock::new();
+static NEXT_HANDLE: AtomicI64 = AtomicI64::new(1);
+
+fn registry() -&gt; &amp;'static Mutex&lt;HashMap&lt;jlong, AlertScorer&gt;&gt; {
+    SCORERS.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_pulsewatch_scoring_NativeScorer_nativeNew(
+    _env: JNIEnv,
+    _class: JClass,
+    baseline_window_secs: jdouble,
+    sensitivity: jfloat,
+) -&gt; jlong {
+    let baseline_window = match Duration::try_from_secs_f64(baseline_window_secs) {
+        Ok(duration) if !duration.is_zero() =&gt; duration,
+        _ =&gt; return 0, // Kotlin treats zero as construction failure
+    };
+    match AlertScorer::new(baseline_window, sensitivity) {
+        Ok(scorer) =&gt; {
+            let handle = NEXT_HANDLE.fetch_add(1, Ordering::Relaxed);
+            registry().lock().expect("scorer registry mutex poisoned").insert(handle, scorer);
+            handle
+        }
+        Err(_) =&gt; 0,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_pulsewatch_scoring_NativeScorer_nativeScore(
+    mut env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+    shard_label: JString,
+    value: jdouble,
+    timestamp_unix_ms: jlong,
+) -&gt; jfloat {
+    let _label: String = match env.get_string(&amp;shard_label) {
+        Ok(s) =&gt; s.into(),
+        Err(_) =&gt; {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", "shard_label was not valid UTF-8");
+            return 0.0;
+        }
+    };
+    let mut scorers = registry().lock().expect("scorer registry mutex poisoned");
+    let scorer = match scorers.get_mut(&amp;handle) {
+        Some(scorer) =&gt; scorer,
+        None =&gt; {
+            let _ = env.throw_new("java/lang/IllegalStateException", "scorer already closed or invalid handle");
+            return 0.0;
+        }
+    };
+    let sample = Sample { value, timestamp_unix_ms };
+    // Every ScoringError variant is mapped explicitly: adding a new variant
+    // to AlertScorer without updating this match is a compile error.
+    match scorer.score(sample) {
+        Ok(score) =&gt; score as jfloat,
+        Err(ScoringError::SensitivityOutOfRange) =&gt; {
+            let _ = env.throw_new("java/lang/IllegalStateException", "sensitivity out of range");
+            0.0
+        }
+        Err(ScoringError::InvalidBaselineWindow) =&gt; {
+            let _ = env.throw_new("java/lang/IllegalStateException", "baseline window is invalid");
+            0.0
+        }
+        Err(ScoringError::EmptyWindow) =&gt; {
+            let _ = env.throw_new("java/lang/IllegalStateException", "scoring window is empty");
+            0.0
+        }
+        Err(ScoringError::NonFiniteValue) =&gt; {
+            let _ = env.throw_new("java/lang/IllegalArgumentException", "value must be finite");
+            0.0
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_com_pulsewatch_scoring_NativeScorer_nativeFree(
+    _env: JNIEnv,
+    _class: JClass,
+    handle: jlong,
+) {
+    // A missing/already-removed key is a harmless no-op, so a double-free
+    // from Kotlin can never reach an already-freed Rust allocation.
+    registry().lock().expect("scorer registry mutex poisoned").remove(&amp;handle);
+}</code></pre>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/lib.rs</code> (append) — add <code>mod jni_bridge;</code> near the top so the new file above actually compiles as part of the crate: JNI's naming convention already makes every function above reachable by symbol name once linked into <code>libpulsewatch_scoring.so</code>, so no <code>pub use</code> re-export is needed.</p>
+      <p>The Kotlin side declares the matching <code>external</code> functions and loads the library once, in a companion object, before any instance is constructed. Its shape is unchanged by the registry rewrite above — Kotlin only ever holds an opaque <code>Long</code> either way — but the <code>check(handle != 0L)</code> guard is now an optimization, not the safety mechanism: even if two threads race past it, the Rust-side registry lookup is what actually prevents use-after-free, by returning a clean exception for a concurrently-freed handle instead of touching memory. <strong>File:</strong> <code>path/to/pulsewatch/android/app/src/main/kotlin/com/pulsewatch/scoring/NativeScorer.kt</code> (new file, complete):</p>
+      <pre class="large-code"><code>// android/app/src/main/kotlin/com/pulsewatch/scoring/NativeScorer.kt
+package com.pulsewatch.scoring
+
+class NativeScorer(baselineWindowSecs: Double, sensitivity: Float) : AutoCloseable {
+    private var handle: Long = nativeNew(baselineWindowSecs, sensitivity)
+
+    fun score(shardLabel: String, value: Double, timestampUnixMs: Long): Float {
+        check(handle != 0L) { "scorer already closed" }
+        return nativeScore(handle, shardLabel, value, timestampUnixMs)
+    }
+
+    override fun close() {
+        if (handle != 0L) {
+            nativeFree(handle)
+            handle = 0L
+        }
+    }
+
+    private external fun nativeNew(baselineWindowSecs: Double, sensitivity: Float): Long
+    private external fun nativeScore(handle: Long, shardLabel: String, value: Double, timestampUnixMs: Long): Float
+    private external fun nativeFree(handle: Long)
+
+    companion object {
+        init {
+            System.loadLibrary("pulsewatch_scoring")
+        }
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>New syntax</th><th>Why it exists</th></tr></thead>
+        <tbody>
+          <tr><td><code>Java_com_pulsewatch_scoring_NativeScorer_nativeNew</code></td><td>JNI's required naming convention, <code>Java_&lt;package&gt;_&lt;Class&gt;_&lt;method&gt;</code>, is how the JVM locates the native symbol at <code>loadLibrary</code> time; it must match the Kotlin <code>external fun</code> name exactly.</td></tr>
+          <tr><td><code>extern "system"</code></td><td>Selects the correct calling convention across platforms (notably Windows), which JNI requires instead of a hard-coded <code>"C"</code>.</td></tr>
+          <tr><td><code>OnceLock&lt;Mutex&lt;HashMap&lt;jlong, AlertScorer&gt;&gt;&gt;</code></td><td>A concurrency-safe handle registry instead of a raw boxed pointer: Kotlin only ever holds an opaque <code>Long</code> key, the lock makes concurrent <code>nativeScore</code>/<code>nativeFree</code> calls serialize, and a handle <code>nativeFree</code> removes simply stops resolving instead of leaving a dangling pointer another thread could dereference.</td></tr>
+          <tr><td><code>env.get_string(...)</code></td><td>The <code>jni</code> crate's safe wrapper around <code>GetStringUTFChars</code>/<code>ReleaseStringUTFChars</code>; it copies the Kotlin string into an owned Rust <code>String</code>, a real per-call cost worth knowing about.</td></tr>
+          <tr><td>Exhaustive <code>match</code> on <code>ScoringError</code></td><td>Every variant from Lesson 19's <code>AlertScorer</code> maps to a distinct Java exception type and message; there is no wildcard arm, so a new variant fails to compile until handled here too.</td></tr>
+          <tr><td><code>class NativeScorer : AutoCloseable</code></td><td>Mirrors the explicit close-not-finalize discipline from Part 4's UniFFI callout: the native handle is only reclaimed when <code>close()</code> runs, not when the JVM garbage-collects the Kotlin object.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 4: UniFFI Kotlin — the product-facing API</h2>
+      <p>Raw JNI glue explains the mechanism; the actual Pulsewatch mobile API should be generated, not hand-written. The same reuse rule applies here: the UniFFI object wraps <code>AlertScorer</code> per shard behind a mutex, and maps every <code>ScoringError</code> variant explicitly through a <code>From</code> impl rather than inventing an incompatible error type. A UniFFI object is a proc-macro-only crate — there is no UDL file here — so it needs one setup call, two library outputs (a <code>cdylib</code> the host machine can load to generate bindings from, and a <code>staticlib</code> Android links per ABI in Part 5), and a small local <code>uniffi-bindgen</code> binary, because UniFFI's own tutorial notes that the real <code>uniffi-bindgen</code> executable requires an unstable Cargo feature outside of nightly. <strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/Cargo.toml</code> (replace the <code>[lib]</code> table from Lesson 19, and add one more line to the same <code>[dependencies]</code> table Lesson 20 started and Part 3 above extended — the full merged file section shown here, not a second <code>[dependencies]</code> header; <code>[build-dependencies]</code> from Lesson 20 is unaffected and not repeated below):</p>
+      <pre class="large-code"><code># crates/pulsewatch-scoring/Cargo.toml (replace [lib]; extend the existing [dependencies]; append [[bin]])
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]   # rlib still needed for `cargo test`
+
+[dependencies]
+cxx = "1"                                              # from Lesson 20, unchanged
+jni = "0.21"                                           # from Part 3, unchanged
+uniffi = { version = "0.32", features = ["cli"] }      # new -- "cli" enables uniffi_bindgen_main()
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"</code></pre>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/uniffi-bindgen.rs</code> (new file, complete) — this tiny binary is what Part 6 actually runs to generate Kotlin (and later Swift) source; it is boilerplate specified by UniFFI's own tutorial, not custom Pulsewatch logic:</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/uniffi-bindgen.rs
+fn main() {
+    uniffi::uniffi_bindgen_main();
+}</code></pre>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/lib.rs</code> (append, once, near the top) — this proc-macro-only crate has no UDL file, so this single call replaces what a UDL build step would otherwise do:</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/lib.rs
+mod mobile;
+uniffi::setup_scaffolding!();</code></pre>
+      <p><strong>File:</strong> <code>path/to/pulsewatch/crates/pulsewatch-scoring/src/mobile.rs</code> (new file, complete):</p>
+      <pre class="large-code"><code>// crates/pulsewatch-scoring/src/mobile.rs
+use std::collections::HashMap;
+use std::sync::Mutex;
+use std::time::Duration;
+use crate::{AlertScorer, Sample, ScoringError};
+
+#[derive(uniffi::Error, Debug)]
+pub enum MobileScoringError {
+    InvalidSensitivity,
+    InvalidBaselineWindow,
+    EmptyWindow,
+    NonFiniteValue,
+}
+
+// Explicit, exhaustive mapping from Lesson 19's ScoringError -- no `_` arm,
+// so a new AlertScorer error variant fails to compile until handled here.
+impl From&lt;ScoringError&gt; for MobileScoringError {
+    fn from(err: ScoringError) -&gt; Self {
+        match err {
+            ScoringError::SensitivityOutOfRange =&gt; MobileScoringError::InvalidSensitivity,
+            ScoringError::InvalidBaselineWindow =&gt; MobileScoringError::InvalidBaselineWindow,
+            ScoringError::EmptyWindow =&gt; MobileScoringError::EmptyWindow,
+            ScoringError::NonFiniteValue =&gt; MobileScoringError::NonFiniteValue,
+        }
+    }
+}
+
+/// The same per-shard adapter idea as Part 3's handle registry, kept
+/// behind a mutex here because UniFFI objects may be called from multiple
+/// Kotlin coroutines/threads, unlike the single-threaded JNI handle above.
+#[derive(uniffi::Object)]
+pub struct MobileScorer {
+    shards: Mutex&lt;HashMap&lt;String, AlertScorer&gt;&gt;,
+    baseline_window: Duration,
+    sensitivity: f32,
+}
+
+#[uniffi::export]
+impl MobileScorer {
+    #[uniffi::constructor]
+    pub fn new(baseline_window_secs: f64, sensitivity: f32) -&gt; Result&lt;Self, MobileScoringError&gt; {
+        let baseline_window = Duration::try_from_secs_f64(baseline_window_secs)
+            .map_err(|_| MobileScoringError::InvalidBaselineWindow)?;
+        if baseline_window.is_zero() {
+            return Err(MobileScoringError::InvalidBaselineWindow);
+        }
+        AlertScorer::new(baseline_window, sensitivity)?; // validate sensitivity once, up front
+        Ok(Self { shards: Mutex::new(HashMap::new()), baseline_window, sensitivity })
+    }
+
+    pub fn score(&amp;self, shard_label: String, value: f64, timestamp_unix_ms: i64) -&gt; Result&lt;f32, MobileScoringError&gt; {
+        let mut shards = self.shards.lock().expect("scorer registry mutex poisoned");
+        let scorer = shards.entry(shard_label).or_insert_with(|| {
+            AlertScorer::new(self.baseline_window, self.sensitivity)
+                .expect("sensitivity already validated in MobileScorer::new")
+        });
+        Ok(scorer.score(Sample { value, timestamp_unix_ms })?)
+    }
+}</code></pre>
+      <pre class="large-code"><code>// Generated Kotlin usage looks like ordinary Kotlin
+val scorer = MobileScorer(300.0, 0.62f)
+try {
+    val score = scorer.score("shard-42", 0.87, 1_726_600_000_000L)
+} catch (e: MobileScoringException.NonFiniteValue) {
+    // handle
+} finally {
+    scorer.close()
+}</code></pre>
+      <p>Integrating the generation step into Gradle runs <code>uniffi-bindgen</code> as a build task per variant, so the Kotlin source stays in sync with the Rust API on every build rather than being copied in by hand.</p>
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong>Generated Kotlin objects have an explicit lifecycle, not a reliable finalizer</strong>
+          <p>UniFFI's Kotlin bindings implement <code>Disposable</code>/<code>AutoCloseable</code> with a <code>close()</code> method that must be called explicitly to reclaim the underlying Rust resources — Kotlin's garbage collector will not do this reliably on its own. Lists and maps of interface objects are not auto-closed either; each contained object must be closed individually. Plan for this the same way you plan for RAII scope exit in C++.</p>
+        </div>
+      </div>
+
+      <h2>Part 5: Android packaging — per-ABI <code>.so</code> and <code>loadLibrary</code></h2>
+      <p>Android ships several ABIs (<code>arm64-v8a</code>, <code>armeabi-v7a</code>, <code>x86_64</code>, ...), each needing its own compiled shared library, cross-compiled separately from the host build Part 4 and Part 6 use to generate Kotlin bindings — the same "host cdylib for generation, per-target build for shipping" split this course returns to in Lesson 22 for iOS. Raw <code>cargo build --target aarch64-linux-android</code> needs a working NDK linker on <code>PATH</code> for every target, which <a href="https://github.com/bbqsrc/cargo-ndk">cargo-ndk</a> (installed in Follow-along setup) configures automatically and writes straight into the <code>jniLibs</code> layout Android expects, so no manual <code>cp</code> step is needed. From <code>path/to/pulsewatch/</code> (the workspace root):</p>
+      <pre class="large-code"><code>cargo ndk -t arm64-v8a -o android/app/src/main/jniLibs build --release -p pulsewatch-scoring</code></pre>
+      <p>This writes <code>android/app/src/main/jniLibs/arm64-v8a/libpulsewatch_scoring.so</code> directly. Add <code>-t armeabi-v7a -t x86_64</code> (repeat <code>-t</code> per ABI) to build additional ABIs into the same output tree in one invocation. <code>System.loadLibrary("pulsewatch_scoring")</code>, typically called once from a companion object <code>init</code> block, resolves to the correct per-ABI library at runtime. UniFFI's own documentation is explicit that it generates the Kotlin <em>bindings</em>, not this packaging step — the cross-compilation, <code>jniLibs</code> layout, and Gradle wiring stay your responsibility.</p>
+      <p>Where useful for contrast: JNA (Java Native Access) avoids writing JNI glue entirely by reflecting over a plain C ABI at runtime, at the cost of runtime dispatch overhead and weaker compile-time checking. Pulsewatch prefers UniFFI's compile-time-generated, checked JNI glue for its product API instead.</p>
+
+      <h2>Part 6: exercise — wire UniFFI Kotlin bindings into Android</h2>
+      <p>Steps 1-3 below run from <code>path/to/pulsewatch/</code>, the workspace root set up in Parts 4-5; step 4's Gradle test command instead runs from inside the <code>android/</code> project the wizard created in Follow-along setup — each step says which.</p>
+      <ol>
+        <li><strong>Working directory:</strong> <code>path/to/pulsewatch/</code> (workspace root). Build a <strong>host</strong> library to generate bindings from — <code>cargo build --release -p pulsewatch-scoring</code>. UniFFI's own tutorial is explicit that <code>generate --library</code> needs a library the host process can load, not a cross-compiled Android artifact, so this step must target the host, not <code>aarch64-linux-android</code>. <strong>Expected evidence:</strong> a host cdylib now exists at <code>target/release/</code>, named <code>libpulsewatch_scoring.so</code> on Linux, <code>libpulsewatch_scoring.dylib</code> on macOS, or <code>pulsewatch_scoring.dll</code> on Windows — substitute the filename that matches the machine you are running this lesson on for every remaining reference below.</li>
+        <li><strong>Working directory:</strong> <code>path/to/pulsewatch/</code> (workspace root). Generate the Kotlin bindings straight into the Gradle source set — <code>cargo run --features=uniffi/cli -p pulsewatch-scoring --bin uniffi-bindgen -- generate --library target/release/&lt;host-library-from-step-1&gt; --language kotlin --out-dir android/app/src/main/kotlin</code> (for example, <code>--library target/release/libpulsewatch_scoring.dylib</code> on macOS). <strong>Expected evidence:</strong> <code>android/app/src/main/kotlin/com/pulsewatch/scoring/pulsewatch_scoring.kt</code> now exists, generated under the package path UniFFI read from the <code>#[uniffi::export]</code> annotations in <code>crates/pulsewatch-scoring/src/mobile.rs</code>.</li>
+        <li><strong>Working directory:</strong> <code>path/to/pulsewatch/</code> (workspace root). Cross-compile the artifact the app actually ships, straight into the Gradle <code>jniLibs</code> tree, using Part 5's <code>cargo-ndk</code> command: <code>cargo ndk -t arm64-v8a -o android/app/src/main/jniLibs build --release -p pulsewatch-scoring</code>. <strong>Expected evidence:</strong> <code>android/app/src/main/jniLibs/arm64-v8a/libpulsewatch_scoring.so</code> exists (this cross-compiled Android artifact is always a <code>.so</code>, regardless of which host OS produced it).</li>
+        <li><strong>File:</strong> <code>path/to/pulsewatch/android/app/src/androidTest/kotlin/com/pulsewatch/scoring/ScoringBridgeTest.kt</code> (new file, complete) — an instrumented test exercising the generated <code>MobileScorer</code> from step 2 on-device, where the native library from step 3 actually loads:
+          <pre class="large-code"><code>// android/app/src/androidTest/kotlin/com/pulsewatch/scoring/ScoringBridgeTest.kt
+package com.pulsewatch.scoring
+
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class ScoringBridgeTest {
+    @Test
+    fun scoresFortySamplesWithoutCrashing() {
+        val scorer = MobileScorer(300.0, 0.62f)
+        var scored = 0
+        try {
+            var t = 1_758_067_200_000L
+            // Warm-up: the first sample only seeds the baseline window
+            // (Lesson 19's EmptyWindow rule) and is expected to throw.
+            try {
+                scorer.score("fleet-a", 100.0, t)
+            } catch (_: MobileScoringException.EmptyWindow) {
+                // expected exactly once, for the warm-up sample
+            }
+            for (i in 0 until 40) {
+                t += 1_000
+                val value = if (i == 20) 500.0 else 100.0
+                scorer.score("fleet-a", value, t)
+                scored += 1
+            }
+        } finally {
+            scorer.close()
+        }
+        assertEquals(40, scored)
+        println("scored $scored/40 offline samples, 0 crashes")
+    }
+}</code></pre>
+          Run it — <strong>working directory:</strong> <code>path/to/pulsewatch/</code> (workspace root); change into the Android project first, since its Gradle wrapper lives there, not at the workspace root: <code>cd android &amp;&amp; ./gradlew :app:connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pulsewatch.scoring.ScoringBridgeTest</code>. The instrumentation-runner property selects this Android test class; <code>--tests</code> is for JVM <code>Test</code> tasks and is not accepted by <code>connectedAndroidTest</code>. This is the instrumented-test task, not the unit-test task (<code>test</code>/<code>testDebugUnitTest</code>), because <code>ScoringBridgeTest.kt</code> lives under <code>app/src/androidTest/</code> and needs a connected device or emulator to load the real <code>.so</code> from <code>jniLibs</code> — a plain JVM unit test never loads native libraries. <strong>Expected evidence:</strong> the test run passes and <code>Logcat</code> shows <code>scored 40/40 offline samples, 0 crashes</code>, with no <code>UnsatisfiedLinkError</code> on-device.
+        </li>
+      </ol>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://www.youtube.com/watch?v=tA_WrHnvY2w">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">5:12 · INTERMEDIATE</span><h3>Best practices using JNI</h3><p>Android Developers (Android Dev Summit '18). Concise, official guidance on JNI local/global references and threading.</p></div>
+        </a>
+        <a class="video-card" href="https://www.youtube.com/watch?v=cUKcrfdFRqk">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">37:41 · ADVANCED</span><h3>Crossing The Barrier Between Kotlin and Rust (and back)!</h3><p>Kotlin by JetBrains (Tarik Eshaq). A practitioner's tour of bridging Kotlin and Rust in both directions.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the JNI best-practices video, read the Android NDK's own <a href="https://developer.android.com/ndk/guides/jni-tips">JNI tips</a> guide covering the same local/global reference and threading rules from Part 2.</li>
+        <li>Instead of the Kotlin/Rust bridging talk, work through the UniFFI Kotlin snippet and packaging steps in Parts 4 and 5 using the <a href="https://mozilla.github.io/uniffi-rs/latest/kotlin/gradle.html">Gradle integration guide</a>.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why must a global JNI reference be explicitly deleted while a local reference does not?</summary><p><strong>Answer:</strong> Local references are automatically freed by the JVM at the end of the native call. Global references are meant to outlive the call, so they leak unless code explicitly calls <code>DeleteGlobalRef</code>.</p></details>
+      <details class="quiz"><summary>2. Why call <code>AttachCurrentThread</code> before using <code>JNIEnv</code> from a Rust-spawned OS thread?</summary><p><strong>Answer:</strong> <code>JNIEnv</code> is only valid on threads that are attached to the JVM. A raw OS thread has no valid <code>JNIEnv</code> until it is attached, and must detach before exiting.</p></details>
+      <details class="quiz"><summary>3. What does UniFFI actually generate for Android, and what does it not generate?</summary><p><strong>Answer:</strong> It generates the Kotlin binding source that calls into the compiled Rust library. It does not cross-compile or copy the per-ABI <code>.so</code> files, and it does not write the Gradle packaging — those remain your responsibility.</p></details>
+      <details class="quiz"><summary>4. Why prefer UniFFI's generated JNI glue over JNA for the Pulsewatch product API?</summary><p><strong>Answer:</strong> UniFFI's glue is generated at build time and checked against the real Rust API. JNA reflects over a plain C ABI at runtime, trading that compile-time checking for slower, less-verified dispatch.</p></details>
+      <details class="quiz"><summary>5. Why does Part 3 keep every <code>AlertScorer</code> in a mutex-guarded <code>HashMap&lt;jlong, AlertScorer&gt;</code> instead of boxing a raw pointer into the <code>jlong</code> handle the way Lesson 19's <code>PwScorer</code> does?</summary><p><strong>Answer:</strong> A raw boxed pointer has no protection against one thread calling <code>nativeFree</code> (freeing it) while another concurrently calls <code>nativeScore</code> on the same handle — a use-after-free. Looking the handle up in a locked map instead makes those calls serialize, and once <code>nativeFree</code> removes the entry, a stale handle simply fails a map lookup and throws a clean exception instead of dereferencing freed memory.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Learning JNI's raw model?            Study JNIEnv, local/global refs, and threads first
+Writing Rust-side JNI by hand?       Use the jni crate over raw FFI
+Building the product API?            Generate it with UniFFI Kotlin
+New native thread calls into Kotlin? Attach it to the JVM first, detach before exit
+Shipping to Android?                 Cross-compile per ABI, place under jniLibs, loadLibrary once
+Tempted to skip JNI entirely?        JNA trades compile-time checks for runtime reflection</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://developer.android.com/ndk/guides/jni-tips">JNI Tips</a>, Android NDK guides, Android Developers. <code>JNIEnv</code>, reference types, and threading rules that apply to both Java and Kotlin. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/jni/latest/jni/">jni</a>, docs.rs. Safe Rust-side JNI bindings crate. Accessed September 17, 2026.</li>
+        <li><a href="https://mozilla.github.io/uniffi-rs/latest/">The UniFFI user guide</a>, Mozilla. Supported languages, including full Kotlin support. Accessed September 17, 2026.</li>
+        <li><a href="https://mozilla.github.io/uniffi-rs/latest/kotlin/gradle.html">Integrating with Gradle</a>, UniFFI user guide, Mozilla. Compile-time Kotlin binding generation. Accessed September 17, 2026.</li>
+        <li><a href="https://mozilla.github.io/uniffi-rs/latest/kotlin/lifetimes.html">Kotlin Lifetimes</a>, UniFFI user guide, Mozilla. The <code>Disposable</code>/<code>close()</code> lifecycle limitation for generated bindings. Accessed September 17, 2026.</li>
+        <li><a href="https://github.com/bbqsrc/cargo-ndk">cargo-ndk</a>, GitHub (bbqsrc). NDK environment configuration and <code>jniLibs</code>-layout output for cross-compiling Rust to Android. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=tA_WrHnvY2w">Best practices using JNI</a>, Android Developers (Android Dev Summit '18), 5:12. Accessed September 17, 2026.</li>
+        <li><a href="https://www.youtube.com/watch?v=cUKcrfdFRqk">Crossing The Barrier Between Kotlin and Rust (and back)!</a>, Kotlin by JetBrains, 37:41. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="20-advanced-cpp-interop.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 20: Advanced C++ Interop</span></a>
+        <a href="22-swift-bindings-apple-packaging.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 22: Swift &amp; Apple Packaging</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

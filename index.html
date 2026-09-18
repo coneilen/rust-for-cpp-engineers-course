@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./" class="active"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <div class="lesson-badge">🦀 22-lesson course · 11 hours</div>
+      <h1>Learning Rust for C++ Engineers</h1>
+      <p class="lesson-subtitle">Transfer your C++ instincts to Rust, then build, test, debug, profile, and integrate a concurrent networked monitoring system from first principles.</p>
+
+      <h2>The finish line</h2>
+      <p>By the end of this course, you will be able to:</p>
+      <ul class="check-list">
+        <li>Model data and control flow with Rust's value, type, struct, enum, and function fundamentals instead of reaching for C++ habits.</li>
+        <li>Use ownership, borrowing, traits, lifetimes, and explicit errors to design Rust APIs from scratch.</li>
+        <li>Build native-threaded and Tokio-based programs with bounded work, deliberate synchronization, networking, HTTP, and SQLite persistence.</li>
+        <li>Test, debug, observe, benchmark, and dynamically check unsafe boundaries using the appropriate Rust tools.</li>
+        <li>Migrate a real C++ module in stages and choose a justified C ABI, C++ bridge, JNI, UniFFI Kotlin, or UniFFI Swift boundary.</li>
+      </ul>
+
+      <div class="callout note">
+        <span class="callout-icon">🧭</span>
+        <div class="callout-content">
+          <strong>Scope and prerequisites</strong>
+          <p>You should recognize C++ functions, classes or structs, references, RAII, threads, and basic build concepts. Before starting, install stable Rust with <code>rustup</code>, <code>rust-analyzer</code>, Clippy, <code>rustfmt</code>, and one debugger (<code>rust-lldb</code> or <code>rust-gdb</code>). To avoid setup delays later, preinstall a nightly toolchain with Miri and the platform dependencies required by <code>cargo-flamegraph</code>. Nightly Miri, sanitizers, and profiling are optional tools used in Lessons 8 and 18; the main course code targets stable Rust.</p>
+        </div>
+      </div>
+
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong>Deliberate boundaries</strong>
+          <p>This course teaches a production-shaped learning system, not a production certification. It does not promise mechanical C++ conversion, universal interop coverage, formal proof of unsafe code, platform signing, GUI development, or deployment-specific security hardening. Each migration and foreign-function boundary still requires project-specific ownership, ABI, threat-model, and rollout review.</p>
+        </div>
+      </div>
+
+      <h2>How to follow the hands-on steps</h2>
+      <ul>
+        <li><strong>Lessons 1–6:</strong> work in the <code>rust-greeter/</code> package created in Lesson 1.</li>
+        <li><strong>Lessons 7–22:</strong> work in the <code>pulsewatch/</code> workspace created in Lesson 7 and carry each completed lesson forward.</li>
+        <li><code>path/to/rust-greeter</code> and <code>path/to/pulsewatch</code> mean the location where you created or checked out the project. Do not create a literal folder named <code>path/to</code>.</li>
+        <li>Each code listing identifies its exact file and whether to create, replace, append, or only read the excerpt. Commands state the directory they run from and the result you should see.</li>
+        <li>When a lesson says <strong>excerpt</strong>, do not replace the entire file with that block; insert it at the named location or use it only to study the concept.</li>
+      </ul>
+
+      <h2>Course plan</h2>
+      <div class="lesson-cards">
+        <a class="lesson-card" href="01-from-toolchain-to-binary.html">
+          <span class="lesson-card-number">1</span>
+          <div>
+            <h3>From Toolchain to Distributable Binary</h3>
+            <p>Install Rust, run Hello World, turn it into a tested CLI with a Cargo dependency, and produce a release binary.</p>
+            <span class="time-pill">30 minutes</span>
+          </div>
+        </a>
+        <a class="lesson-card" href="02-values-variables-types-storage-constants.html">
+          <span class="lesson-card-number">2</span>
+          <div>
+            <h3>Values, Variables, Types, Storage, and Constants</h3>
+            <p>Add typed configuration values to the CLI: primitive types, variable bindings, mutability, constants, and stack versus heap storage.</p>
+            <span class="time-pill">30 minutes</span>
+          </div>
+        </a>
+        <a class="lesson-card" href="03-structs-enums-immutable-data-modeling.html">
+          <span class="lesson-card-number">3</span>
+          <div>
+            <h3>Structs, Enums, and Immutable Data Modeling</h3>
+            <p>Model the CLI's data with structs and enums, then branch on it exhaustively with pattern matching.</p>
+            <span class="time-pill">30 minutes</span>
+          </div>
+        </a>
+        <a class="lesson-card" href="04-control-flow-functions-closures-macros.html">
+          <span class="lesson-card-number">4</span>
+          <div>
+            <h3>Control Flow, Functions, Closures, and Macros</h3>
+            <p>Round out the CLI with loops, conditionals, functions, closures, and macro invocation syntax.</p>
+            <span class="time-pill">30 minutes</span>
+          </div>
+        </a>
+        <a class="lesson-card" href="05-ownership-errors-concurrency.html">
+          <span class="lesson-card-number">5</span>
+          <div>
+            <h3>Ownership, Explicit Errors, and Safe Concurrency</h3>
+            <p>Extend the CLI with borrowed data, exhaustive error handling, iterator pipelines, and scoped worker threads.</p>
+            <span class="time-pill">30 minutes</span>
+          </div>
+        </a>
+        <a class="lesson-card" href="06-traits-lifetimes-shared-ownership.html">
+          <span class="lesson-card-number">6</span>
+          <div>
+            <h3>Traits, Lifetimes, and Shared Ownership</h3>
+            <p>Add pluggable output formatting, compare static and dynamic dispatch, store a checked borrow, and share one formatter safely across workers.</p>
+            <span class="time-pill">30 minutes</span>
+          </div>
+        </a>
+        <a class="lesson-card" href="07-production-workspaces-modules-api-design.html">
+          <span class="lesson-card-number">7</span>
+          <div><h3>Production Workspaces, Modules, and API Design</h3><p>Start Pulsewatch as a multi-package workspace with a small, tested public API.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="08-smart-pointers-interior-mutability-unsafe.html">
+          <span class="lesson-card-number">8</span>
+          <div><h3>Smart Pointers, Interior Mutability, and Unsafe Boundaries</h3><p>Choose ownership wrappers by invariant and isolate one auditable unsafe operation.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="09-native-threads-channels.html">
+          <span class="lesson-card-number">9</span>
+          <div><h3>Native Threads and Channels</h3><p>Build a bounded worker pool with explicit lifecycle, backpressure, and failure handling.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="10-locks-atomics-deadlocks-data-parallelism.html">
+          <span class="lesson-card-number">10</span>
+          <div><h3>Locks, Atomics, Deadlocks, and Data Parallelism</h3><p>Select synchronization by invariant and measure before introducing parallelism.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="11-blocking-tcp-networking.html">
+          <span class="lesson-card-number">11</span>
+          <div><h3>Blocking TCP Networking</h3><p>Implement and test a framed loopback probe with timeouts and partial-read handling.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="12-async-rust-tokio.html">
+          <span class="lesson-card-number">12</span>
+          <div><h3>Async Rust and Tokio</h3><p>Convert the scheduler to bounded async tasks without blocking the runtime.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="13-http-client-axum-service.html">
+          <span class="lesson-card-number">13</span>
+          <div><h3>HTTP Client and Axum Service</h3><p>Add safe outbound checks and a structured HTTP administration surface.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="14-sqlite-rusqlite.html">
+          <span class="lesson-card-number">14</span>
+          <div><h3>SQLite with rusqlite</h3><p>Persist targets and results with migrations, transactions, and bound parameters.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="15-production-service-sqlx.html">
+          <span class="lesson-card-number">15</span>
+          <div><h3>Production Service with SQLx</h3><p>Assemble the async service around pooled persistence and graceful shutdown.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="16-testing-quality-gates.html">
+          <span class="lesson-card-number">16</span>
+          <div><h3>Testing and Quality Gates</h3><p>Apply unit, integration, documentation, property, and differential tests.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="17-debugging-observability.html">
+          <span class="lesson-card-number">17</span>
+          <div><h3>Debugging and Observability</h3><p>Diagnose failures with compiler evidence, debuggers, errors, backtraces, and tracing.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="18-performance-profiling-unsafe-verification.html">
+          <span class="lesson-card-number">18</span>
+          <div><h3>Performance, Profiling, and Unsafe Verification</h3><p>Benchmark against baselines, read flamegraphs, and recheck unsafe paths dynamically.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="19-migration-playbook-raw-c-abi.html">
+          <span class="lesson-card-number">19</span>
+          <div><h3>Migration Playbook and Raw C ABI</h3><p>Characterize a legacy C++ module and replace it behind a staged, rollback-safe seam.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="20-advanced-cpp-interop.html">
+          <span class="lesson-card-number">20</span>
+          <div><h3>Advanced C++ Interop</h3><p>Choose among bindgen, cxx, Crubit, and maintained legacy autocxx deployments.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="21-kotlin-java-bindings.html">
+          <span class="lesson-card-number">21</span>
+          <div><h3>Kotlin and Java Bindings</h3><p>Understand JNI mechanics, then expose a product API with UniFFI Kotlin.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+        <a class="lesson-card" href="22-swift-bindings-apple-packaging.html">
+          <span class="lesson-card-number">22</span>
+          <div><h3>Swift Bindings and Apple Packaging</h3><p>Generate Swift bindings and define the XCFramework and SwiftPM packaging boundary.</p><span class="time-pill">30 minutes</span></div>
+        </a>
+      </div>
+
+      <h2>What you will produce</h2>
+      <p>Lessons 1–6 produce <code>rust-greeter</code>, a compact fundamentals warm-up. Lessons 7–22 produce <strong>Pulsewatch</strong>: a production-shaped monitoring workspace with native and async concurrency, TCP and HTTP probes, SQLite persistence, quality gates, structured diagnostics, measured performance work, a staged C++ migration seam, and mobile-facing Kotlin and Swift bindings.</p>
+
+      <h2>Why this path is different from a syntax tour</h2>
+      <table class="comparison-table">
+        <thead><tr><th>C++ instinct</th><th>Rust move</th><th>Evidence you will produce</th></tr></thead>
+        <tbody>
+          <tr><td>Choose a compiler, build system, package manager, and test framework.</td><td>Start with the integrated <code>rustup</code> + Cargo workflow.</td><td>A reproducible package with a lockfile and tests.</td></tr>
+          <tr><td>Use discipline and review to avoid dangling views and data races.</td><td>Express ownership and borrowing so unsafe aliases fail to compile.</td><td>A borrowed API and scoped-thread implementation.</td></tr>
+          <tr><td>Mix exceptions, status values, and nullable pointers.</td><td>Model expected failure with <code>Result</code> and <code>Option</code>.</td><td>Exhaustive handling of invalid names and I/O failure.</td></tr>
+          <tr><td>Choose between templates, virtual interfaces, and shared pointers.</td><td>Choose trait bounds, trait objects, lifetimes, and <code>Arc</code> deliberately.</td><td>A runtime-selected formatter shared safely across workers.</td></tr>
+          <tr><td>Reach for threads, mutexes, sockets, and hand-assembled event loops.</td><td>Choose scoped threads, channels, locks, atomics, Tokio tasks, and bounded async work by lifecycle and invariant.</td><td>A monitored service with explicit backpressure and shutdown.</td></tr>
+          <tr><td>Rewrite a subsystem and switch callers when it seems ready.</td><td>Characterize behavior, choose a narrow ABI seam, compare implementations, canary, ramp, and retain rollback.</td><td>A staged replacement of a realistic legacy scoring module.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="lesson-nav">
+        <div></div>
+        <a href="01-from-toolchain-to-binary.html" class="next"><span class="nav-label">Begin →</span><span class="nav-title">Lesson 1: Toolchain to Binary</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

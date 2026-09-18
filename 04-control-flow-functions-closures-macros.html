@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control Flow, Functions, Closures, and Macros — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html" class="active"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 4 · 30 minutes</span>
+      <h1>Control Flow, Functions, Closures, and Macros</h1>
+      <p class="lesson-subtitle">Make decisions with <code>if</code>/<code>match</code>, loop deliberately, write functions where the tail expression <em>is</em> the return value, capture your environment with closures, and understand what <code>println!</code> and friends actually are. Finish by rendering real greetings by style in <code>rust-greeter</code>.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can read <code>if</code> and <code>match</code> as expressions, choose the right loop and use <code>break</code> with a value, tell statements from expressions in a function body, describe what a closure captures and how, and explain why <code>println!</code> is a macro rather than an ordinary function.
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">📁</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p><strong>Starting state:</strong> the Lesson 3 <code>rust-greeter</code> package — <code>Args</code>/<code>greeting</code> unchanged since Lesson 1, the Lesson 2 constants/<code>describe_cast</code>, and the Lesson 3 <code>RepeatCount</code>/<code>Audience</code>/<code>GreetingStyle</code>/<code>GreeterConfig</code>/<code>lookup_style</code>. <strong>Working directory:</strong> <code>cd path/to/rust-greeter</code> — <code>path/to</code> is a placeholder for wherever you keep the project (for example <code>~/dev/rust-greeter</code>); it is not a literal folder. <strong>Default file:</strong> every unqualified snippet below targets <code>src/main.rs</code>, and each pass states whether it adds to the file, replaces part of it, or is an illustrative excerpt not added to the file.</p>
+        </div>
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="3"><td>3 min</td><td><code>if</code> as an expression; exhaustive <code>match</code> with guards and destructuring</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td><code>loop</code>/<code>while</code>/<code>for</code>, <code>break</code> with a value, and ranges</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Functions: statements vs. expressions, tail returns, and early <code>return</code></td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Closures and capture modes</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Macros: <code>println!</code>/<code>vec!</code>/<code>format!</code>, <code>macro_rules!</code>, and derive/attribute macros</td></tr>
+          <tr data-minutes="10"><td>10 min</td><td>Evolve <code>rust-greeter</code>: parse a style flag and render greetings</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Knowledge check and recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: <code>if</code> and <code>match</code> as expressions</h2>
+      <p><code>if</code> in Rust produces a value, so it can appear directly on the right-hand side of a <code>let</code> — but every arm must produce the <em>same type</em>, unlike C++'s ternary operator which quietly permits mismatched types via conversion:</p>
+      <pre><code>let label = if count &gt; 1 { "greetings" } else { "greeting" }; // both arms: &amp;str</code></pre>
+      <p><code>match</code> generalizes this to any number of patterns and is <strong>exhaustive</strong>: the compiler rejects code that does not cover every possibility, which is what made <code>lookup_style</code>'s trailing <code>_ =&gt; None</code> mandatory in Lesson 3. Patterns can also destructure and add <strong>guards</strong> — extra <code>if</code> conditions evaluated only when the pattern itself matches:</p>
+      <pre><code>fn name_length_label(name: &amp;str) -&gt; &amp;'static str {
+    match name.len() {
+        n if n == 0 =&gt; "empty",
+        n if n &lt;= 4 =&gt; "short",
+        n if n &lt;= 12 =&gt; "medium",
+        _ =&gt; "long",
+    }
+}</code></pre>
+      <p>Each arm above is a guard (<code>if n == 0</code>, <code>if n &lt;= 4</code>, …) attached to the same binding pattern <code>n</code>; the first guard that evaluates <code>true</code> wins, and the final <code>_</code> still must be present to keep the match exhaustive even though the guards look like they cover everything.</p>
+
+      <h2>Part 2: <code>loop</code>, <code>while</code>, <code>for</code>, and <code>break</code> with a value</h2>
+      <table class="comparison-table">
+        <thead><tr><th>Loop</th><th>When to use it</th></tr></thead>
+        <tbody>
+          <tr><td><code>loop { ... }</code></td><td>Unconditional repetition; the only loop form that can <code>break</code> with a value, replacing a hand-written retry loop</td></tr>
+          <tr><td><code>while condition { ... }</code></td><td>Repeat while a condition holds — same shape as C++'s <code>while</code></td></tr>
+          <tr><td><code>for item in iterable { ... }</code></td><td>Iterate a range or collection directly; the idiomatic default, since it cannot skip a bound or forget to increment</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Illustrative excerpt — not added to <code>rust-greeter</code>.</strong> A manual countdown with <code>while</code> works, but a <code>for</code> loop over a range says the same thing with no mutable counter to get wrong:</p>
+      <div class="code-compare">
+        <div>
+          <div class="code-label bad">Works, but a manual counter</div>
+          <pre><code>let mut remaining = 3u8;
+while remaining &gt; 0 {
+    println!("tick {remaining}");
+    remaining -= 1;
+}</code></pre>
+        </div>
+        <div>
+          <div class="code-label good">Idiomatic: no counter to maintain</div>
+          <pre><code>for remaining in (1..=3).rev() {
+    println!("tick {remaining}");
+}</code></pre>
+        </div>
+      </div>
+      <p><code>1..=3</code> is an inclusive range (<code>1</code> through <code>3</code>); <code>1..3</code> would be exclusive of <code>3</code>. <code>loop</code> is the only loop that can hand back a value through <code>break</code>, which <code>while</code>/<code>for</code> cannot do:</p>
+      <pre><code>fn first_space_index(name: &amp;str) -&gt; Option&lt;usize&gt; {
+    let mut chars = name.char_indices();
+    loop {
+        match chars.next() {
+            Some((index, ' ')) =&gt; break Some(index), // break WITH a value
+            Some(_) =&gt; continue,
+            None =&gt; break None,
+        }
+    }
+}</code></pre>
+      <p><code>Some((index, ' '))</code> destructures the tuple <code>char_indices()</code> yields, matching only when the character itself is a space, and binding <code>index</code> at the same time — pattern matching and destructuring in one step.</p>
+
+      <h2>Part 3: functions — statements, expressions, and returns</h2>
+      <p>A block's final line, if it has no trailing semicolon, is the block's <strong>value</strong> — the same rule that makes <code>if</code>/<code>match</code> usable as expressions applies to whole function bodies:</p>
+      <pre><code>fn shout_line(text: &amp;str, should_shout: bool) -&gt; String {
+    if text.is_empty() {
+        return String::new(); // early return — still needs `return` and `;` here
+    }
+    if should_shout {
+        text.to_uppercase() // tail expression, no semicolon: this IS the return value
+    } else {
+        text.to_string() // tail expression in the other arm
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>C++ instinct</th><th>Rust reality</th></tr></thead>
+        <tbody>
+          <tr><td>Every path needs an explicit <code>return</code></td><td>The final expression of a block (no semicolon) is implicitly returned; <code>return</code> is only needed to exit <em>early</em></td></tr>
+          <tr><td>A semicolon is just a statement terminator</td><td>Adding a semicolon turns an expression into a statement that evaluates to <code>()</code> — <code>text.to_uppercase();</code> as the last line would make the function return <code>()</code>, a type error against <code>-&gt; String</code></td></tr>
+        </tbody>
+      </table>
+      <p>Generics are previewed only briefly here — Lesson 6 covers them properly alongside traits and lifetimes. The rule for this lesson: reach for a generic function only when a concrete type genuinely does not fit; everything in <code>rust-greeter</code> so far has a concrete, known type at every call site, so none of today's functions need one.</p>
+
+      <h2>Part 4: closures and capture modes</h2>
+      <p>A closure is an anonymous function that can capture variables from its surrounding scope — C++'s lambda, with the same trailing-brace call syntax but different capture rules. Without <code>move</code>, the compiler does not simply borrow everything: it infers the <em>least restrictive</em> capture each variable actually needs from how the closure body uses it — an immutable borrow if the body only reads the variable, a mutable borrow if the body mutates it, or a move if the body must consume/own it outright. The closure below only reads <code>label</code>, so the compiler captures it by immutable borrow:</p>
+      <pre><code>let label = "casual";
+let describe = |name: &amp;str| format!("{name} ({label})"); // captured by immutable borrow (read-only use)
+println!("{}", describe("Ada"));
+println!("{label}"); // still usable — `describe` only borrowed it</code></pre>
+      <p>Mutating a captured variable inside the closure body makes the compiler infer a <em>mutable</em> borrow instead — still not a move, so the original binding is usable again once the closure's last use ends:</p>
+      <pre><code>let mut count = 0;
+let mut increment = || count += 1; // captured by mutable borrow (the body mutates `count`)
+increment();
+increment();
+// `increment`'s last use is above, so its mutable borrow of `count` has ended here
+println!("{count}"); // 2 — `count` is usable again</code></pre>
+      <p>The <code>move</code> keyword forces a closure to capture everything it uses <em>by value</em> instead of letting the compiler infer a borrow. It is commonly needed when a closure must own captured non-<code>'static</code> locals—for example, when handing work to a thread that may outlive the current scope (Lesson 9 uses this pattern for real). A noncapturing closure, or one that only refers to <code>static</code> data, can outlive its creating scope without <code>move</code>. What happens to an original captured binding depends on whether its type is <code>Copy</code>: a <code>Copy</code> value (like the <code>u8</code> below) is copied into the closure, so the original stays usable too; a non-<code>Copy</code> value (like a <code>String</code>) is moved in, so the original binding is gone:</p>
+      <pre><code>let n: u8 = 5; // Copy
+let show_n = move || println!("n inside closure = {n}");
+show_n();
+println!("n outside closure = {n}"); // still usable — `u8` is `Copy`, so `move` copied it
+
+let label = String::from("casual"); // not Copy
+let describe = move |name: &amp;str| format!("{name} ({label})"); // takes ownership of `label`
+println!("{}", describe("Ada"));
+// println!("{label}"); // would not compile: `label` was moved into `describe`</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Trait</th><th>What it means for a closure</th></tr></thead>
+        <tbody>
+          <tr><td><code>FnOnce</code></td><td>Can be called at least once; may consume captured values</td></tr>
+          <tr><td><code>FnMut</code></td><td>Can be called multiple times; may mutate captured values</td></tr>
+          <tr><td><code>Fn</code></td><td>Can be called multiple times; only reads captured values</td></tr>
+        </tbody>
+      </table>
+      <p>This lesson only reads closures used inline, such as inside <code>.map(...)</code> below; Lesson 6 covers writing functions that accept a closure as a parameter using these three traits explicitly.</p>
+
+      <h2>Part 5: macros — what <code>println!</code> actually is</h2>
+      <p>The trailing <code>!</code> is not decoration: <code>println!</code>, <code>vec!</code>, and <code>format!</code> are all <strong>macros</strong>, expanded into ordinary code by the compiler <em>before</em> type-checking runs — they are not regular functions, and that is precisely why they can accept a variable number of arguments and check format-string placeholders at compile time, something no plain Rust function can do.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Macro</th><th>What it produces</th></tr></thead>
+        <tbody>
+          <tr><td><code>println!("{name}")</code></td><td>Prints to stdout with a trailing newline; expands into code that validates <code>{name}</code> against an actual variable named <code>name</code> at compile time</td></tr>
+          <tr><td><code>format!("{name}")</code></td><td>Same formatting, returned as an owned <code>String</code> instead of printed</td></tr>
+          <tr><td><code>vec![1, 2, 3]</code></td><td>Builds a <code>Vec&lt;i32&gt;</code> without manually calling <code>Vec::new()</code> then <code>.push(...)</code> three times</td></tr>
+        </tbody>
+      </table>
+      <p>You can define your own <strong>declarative macro</strong> with <code>macro_rules!</code>, matching on the shape of the tokens passed in — this is pattern matching over syntax, not values:</p>
+      <pre><code>macro_rules! greet_many {
+    ($name:expr, $times:expr) =&gt; {{
+        let mut lines = Vec::new();
+        for _ in 0..$times {
+            lines.push(greeting($name));
+        }
+        lines
+    }};
+}</code></pre>
+      <p><code>$name:expr</code> and <code>$times:expr</code> declare that this macro accepts two comma-separated expressions; the double braces <code>{{ ... }}</code> are an ordinary block expression (outer braces are the macro arm's body, inner braces make that body a single block that evaluates to <code>lines</code>).</p>
+      <p>Rust also has <strong>procedural</strong> macros — <code>#[derive(Debug)]</code> from Lesson 3 is one — which run arbitrary code to generate new tokens instead of matching a fixed pattern; writing one is out of scope for this course, but recognizing <code>#[derive(...)]</code> and attribute macros like <code>#[tokio::main]</code> (Lesson 12) as macros, not built-in syntax, matters for reading real Rust code.</p>
+      <div class="callout warning">
+        <span class="callout-icon">🛑</span>
+        <div class="callout-content">
+          <strong>When not to reach for <code>macro_rules!</code></strong>
+          <p>If a plain function or generic function expresses the idea, prefer it: macros are harder to read, harder to debug (errors point at the expansion, not your call site), and cannot be documented with normal doc comments as clearly. <code>greet_many!</code> above exists to teach the mechanism; in real code, a plain function taking a count would usually be simpler and just as fast.</p>
+        </div>
+      </div>
+
+      <h2>Part 6: evolve <code>rust-greeter</code> to render greetings by style</h2>
+      <p><strong>File: <code>Cargo.toml</code></strong> — no changes needed; <code>clap</code>'s <code>derive</code> feature already supports the <code>ValueEnum</code> derive used below. <strong>File: <code>src/main.rs</code></strong> — replace the Lesson 3 <code>GreetingStyle</code> enum with a version that also derives <code>clap::ValueEnum</code>, so it can be parsed straight from a command-line flag:</p>
+      <pre class="large-code"><code>#[derive(Debug, Clone, Copy, PartialEq, clap::ValueEnum)]
+enum GreetingStyle {
+    Formal,
+    Casual,
+}</code></pre>
+      <p><strong>File: <code>src/main.rs</code></strong> — replace the Lesson 1 <code>struct Args</code> block with a version that adds a <code>style</code> field:</p>
+      <pre class="large-code"><code>#[derive(Parser)]
+#[command(version, about = "A small Rust greeting CLI")]
+struct Args {
+    #[arg(short, long, default_value = "world")]
+    name: String,
+
+    #[arg(short, long, default_value_t = 1)]
+    count: u8,
+
+    #[arg(long, value_enum, default_value_t = GreetingStyle::Casual)]
+    style: GreetingStyle,
+}</code></pre>
+      <p><strong>File: <code>src/main.rs</code></strong> — add below <code>lookup_style</code> (keep <code>RepeatCount</code>, <code>Audience</code>, <code>GreeterConfig</code>, and <code>lookup_style</code> from Lesson 3 unchanged):</p>
+      <pre class="large-code"><code>const TEAM_ROSTER: [&amp;str; 2] = ["Ada Lovelace", "Grace Hopper"];
+
+fn first_space_index(name: &amp;str) -&gt; Option&lt;usize&gt; {
+    let mut chars = name.char_indices();
+    loop {
+        match chars.next() {
+            Some((index, ' ')) =&gt; break Some(index),
+            Some(_) =&gt; continue,
+            None =&gt; break None,
+        }
+    }
+}
+
+fn shout_line(text: &amp;str, should_shout: bool) -&gt; String {
+    if text.is_empty() {
+        return String::new();
+    }
+    if should_shout {
+        text.to_uppercase()
+    } else {
+        text.to_string()
+    }
+}
+
+fn name_length_label(name: &amp;str) -&gt; &amp;'static str {
+    match name.len() {
+        n if n == 0 =&gt; "empty",
+        n if n &lt;= 4 =&gt; "short",
+        n if n &lt;= 12 =&gt; "medium",
+        _ =&gt; "long",
+    }
+}
+
+fn render_greetings(config: &amp;GreeterConfig) -&gt; Vec&lt;String&gt; {
+    let should_shout = config.style == GreetingStyle::Formal;
+    let render_one = |name: &amp;str| shout_line(&amp;greeting(name), should_shout);
+
+    match config.audience {
+        Audience::Individual =&gt; vec![render_one(config.name())],
+        Audience::Team =&gt; TEAM_ROSTER
+            .iter()
+            .map(|member| render_one(member))
+            .collect(),
+    }
+}
+
+macro_rules! greet_many {
+    ($name:expr, $times:expr) =&gt; {{
+        let mut lines = Vec::new();
+        for _ in 0..$times {
+            lines.push(greeting($name));
+        }
+        lines
+    }};
+}</code></pre>
+      <p><strong>File: <code>src/main.rs</code></strong> — replace <code>fn main</code> from Lesson 3 with:</p>
+      <pre class="large-code"><code>fn main() {
+    let args = Args::parse();
+    let audience = if args.name.contains(' ') || first_space_index(&amp;args.name).is_some() {
+        Audience::Team
+    } else {
+        Audience::Individual
+    };
+
+    let mut config = GreeterConfig::new(args.name.clone(), audience, args.style, args.count);
+    println!(
+        "{APP_NAME} config -&gt; {} [{}]",
+        config.describe(),
+        name_length_label(config.name())
+    );
+    println!(
+        "cast demo: {}; compile-time clamped default: {CLAMPED_DEFAULT}",
+        describe_cast(1000)
+    );
+    println!("lookup_style(\"formal\") -&gt; {:?}", lookup_style("formal"));
+
+    for line in render_greetings(&amp;config) {
+        println!("{line}");
+    }
+
+    config.set_style(GreetingStyle::Formal);
+    let repeats = config.repeats.get();
+    let owned_name = config.into_name();
+    for line in greet_many!(&amp;owned_name, repeats) {
+        println!("(macro) {line}");
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Line</th><th>Why it is written this way</th></tr></thead>
+        <tbody>
+          <tr><td><code>|name: &amp;str| shout_line(&amp;greeting(name), should_shout)</code></td><td>A non-<code>move</code> closure that borrows <code>should_shout</code> (a <code>bool</code>, <code>Copy</code>, from the enclosing <code>render_greetings</code>) — no ownership transfer needed since it never outlives that function call.</td></tr>
+          <tr><td><code>TEAM_ROSTER.iter().map(|member| render_one(member)).collect()</code></td><td>Applies the closure to every roster entry and collects the results into a <code>Vec&lt;String&gt;</code>, matching the <code>Vec&lt;String&gt;</code> the <code>Individual</code> arm produces — required so <code>match</code>'s arms agree on type.</td></tr>
+          <tr><td><code>greet_many!(&amp;owned_name, repeats)</code></td><td>Invokes the declarative macro from Part 5 with the <code>owned_name</code> obtained by consuming <code>config</code> through <code>into_name</code>, exactly as in Lesson 3.</td></tr>
+          <tr><td><code>describe_cast(1000)</code>, <code>CLAMPED_DEFAULT</code>, <code>lookup_style("formal")</code></td><td>Carried forward from Lessons 2–3 and printed here so they stay exercised — keeping the whole file warning-free under <code>cargo build</code>, the same standard every lesson in this course holds itself to.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Active exercise: verify style rendering end to end</h2>
+      <p><strong>File: <code>src/main.rs</code></strong> — add inside the existing <code>#[cfg(test)] mod tests { ... }</code> block, alongside the Lesson 2–3 tests:</p>
+      <pre class="large-code"><code>    #[test]
+    fn finds_first_space_with_a_manual_loop() {
+        assert_eq!(first_space_index("Grace Hopper"), Some(5));
+        assert_eq!(first_space_index("Ada"), None);
+    }
+
+    #[test]
+    fn shout_line_upcases_or_stays_empty() {
+        assert_eq!(shout_line("hi", true), "HI");
+        assert_eq!(shout_line("hi", false), "hi");
+        assert_eq!(shout_line("", true), "");
+    }
+
+    #[test]
+    fn name_length_label_uses_guards() {
+        assert_eq!(name_length_label(""), "empty");
+        assert_eq!(name_length_label("Ada"), "short");
+        assert_eq!(name_length_label("Grace H."), "medium");
+        assert_eq!(name_length_label("Bartholomew Long"), "long");
+    }
+
+    #[test]
+    fn renders_individual_and_team_greetings() {
+        let individual = GreeterConfig::new(
+            String::from("Ada"),
+            Audience::Individual,
+            GreetingStyle::Casual,
+            1,
+        );
+        assert_eq!(
+            render_greetings(&amp;individual),
+            vec!["Hello, Ada!".to_string()]
+        );
+
+        let team = GreeterConfig::new(
+            String::from("Pair"),
+            Audience::Team,
+            GreetingStyle::Formal,
+            1,
+        );
+        assert_eq!(
+            render_greetings(&amp;team),
+            vec![
+                "HELLO, ADA LOVELACE!".to_string(),
+                "HELLO, GRACE HOPPER!".to_string(),
+            ]
+        );
+    }
+
+    #[test]
+    fn greet_many_repeats_via_macro() {
+        let lines = greet_many!("Ada", 2);
+        assert_eq!(
+            lines,
+            vec!["Hello, Ada!".to_string(), "Hello, Ada!".to_string()]
+        );
+    }</code></pre>
+      <p>Run each command from the <code>rust-greeter</code> package root:</p>
+      <pre class="large-code"><code>cargo fmt --check
+cargo test
+cargo run
+cargo run -- --name "Ada Lovelace" --count 1 --style formal
+cargo run -- --help</code></pre>
+      <p>Expected evidence: <code>cargo fmt --check</code> prints nothing; <code>cargo test</code> reports <code>test result: ok. 13 passed</code>. <code>cargo run</code> (defaults: <code>name=world</code>, <code>count=1</code>, <code>style=casual</code>) prints:</p>
+      <pre class="large-code"><code>rust-greeter config -&gt; world (Individual, Casual, x1) [medium]
+cast demo: 1000 as u8 = 232 (truncated); try_from does not fit; compile-time clamped default: 9
+lookup_style("formal") -&gt; Some(Formal)
+Hello, world!
+(macro) Hello, world!</code></pre>
+      <p><code>cargo run -- --name "Ada Lovelace" --count 1 --style formal</code> prints:</p>
+      <pre class="large-code"><code>rust-greeter config -&gt; Ada Lovelace (Team, Formal, x1) [medium]
+cast demo: 1000 as u8 = 232 (truncated); try_from does not fit; compile-time clamped default: 9
+lookup_style("formal") -&gt; Some(Formal)
+HELLO, ADA LOVELACE!
+HELLO, GRACE HOPPER!
+(macro) Hello, Ada Lovelace!</code></pre>
+      <div class="callout tip">
+        <span class="callout-icon">💡</span>
+        <div class="callout-content">
+          <strong>Why the team lines are shouted but the macro line is not</strong>
+          <p><code>render_greetings</code> applies <code>shout_line</code> using <code>config.style</code>, which reads <code>Formal</code> here. The macro block runs afterward, once <code>config.set_style(GreetingStyle::Formal)</code> has already run and <code>config</code> has since been consumed by <code>into_name</code> — <code>greet_many!</code> only ever calls the original Lesson 1 <code>greeting</code> function directly, which never shouts, so its output stays in plain case regardless of style.</p>
+        </div>
+      </div>
+      <p><code>cargo run -- --help</code> lists all four flags, including the new one:</p>
+      <pre class="large-code"><code>A small Rust greeting CLI
+
+Usage: rust-greeter [OPTIONS]
+
+Options:
+  -n, --name &lt;NAME&gt;    [default: world]
+  -c, --count &lt;COUNT&gt;  [default: 1]
+      --style &lt;STYLE&gt;  [default: casual] [possible values: formal, casual]
+  -h, --help            Print help
+  -V, --version         Print version
+</code></pre>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/functions-13-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">1:51 · BEGINNER</span><h3>Functions [13 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Reinforces statements vs. expressions and tail returns.</p></div>
+        </a>
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/loops-21-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">3:03 · BEGINNER</span><h3>Loops [21 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Reinforces <code>loop</code>/<code>while</code>/<code>for</code> and <code>break</code> with a value.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the functions video, read <a href="https://doc.rust-lang.org/book/ch03-03-how-functions-work.html">Functions</a> in <em>The Rust Programming Language</em>.</li>
+        <li>Instead of the loops video, read <a href="https://doc.rust-lang.org/book/ch03-05-control-flow.html">Control Flow</a> in <em>The Rust Programming Language</em>.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why must both arms of <code>let label = if count &gt; 1 { "greetings" } else { "greeting" };</code> produce the same type?</summary><p><strong>Answer:</strong> <code>if</code> is an expression whose value is assigned to <code>label</code>; the compiler must know <code>label</code>'s single type at compile time, so every arm supplying that value has to agree — unlike C++'s ternary operator, which permits differing types via conversion.</p></details>
+      <details class="quiz"><summary>2. In <code>first_space_index</code>, why is <code>loop</code> used instead of <code>while</code> or <code>for</code>?</summary><p><strong>Answer:</strong> Only <code>loop</code> can <code>break</code> with a value (here, <code>Some(index)</code> or <code>None</code>) that becomes the loop's own value. <code>while</code> and <code>for</code> always evaluate to <code>()</code>, so they cannot hand back a result this way.</p></details>
+      <details class="quiz"><summary>3. What is the difference between a closure that borrows <code>label</code> and one written with <code>move</code>, and does <code>move</code> always make the original binding unusable?</summary><p><strong>Answer:</strong> Without <code>move</code>, the compiler infers the least restrictive capture the closure body needs—an immutable borrow, a mutable borrow, or a value capture—so a borrowing closure typically leaves the original binding usable. A <code>move</code> closure captures by value, but a <code>Copy</code> value is copied in while a non-<code>Copy</code> value is moved. Use <code>move</code> when the closure needs to own captured non-<code>'static</code> locals, as commonly happens with spawned threads; noncapturing closures and closures using only <code>static</code> data do not need it merely because they outlive the current scope.</p></details>
+      <details class="quiz"><summary>4. Why is <code>println!</code> a macro rather than an ordinary function?</summary><p><strong>Answer:</strong> Macros expand before type-checking, which lets <code>println!</code> accept a variable number of differently typed arguments and validate each <code>{ }</code> placeholder against a real variable at compile time — something an ordinary Rust function, which has a fixed parameter list and type signature, cannot do.</p></details>
+      <details class="quiz"><summary>5. Why does <code>greet_many!(&amp;owned_name, repeats)</code> in the exercise never print an uppercase greeting?</summary><p><strong>Answer:</strong> The macro calls the original Lesson 1 <code>greeting</code> function directly, not <code>shout_line</code> or <code>render_greetings</code>; style-based shouting is only applied inside <code>render_greetings</code>, so the macro's output is unaffected by <code>config.style</code>.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Value chosen from two branches?          `if` as an expression (both arms same type)
+Need to cover every case of an enum?     `match` (exhaustive; add guards for extra conditions)
+Repeat while a condition holds?           `while`
+Repeat over a range/collection?           `for` (default choice; nothing to increment by hand)
+Need to `break` out with a computed value? `loop`
+Last line of a function, no semicolon?    That expression IS the return value
+Need to exit a function before the end?   `return` with an explicit semicolon
+Need a small function that reads/mutates context? A closure — the compiler infers borrow (immutable or mutable) or value capture from how the body uses it
+Closure must own captured local data?     `move` closure — `Copy` captures are copied; non-`Copy` captures move
+Formatting text or printing it?           `format!`/`println!` — macros, not functions
+Matching your own repeated code shape?    `macro_rules!` only if a plain function can't say it as clearly</code></pre>
+      <p>You now read <code>if</code>/<code>match</code> as value-producing expressions, chose loops by what they need to do rather than habit, told statements from expressions in function bodies, distinguished borrowing closures from <code>move</code> closures, and recognized macros as compile-time code generation. Lesson 5 takes this exact <code>rust-greeter</code> — now parsing a <code>style</code> flag and rendering per-audience greetings — and rebuilds its error handling and name validation around ownership, <code>Result</code>, and a first concurrency example.</p>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/book/ch03-05-control-flow.html">Control Flow</a>, <em>The Rust Programming Language</em>, Rust Project. <code>if</code> as an expression, <code>loop</code>/<code>while</code>/<code>for</code>, and <code>break</code> with a value. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch06-02-match.html">The match Control Flow Construct</a>, <em>The Rust Programming Language</em>, Rust Project. Exhaustiveness, destructuring, and guards. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch03-03-how-functions-work.html">Functions</a>, <em>The Rust Programming Language</em>, Rust Project. Statements vs. expressions and tail returns. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch13-01-closures.html">Closures: Anonymous Functions that Capture Their Environment</a>, <em>The Rust Programming Language</em>, Rust Project. Capture modes and <code>move</code>. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch19-06-macros.html">Macros</a>, <em>The Rust Programming Language</em>, Rust Project. Declarative <code>macro_rules!</code> versus procedural macros. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/macro.println.html">println!</a>, Rust standard library documentation, Rust Project. Standard-library macro reference. Accessed September 18, 2026.</li>
+        <li><a href="https://docs.rs/clap/latest/clap/trait.ValueEnum.html">ValueEnum</a>, clap crate documentation, docs.rs. Deriving a CLI-parseable enum for the <code>style</code> flag. Accessed September 18, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/functions-13-of-35--beginners-series-to-rust">Functions [13 of 35]</a>, Microsoft Developer (Microsoft Learn), 1:51. Accessed September 18, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/loops-21-of-35--beginners-series-to-rust">Loops [21 of 35]</a>, Microsoft Developer (Microsoft Learn), 3:03. Accessed September 18, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="03-structs-enums-immutable-data-modeling.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 3: Structs, Enums &amp; Data Modeling</span></a>
+        <a href="05-ownership-errors-concurrency.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 5: Ownership to Concurrency</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

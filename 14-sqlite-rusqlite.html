@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQLite with rusqlite — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html" class="active"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 14 · 30 minutes</span>
+      <h1>Persisting State with SQLite and rusqlite</h1>
+      <p class="lesson-subtitle">Give Pulsewatch a memory: store targets and every probe result in a local SQLite database with <code>rusqlite</code>, using transactions, prepared statements, versioned migrations, and a busy timeout instead of ad-hoc file writes.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can open a <code>rusqlite::Connection</code>, run a versioned migration with <code>user_version</code>, insert and query rows with prepared, parameter-bound statements, map SQL <code>NULL</code> to <code>Option&lt;T&gt;</code>, wrap a batch insert in a transaction with correct rollback-on-error behavior, and explain why <code>Connection</code> is confined to one thread.
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td>Open a connection, enable WAL, and set a busy timeout</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Versioned schema migrations with <code>PRAGMA user_version</code></td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Prepared statements, named params, and <code>Option&lt;T&gt;</code> for <code>NULL</code></td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Transactions: batching writes and rolling back on error</td></tr>
+          <tr data-minutes="8"><td>8 min</td><td>Exercise: persist Pulsewatch results and query recent history</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">🗂️</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p>This lesson continues the same <code>pulsewatch</code> Cargo workspace as Lessons 11 through 13, including <code>crates/pulsewatch-cli/src/lib.rs</code> with its existing <code>tcp_probe</code>, <code>async_probe</code>, and <code>http_probe</code> module declarations, and <code>crates/pulsewatch-cli/src/main.rs</code> from Lesson 7. Change into that workspace before doing anything else in this lesson:</p>
+          <pre class="large-code"><code>cd path/to/pulsewatch</code></pre>
+          <p><code>path/to/pulsewatch</code> is a placeholder for wherever that workspace already sits on your machine — replace it with your actual path. Every command in this lesson runs from that workspace root unless a step states otherwise.</p>
+        </div>
+      </div>
+
+      <h2>Part 1: opening a connection that behaves under concurrent access</h2>
+      <p>Every probe result from Lessons 11 through 13 has lived only in memory. This lesson gives Pulsewatch a small SQLite file so targets and history survive a restart, using <code>rusqlite</code>, a safe wrapper over the SQLite C library.</p>
+      <p>This lesson's persistence code builds toward one new file, <code>crates/pulsewatch-cli/src/store.rs</code>, another sibling module of Lesson 11's <code>tcp_probe.rs</code>, Lesson 12's <code>async_probe.rs</code>, and Lesson 13's <code>http_probe.rs</code> in the same <code>pulsewatch-cli</code> package. Parts 1 through 4 below are excerpts that explain one function at a time; the exercise in Part 5 gives that file's complete, exact contents to create.</p>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/store.rs</code></strong> (illustrates opening a connection with WAL, a busy timeout, and foreign keys enabled; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>use rusqlite::Connection;
+
+pub fn open_store(path: &amp;str) -&gt; rusqlite::Result&lt;Connection&gt; {
+    let conn = Connection::open(path)?;
+    conn.pragma_update(None, "journal_mode", "WAL")?;
+    conn.busy_timeout(std::time::Duration::from_secs(5))?;
+    // Unlike journal_mode, foreign_keys is a per-connection setting that
+    // SQLite does not persist in the database file, so every connection
+    // this function opens must turn it on for itself before use.
+    conn.pragma_update(None, "foreign_keys", true)?;
+    Ok(conn)
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>Connection::open(path)</code></td><td>Opens (creating if absent) a SQLite database file and returns an owned <code>Connection</code> handle wrapping the underlying <code>sqlite3*</code>.</td><td>Comparable to <code>sqlite3_open</code> wrapped in RAII instead of a raw pointer the caller must remember to close.</td></tr>
+          <tr><td><code>pragma_update(None, "journal_mode", "WAL")</code></td><td>Switches the database to Write-Ahead Logging, where readers and a writer can generally proceed concurrently instead of a writer exclusively locking the whole file.</td><td>No direct C++ analogue; closest to choosing a database engine's concurrency mode at connect time.</td></tr>
+          <tr><td><code>conn.busy_timeout(Duration)</code></td><td>Installs a busy handler so a connection that finds the database locked retries for up to the given duration instead of immediately returning <code>SQLITE_BUSY</code>.</td><td>Similar to setting a retry/backoff policy on a resource lock rather than failing on first contention.</td></tr>
+          <tr><td><code>pragma_update(None, "foreign_keys", true)</code></td><td>Turns on enforcement of <code>REFERENCES</code> constraints for this connection; SQLite ships with foreign-key enforcement off by default for backward compatibility, and the setting does not carry over between connections.</td><td>No C++ analogue with a global default; closer to opting in to a validation mode that some database engines instead enable unconditionally.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-content">
+          <strong><code>Connection</code> is confined to one thread</strong>
+          <p><code>rusqlite::Connection</code> is <code>Send</code> but not <code>Sync</code>: it can be moved to another thread, but it cannot be shared by reference across threads at the same time, because the underlying SQLite handle is not safe for concurrent use without external synchronization. Pulsewatch gives each worker its own <code>Connection</code> (SQLite's WAL mode lets multiple connections to the same file coexist), rather than wrapping one connection in <code>Arc&lt;Mutex&lt;Connection&gt;&gt;</code> and serializing every query through it. Lesson 15 revisits this with a proper pool.</p>
+        </div>
+      </div>
+
+      <h2>Part 2: versioned migrations with <code>user_version</code></h2>
+      <p>SQLite reserves an integer, <code>PRAGMA user_version</code>, for applications to track their own schema version inside the database file itself. Applying the DDL and bumping that version outside of an explicit transaction would let a mid-migration failure leave a database with the new tables but the old version number — this lesson wraps both in one <code>conn.transaction()</code> so the upgrade is all-or-nothing.</p>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/store.rs</code></strong> (continues the same file as Part 1; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>const SCHEMA_VERSION: i64 = 1;
+
+pub fn migrate(conn: &amp;mut Connection) -&gt; rusqlite::Result&lt;()&gt; {
+    let current: i64 = conn.query_row("PRAGMA user_version", [], |row| row.get(0))?;
+
+    if current &lt; 1 {
+        // Run the schema DDL and the user_version bump inside one explicit
+        // transaction. user_version lives in the database file's own header
+        // page, so writing it participates in the same commit as the CREATE
+        // TABLE statements: either both land, or (on any error, or if this
+        // function returns before tx.commit()) neither does. Without this,
+        // a crash or error between creating the tables and bumping the
+        // version would leave the file with tables already present but
+        // user_version still 0, and the next run would fail re-creating them.
+        let tx = conn.transaction()?;
+        tx.execute_batch(
+            "CREATE TABLE targets (
+                 id   INTEGER PRIMARY KEY,
+                 name TEXT NOT NULL UNIQUE,
+                 host TEXT NOT NULL,
+                 port INTEGER NOT NULL
+             );
+             CREATE TABLE probe_results (
+                 id          INTEGER PRIMARY KEY,
+                 target_id   INTEGER NOT NULL REFERENCES targets(id),
+                 success     INTEGER NOT NULL,
+                 latency_ms  INTEGER NOT NULL,
+                 message     TEXT,
+                 checked_at  TEXT NOT NULL
+             );",
+        )?;
+        tx.pragma_update(None, "user_version", 1)?;
+        tx.commit()?;
+    }
+
+    Ok(())
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>conn.query_row(sql, [], |row| ...)</code></td><td>Runs a query expected to return exactly one row, invoking the closure once with that row to extract values.</td><td>Similar to executing a prepared statement, stepping it once, and reading columns, but with a single call instead of prepare/step/finalize managed by hand.</td></tr>
+          <tr><td><code>conn.transaction()</code></td><td>Begins an explicit transaction and returns a <code>Transaction</code> guard; every statement run through <code>tx</code> below is part of the same atomic unit of work.</td><td>Comparable to an RAII transaction guard wrapping <code>BEGIN</code>/<code>COMMIT</code>/<code>ROLLBACK</code> around a multi-statement schema change.</td></tr>
+          <tr><td><code>tx.execute_batch(sql)</code></td><td>Runs one or more semicolon-separated statements that return no rows, used here for DDL such as <code>CREATE TABLE</code>, inside the open transaction.</td><td>Analogous to executing a multi-statement schema script through <code>sqlite3_exec</code>, but scoped inside a transaction instead of running each statement in its own implicit commit.</td></tr>
+          <tr><td><code>tx.pragma_update(None, "user_version", 1)</code></td><td>Writes the new version into the same transaction as the DDL above; because <code>user_version</code> lives in the database file's header page, this write is committed or rolled back together with the table creation.</td><td>No direct analogue: most engines keep schema-version metadata in an ordinary table, which is transactional by default, whereas here the version lives in file-level metadata that must be explicitly folded into the transaction to get the same guarantee.</td></tr>
+          <tr><td><code>tx.commit()</code></td><td>Commits the DDL and the version bump together; if this line is never reached, dropping <code>tx</code> rolls both back.</td><td>Same idea as an explicit <code>commit()</code> on a transaction RAII object guarding several related statements.</td></tr>
+          <tr><td><code>row.get(0)</code></td><td>Reads column <code>0</code>, converting the stored SQLite type into the target Rust type (<code>i64</code> here) and returning a <code>rusqlite::Result</code>.</td><td>Comparable to <code>sqlite3_column_int64</code>, but returning a checked <code>Result</code> instead of a raw value with a separate error check.</td></tr>
+          <tr><td><code>message TEXT</code> (no <code>NOT NULL</code>)</td><td>This column may hold SQL <code>NULL</code>; Part 3 maps that to <code>Option&lt;String&gt;</code> on the Rust side.</td><td>Similar to a nullable column mapped to <code>std::optional&lt;std::string&gt;</code> rather than relying on a sentinel value such as an empty string.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 3: prepared statements, named parameters, and <code>NULL</code> as <code>Option&lt;T&gt;</code></h2>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/store.rs</code></strong> (continues the same file as Parts 1 and 2; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>use rusqlite::{params, OptionalExtension};
+
+pub fn insert_target(conn: &amp;Connection, name: &amp;str, host: &amp;str, port: u16) -&gt; rusqlite::Result&lt;i64&gt; {
+    conn.execute(
+        "INSERT INTO targets (name, host, port) VALUES (?1, ?2, ?3)",
+        params![name, host, port],
+    )?;
+    Ok(conn.last_insert_rowid())
+}
+
+pub struct StoredResult {
+    pub success: bool,
+    pub latency_ms: i64,
+    pub message: Option&lt;String&gt;,
+    pub checked_at: String,
+}
+
+pub fn recent_results(conn: &amp;Connection, target_name: &amp;str, limit: i64) -&gt; rusqlite::Result&lt;Vec&lt;StoredResult&gt;&gt; {
+    let mut stmt = conn.prepare(
+        "SELECT r.success, r.latency_ms, r.message, r.checked_at
+         FROM probe_results r
+         JOIN targets t ON t.id = r.target_id
+         WHERE t.name = :name
+         ORDER BY r.checked_at DESC
+         LIMIT :limit",
+    )?;
+
+    let rows = stmt.query_map(
+        rusqlite::named_params! { ":name": target_name, ":limit": limit },
+        |row| {
+            Ok(StoredResult {
+                success: row.get::&lt;_, i64&gt;(0)? != 0,
+                latency_ms: row.get(1)?,
+                message: row.get(2)?,
+                checked_at: row.get(3)?,
+            })
+        },
+    )?;
+
+    rows.collect()
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>params![name, host, port]</code></td><td>Builds a parameter list bound by position (<code>?1</code>, <code>?2</code>, <code>?3</code>); each value is sent to SQLite separately from the SQL text.</td><td>Comparable to binding values to <code>?</code> placeholders in a prepared <code>sqlite3_stmt</code> rather than formatting them into the SQL string.</td></tr>
+          <tr><td><code>conn.last_insert_rowid()</code></td><td>Returns the automatically assigned <code>INTEGER PRIMARY KEY</code> of the row just inserted on this connection.</td><td>Similar to reading a database's identity/auto-increment value immediately after an insert on the same connection.</td></tr>
+          <tr><td><code>:name</code> / <code>:limit</code> with <code>named_params!</code></td><td>Named placeholders bound by name instead of position, useful once a query has several parameters and positional order becomes error-prone.</td><td>Comparable to named bind parameters supported by some prepared-statement APIs, versus purely positional <code>?</code> placeholders.</td></tr>
+          <tr><td><code>message: Option&lt;String&gt;</code> from <code>row.get(2)</code></td><td>rusqlite maps a <code>NULL</code> column value to <code>None</code> and a present value to <code>Some(String)</code> automatically when the target type is <code>Option&lt;String&gt;</code>.</td><td>Equivalent in intent to mapping a nullable database column to <code>std::optional&lt;std::string&gt;</code> instead of a magic empty-string sentinel.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <span class="callout-icon">🛡️</span>
+        <div class="callout-content">
+          <strong>SQL injection is a string-formatting bug, and parameters are the fix</strong>
+          <p>Building the query above as <code>format!("... WHERE t.name = '{target_name}' ...")</code> would let a target name containing a single quote change the query's meaning entirely — classic SQL injection. Binding <code>target_name</code> through <code>params!</code> or <code>named_params!</code> sends it to SQLite as data, never as SQL text, which closes that class of bug regardless of what characters the value contains.</p>
+        </div>
+      </div>
+
+      <h2>Part 4: transactions batch writes and roll back correctly on error</h2>
+      <p><strong>Excerpt from <code>crates/pulsewatch-cli/src/store.rs</code></strong> (continues the same file as Parts 1 through 3; the exercise gives the complete file):</p>
+      <pre class="large-code"><code>pub fn record_batch(
+    conn: &amp;mut Connection,
+    target_id: i64,
+    outcomes: &amp;[pulsewatch_core::ProbeOutcome],
+) -&gt; rusqlite::Result&lt;()&gt; {
+    let tx = conn.transaction()?;
+    {
+        let mut stmt = tx.prepare(
+            "INSERT INTO probe_results (target_id, success, latency_ms, message, checked_at)
+             VALUES (?1, ?2, ?3, ?4, datetime('now'))",
+        )?;
+        for outcome in outcomes {
+            stmt.execute(params![
+                target_id,
+                outcome.success as i64,
+                outcome.latency_ms as i64,
+                outcome.message,
+            ])?;
+        }
+    }
+    tx.commit()
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>conn.transaction()</code></td><td>Begins a transaction and returns a <code>Transaction</code> guard borrowing the connection for its lifetime.</td><td>Comparable to an RAII transaction guard wrapping <code>BEGIN</code>/<code>COMMIT</code>/<code>ROLLBACK</code>.</td></tr>
+          <tr><td><code>tx.commit()</code></td><td>Explicitly commits; consumes the guard so it cannot be committed twice.</td><td>Same idea as an explicit <code>commit()</code> call on a transaction RAII object.</td></tr>
+          <tr><td>No explicit <code>rollback()</code> call on the early-return <code>?</code> paths</td><td>If <code>?</code> returns early anywhere before <code>tx.commit()</code> runs, <code>tx</code> is dropped without being committed, and its <code>Drop</code> implementation issues <code>ROLLBACK</code> automatically.</td><td>Directly analogous to RAII rollback-on-scope-exit: the transaction is undone unless the commit path is reached, with no explicit <code>catch</code>/rollback needed.</td></tr>
+        </tbody>
+      </table>
+      <p>Every insert in the loop shares one transaction, so SQLite fsyncs once at commit instead of once per row — the same batching benefit any transactional database gives a caller that groups related writes.</p>
+
+      <h2>Part 5: exercise — persist Pulsewatch results and query history</h2>
+      <p>This exercise creates the complete <code>store.rs</code> file — combining Parts 1 through 4's excerpts plus a unit test into one module — along with its dependency and a real <code>add-target</code>/<code>history</code> command pair on the existing <code>pulsewatch-cli</code> binary from Lesson 7. Work through the numbered steps in order from the workspace root.</p>
+      <ol class="numbered-steps">
+        <li>
+          <strong>Append to <code>crates/pulsewatch-cli/Cargo.toml</code></strong> under its existing <code>[dependencies]</code> table (the <code>bundled</code> feature compiles SQLite's C source directly into the binary, so the exercise below has no system SQLite library to install separately):
+          <pre class="large-code"><code># crates/pulsewatch-cli/Cargo.toml (append under [dependencies])
+rusqlite = { version = "0.40", features = ["bundled"] }</code></pre>
+        </li>
+        <li>
+          <strong>Append to <code>crates/pulsewatch-cli/src/lib.rs</code></strong> (this file already has <code>pub mod tcp_probe;</code>, <code>pub mod async_probe;</code>, and <code>pub mod http_probe;</code> from Lessons 11 through 13; add one more line below them):
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/lib.rs (append)
+pub mod store;</code></pre>
+        </li>
+        <li>
+          <strong>Create <code>crates/pulsewatch-cli/src/store.rs</code></strong> with exactly this content:
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/store.rs
+use rusqlite::{params, Connection};
+
+pub fn open_store(path: &amp;str) -&gt; rusqlite::Result&lt;Connection&gt; {
+    let conn = Connection::open(path)?;
+    conn.pragma_update(None, "journal_mode", "WAL")?;
+    conn.busy_timeout(std::time::Duration::from_secs(5))?;
+    conn.pragma_update(None, "foreign_keys", true)?;
+    Ok(conn)
+}
+
+const SCHEMA_VERSION: i64 = 1;
+
+pub fn migrate(conn: &amp;mut Connection) -&gt; rusqlite::Result&lt;()&gt; {
+    let current: i64 = conn.query_row("PRAGMA user_version", [], |row| row.get(0))?;
+
+    if current &lt; 1 {
+        let tx = conn.transaction()?;
+        tx.execute_batch(
+            "CREATE TABLE targets (
+                 id   INTEGER PRIMARY KEY,
+                 name TEXT NOT NULL UNIQUE,
+                 host TEXT NOT NULL,
+                 port INTEGER NOT NULL
+             );
+             CREATE TABLE probe_results (
+                 id          INTEGER PRIMARY KEY,
+                 target_id   INTEGER NOT NULL REFERENCES targets(id),
+                 success     INTEGER NOT NULL,
+                 latency_ms  INTEGER NOT NULL,
+                 message     TEXT,
+                 checked_at  TEXT NOT NULL
+             );",
+        )?;
+        tx.pragma_update(None, "user_version", 1)?;
+        tx.commit()?;
+    }
+
+    Ok(())
+}
+
+pub fn insert_target(conn: &amp;Connection, name: &amp;str, host: &amp;str, port: u16) -&gt; rusqlite::Result&lt;i64&gt; {
+    conn.execute(
+        "INSERT INTO targets (name, host, port) VALUES (?1, ?2, ?3)",
+        params![name, host, port],
+    )?;
+    Ok(conn.last_insert_rowid())
+}
+
+pub struct StoredResult {
+    pub success: bool,
+    pub latency_ms: i64,
+    pub message: Option&lt;String&gt;,
+    pub checked_at: String,
+}
+
+pub fn recent_results(conn: &amp;Connection, target_name: &amp;str, limit: i64) -&gt; rusqlite::Result&lt;Vec&lt;StoredResult&gt;&gt; {
+    let mut stmt = conn.prepare(
+        "SELECT r.success, r.latency_ms, r.message, r.checked_at
+         FROM probe_results r
+         JOIN targets t ON t.id = r.target_id
+         WHERE t.name = :name
+         ORDER BY r.checked_at DESC
+         LIMIT :limit",
+    )?;
+
+    let rows = stmt.query_map(
+        rusqlite::named_params! { ":name": target_name, ":limit": limit },
+        |row| {
+            Ok(StoredResult {
+                success: row.get::&lt;_, i64&gt;(0)? != 0,
+                latency_ms: row.get(1)?,
+                message: row.get(2)?,
+                checked_at: row.get(3)?,
+            })
+        },
+    )?;
+
+    rows.collect()
+}
+
+pub fn record_batch(
+    conn: &amp;mut Connection,
+    target_id: i64,
+    outcomes: &amp;[pulsewatch_core::ProbeOutcome],
+) -&gt; rusqlite::Result&lt;()&gt; {
+    let tx = conn.transaction()?;
+    {
+        let mut stmt = tx.prepare(
+            "INSERT INTO probe_results (target_id, success, latency_ms, message, checked_at)
+             VALUES (?1, ?2, ?3, ?4, datetime('now'))",
+        )?;
+        for outcome in outcomes {
+            stmt.execute(params![
+                target_id,
+                outcome.success as i64,
+                outcome.latency_ms as i64,
+                outcome.message,
+            ])?;
+        }
+    }
+    tx.commit()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn records_and_queries_probe_history() -&gt; rusqlite::Result&lt;()&gt; {
+        let mut conn = open_store(":memory:")?;
+        migrate(&amp;mut conn)?;
+
+        let target_id = insert_target(&amp;conn, "loopback-probe", "127.0.0.1", 7878)?;
+
+        let outcomes = vec![
+            pulsewatch_core::ProbeOutcome {
+                target: "loopback-probe".into(),
+                success: true,
+                latency_ms: 4,
+                message: "PONG pulsewatch-v1".into(),
+            },
+            pulsewatch_core::ProbeOutcome {
+                target: "loopback-probe".into(),
+                success: false,
+                latency_ms: 0,
+                message: "connection refused".into(),
+            },
+        ];
+        record_batch(&amp;mut conn, target_id, &amp;outcomes)?;
+
+        let history = recent_results(&amp;conn, "loopback-probe", 10)?;
+        assert_eq!(history.len(), 2);
+        assert!(history.iter().any(|r| r.success));
+        assert!(history.iter().any(|r| !r.success));
+        Ok(())
+    }
+}</code></pre>
+          <p><code>Connection::open(":memory:")</code> opens a private, in-process database that never touches disk, which keeps this test fast and isolated without special test-only configuration.</p>
+        </li>
+        <li>
+          <strong>Replace</strong> the entire contents of <code>crates/pulsewatch-cli/src/main.rs</code> — since Lesson 7, this file has only printed one fixed-probe reading; this step replaces that body with two real subcommands, <code>add-target</code> and <code>history</code>, built on <code>store.rs</code> above:
+          <pre class="large-code"><code>// crates/pulsewatch-cli/src/main.rs (replace entire file)
+use pulsewatch_cli::store;
+
+fn main() -&gt; rusqlite::Result&lt;()&gt; {
+    let args: Vec&lt;String&gt; = std::env::args().collect();
+    let mut conn = store::open_store("pulsewatch.db")?;
+    store::migrate(&amp;mut conn)?;
+
+    match args.get(1).map(String::as_str) {
+        Some("add-target") =&gt; {
+            let name = &amp;args[2];
+            let host = &amp;args[3];
+            let port: u16 = args[4].parse().expect("port must be a number 0-65535");
+            let id = store::insert_target(&amp;conn, name, host, port)?;
+            println!("inserted target {name} (id {id})");
+        }
+        Some("history") =&gt; {
+            let name = &amp;args[2];
+            let limit = args
+                .iter()
+                .position(|a| a == "--limit")
+                .and_then(|i| args.get(i + 1))
+                .map(|s| s.parse().expect("--limit must be a number"))
+                .unwrap_or(10);
+            for row in store::recent_results(&amp;conn, name, limit)? {
+                println!(
+                    "{} success={} latency_ms={} message={}",
+                    row.checked_at,
+                    row.success,
+                    row.latency_ms,
+                    row.message.as_deref().unwrap_or("&lt;none&gt;")
+                );
+            }
+        }
+        _ =&gt; eprintln!("usage: pulsewatch-cli add-target NAME HOST PORT | history NAME [--limit N]"),
+    }
+
+    Ok(())
+}</code></pre>
+          <p><code>use pulsewatch_cli::store;</code> reaches this package's own library part from its default binary — the same cross-crate reference already used by every <code>src/bin/*.rs</code> file in Lessons 11 through 13, since a package's <code>main.rs</code> and its <code>lib.rs</code> compile as two separate crates linked together, even though they live in the same package.</p>
+        </li>
+        <li>
+          <strong>Run:</strong> <code>cargo fmt --check</code>
+          <p><strong>Expected evidence:</strong> the command exits with status 0 and prints nothing; a non-zero exit lists the files and lines that need reformatting.</p>
+        </li>
+        <li>
+          <strong>Run:</strong> <code>cargo test -p pulsewatch-cli records_and_queries_probe_history</code>
+          <p><strong>Expected evidence:</strong> output includes <code>test store::tests::records_and_queries_probe_history ... ok</code> and a final <code>test result: ok</code> line.</p>
+        </li>
+        <li>
+          <strong>Run:</strong> <code>cargo run --bin pulsewatch-cli -- add-target loopback-probe 127.0.0.1 7878</code>
+          <p><strong>Expected evidence:</strong> prints <code>inserted target loopback-probe (id 1)</code> and creates a <code>pulsewatch.db</code> file in the workspace root (confirm with <code>ls pulsewatch.db</code>).</p>
+        </li>
+        <li>
+          <strong>Run:</strong> <code>cargo run --bin pulsewatch-cli -- history loopback-probe --limit 5</code>
+          <p><strong>Expected evidence:</strong> prints one line per stored row in descending <code>checked_at</code> order; a fresh target with no recorded probes yet prints no lines and exits 0, since <code>recent_results</code> returns an empty <code>Vec</code> rather than an error.</p>
+        </li>
+      </ol>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://media.ccc.de/v/36c3-10701-select_code_execution_from_using_sqlite">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">46 min · CONFERENCE TALK</span><h3>SELECT code_execution FROM * USING SQLite;</h3><p>Omer Gull, 36C3 (media.ccc.de). Shows how a maliciously crafted SQLite database file can achieve code execution against applications that open it, a sharp illustration of why untrusted database files and unbound query strings both deserve suspicion.</p></div>
+        </a>
+        <a class="video-card" href="https://media.ccc.de/v/rustfest18-8-building_reliable_infrastructure_in_rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">32 min · CONFERENCE TALK</span><h3>Building Reliable Infrastructure in Rust</h3><p>Tyler Neely, RustFest 2018 Paris (media.ccc.de). By the author of <code>sled</code>, an embedded Rust database, on systematically finding bugs in storage and I/O code before they reach production — directly relevant to testing the migration and transaction logic in this lesson.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the SQLite security talk, read SQLite's own notes on <a href="https://www.sqlite.org/lang_expr.html#varparam">bind parameters</a> and why they are the documented way to include external values in SQL.</li>
+        <li>Instead of the reliability talk, review the transaction rollback-on-drop behavior described in Part 4 above and the <a href="https://docs.rs/rusqlite/latest/rusqlite/struct.Transaction.html">Transaction</a> API documentation.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why does <code>migrate</code> read <code>PRAGMA user_version</code> before creating any tables, and why does it wrap the <code>CREATE TABLE</code> statements and the version bump in one <code>conn.transaction()</code>?</summary><p><strong>Answer:</strong> <code>user_version</code> is an integer SQLite stores in the database file for the application's own use; reading it first lets <code>migrate</code> apply only the schema changes a given file has not already received, so running it again against an already-migrated file is a no-op. Wrapping the DDL and the <code>PRAGMA user_version</code> update in one transaction matters because <code>user_version</code> lives in the same file header page that participates in SQLite's normal commit/rollback: if a failure happened between creating the tables and bumping the version with no transaction, the file could be left with the new tables but the old version number, and the next run would fail trying to re-create them.</p></details>
+      <details class="quiz"><summary>2. What happens to a <code>NULL</code> value stored in the <code>message</code> column when it is read into a Rust <code>Option&lt;String&gt;</code> field?</summary><p><strong>Answer:</strong> rusqlite maps SQL <code>NULL</code> to <code>None</code> and any present text value to <code>Some(String)</code> when the target field's type is <code>Option&lt;String&gt;</code>, so the absence of a message is represented directly rather than through an empty-string sentinel.</p></details>
+      <details class="quiz"><summary>3. Why is binding <code>target_name</code> through <code>named_params!</code> safer than formatting it directly into the SQL string?</summary><p><strong>Answer:</strong> A bound parameter is sent to SQLite as a value, never interpreted as SQL syntax, so characters like a single quote in the value cannot change the query's structure. Formatting the value into the SQL string directly opens a SQL injection vulnerability where an attacker-controlled value can alter or extend the query.</p></details>
+      <details class="quiz"><summary>4. If <code>stmt.execute(...)</code> inside <code>record_batch</code> returns an error partway through the loop, what happens to the rows already inserted in that same call?</summary><p><strong>Answer:</strong> The <code>?</code> operator returns early, so <code>tx.commit()</code> is never reached and the <code>Transaction</code> guard is dropped instead. Its <code>Drop</code> implementation issues <code>ROLLBACK</code>, undoing every insert performed earlier in that same transaction, so the batch is all-or-nothing.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Opening a database used by more than one connection?  Enable WAL, set a busy_timeout
+Want REFERENCES constraints enforced?                   pragma_update(None, "foreign_keys", true) on every connection
+Schema needs to evolve over time?                       Track it with PRAGMA user_version
+Migration must not land half-applied?                   Run the DDL and the user_version bump in one conn.transaction()
+Passing an external value into SQL?                     Bind it with params!/named_params!, never format it in
+Column can be absent?                                   Model it as Option&lt;T&gt; on the Rust side
+Several related writes must all succeed or none do?     Wrap them in one conn.transaction()
+Need the transaction undone on any early error?          Let ? drop the guard; Drop runs ROLLBACK
+Sharing one Connection across threads?                    Don't: Connection is Send, not Sync</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://docs.rs/rusqlite/latest/rusqlite/">rusqlite</a>, crate documentation, docs.rs. Connections, statements, transactions, and type mapping. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/rusqlite/latest/rusqlite/struct.Connection.html">Connection</a>, rusqlite API documentation, docs.rs. Opening databases, pragmas, and thread-safety notes. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/rusqlite/latest/rusqlite/struct.Transaction.html">Transaction</a>, rusqlite API documentation, docs.rs. Commit and drop-triggered rollback semantics. Accessed September 17, 2026.</li>
+        <li><a href="https://docs.rs/rusqlite/latest/rusqlite/macro.params.html">params!</a>, rusqlite API documentation, docs.rs. Binding positional parameters to a prepared statement. Accessed September 17, 2026.</li>
+        <li><a href="https://www.sqlite.org/wal.html">Write-Ahead Logging</a>, SQLite documentation, SQLite Consortium. WAL mode concurrency behavior. Accessed September 17, 2026.</li>
+        <li><a href="https://www.sqlite.org/c3ref/busy_timeout.html">sqlite3_busy_timeout</a>, SQLite C API documentation, SQLite Consortium. Retry behavior when a database is locked. Accessed September 17, 2026.</li>
+        <li><a href="https://www.sqlite.org/pragma.html#pragma_user_version">PRAGMA user_version</a>, SQLite documentation, SQLite Consortium. Application-defined schema versioning. Accessed September 17, 2026.</li>
+        <li><a href="https://www.sqlite.org/foreignkeys.html">SQLite Foreign Key Support</a>, SQLite documentation, SQLite Consortium. Foreign-key enforcement is off by default and must be enabled per connection. Accessed September 17, 2026.</li>
+        <li><a href="https://www.sqlite.org/lang_expr.html#varparam">Bind Parameters</a>, SQLite documentation, SQLite Consortium. Why parameter binding, not string formatting, is the documented way to include values in SQL. Accessed September 17, 2026.</li>
+        <li><a href="https://media.ccc.de/v/36c3-10701-select_code_execution_from_using_sqlite">SELECT code_execution FROM * USING SQLite;</a>, Omer Gull, 36C3 (media.ccc.de), 46 min. Accessed September 17, 2026.</li>
+        <li><a href="https://media.ccc.de/v/rustfest18-8-building_reliable_infrastructure_in_rust">Building Reliable Infrastructure in Rust</a>, Tyler Neely, RustFest 2018 Paris (media.ccc.de), 32 min. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="13-http-client-axum-service.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 13: HTTP Client &amp; Axum</span></a>
+        <a href="15-production-service-sqlx.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 15: Production Service with SQLx</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

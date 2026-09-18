@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traits, Lifetimes, and Shared Ownership — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html" class="active"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 6 · 30 minutes</span>
+      <h1>Traits, Lifetimes, and Shared Ownership</h1>
+      <p class="lesson-subtitle">Make <code>rust-greeter</code> extensible without inheritance, state a reference relationship the compiler can verify, and share one runtime-selected formatter safely across worker threads.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can implement a trait, choose static or dynamic dispatch, read an explicit lifetime as a relationship between borrows, and explain why <code>Arc&lt;T&gt;</code> is shared ownership rather than automatic thread safety.
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">📁</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p><strong>Starting state:</strong> the completed Lesson 5 <code>rust-greeter</code> package (<code>src/main.rs</code> with <code>Args</code> — carrying <code>name</code>, <code>count</code>, <code>style: GreetingStyle</code>, and <code>file: Option&lt;PathBuf&gt;</code> — plus <code>greeting</code>, <code>GreetingStyle</code>, <code>NameError</code>, <code>validate_name</code>, <code>load_names</code>, the style-aware <code>render_all(&amp;names, style)</code>, the batch-aware <code>main</code>, and 15 passing tests; <code>Cargo.toml</code> unchanged since Lesson 1). <strong>Working directory:</strong> <code>cd path/to/rust-greeter</code> — replace <code>path/to</code> with the parent folder you used before; every command in this lesson runs from that package root. <strong>Default file:</strong> unqualified code snippets target <code>src/main.rs</code>; each one below states whether it replaces existing code, is inserted at a named location, or is an illustrative excerpt that is not added to the file.</p>
+        </div>
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td>Define and implement a formatter trait</td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Compare generic static dispatch with <code>dyn Trait</code> dynamic dispatch</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Read an explicit lifetime on a struct that stores a borrow</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Choose among <code>Box</code>, <code>Rc</code>, <code>Arc</code>, <code>RefCell</code>, and <code>Mutex</code></td></tr>
+          <tr data-minutes="7"><td>7 min</td><td>Exercise: share a runtime-selected formatter across scoped workers</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Knowledge check and decision-rule recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: traits define behavior without inheriting data</h2>
+      <p>Lesson 4 introduced <code>GreetingStyle</code> (<code>Formal</code>/<code>Casual</code>) behind a <code>--style</code> flag, and Lesson 5 threaded it through <code>shout_line</code> inside the scoped batch renderer. That <code>bool</code>-and-<code>match</code> branch works, but it does not scale to a third style and cannot be extended by code outside this file. A <strong>trait</strong> names behavior that a type can implement, so we can route the same <code>--style</code> flag through pluggable types instead of a boolean flag deep inside <code>render_all</code>.</p>
+      <p><strong>File: <code>src/main.rs</code></strong> — add above the existing <code>greeting</code> function. Part 5 later replaces the <code>trait Formatter</code> line below with a version that adds supertraits; leave <code>greeting</code> itself untouched for now.</p>
+      <pre class="large-code"><code>trait Formatter {
+    fn format(&amp;self, name: &amp;str) -&gt; String;
+}
+
+struct Plain;
+struct Loud;
+
+impl Formatter for Plain {
+    fn format(&amp;self, name: &amp;str) -&gt; String {
+        greeting(name)
+    }
+}
+
+impl Formatter for Loud {
+    fn format(&amp;self, name: &amp;str) -&gt; String {
+        greeting(name).to_uppercase()
+    }
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td><code>trait Formatter</code></td><td>Declares required behavior, not storage or an inheritance tree.</td><td>Closest to a pure abstract interface or a concept, depending on how it is consumed.</td></tr>
+          <tr><td><code>&amp;self</code></td><td>A shared borrow of the value receiving the method.</td><td>Comparable to a <code>const</code> member-function receiver.</td></tr>
+          <tr><td><code>struct Plain;</code></td><td>A unit-like, zero-size type with no fields. Its type identity selects behavior.</td><td>Like an empty policy class, usually optimized to occupy no runtime space.</td></tr>
+          <tr><td><code>impl Formatter for Plain</code></td><td>Implements the trait for this concrete type. Data and behavior definitions remain separate.</td><td>Unlike inheriting from a base class, <code>Plain</code> stores no base subobject or vtable by default.</td></tr>
+          <tr><td><code>greeting(name)</code> / <code>greeting(name).to_uppercase()</code></td><td>Both formatters reuse the Lesson 1 <code>greeting</code> function instead of duplicating its format string. <code>Loud</code> just uppercases the result — the same text <code>shout_line(&amp;text, true)</code> produced in Lesson 5 — so switching to traits changes dispatch, not output.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout note">
+        <span class="callout-icon">🧩</span>
+        <div class="callout-content">
+          <strong>Coherence prevents conflicting implementations</strong>
+          <p>A crate may implement a trait for a type when it owns the trait or the type. This “orphan rule” prevents two dependency crates from silently supplying competing implementations of the same trait/type pair.</p>
+        </div>
+      </div>
+
+      <h2>Part 2: one trait, two dispatch choices</h2>
+      <h3>Static dispatch with a trait bound</h3>
+      <p><strong>Illustrative excerpt — not added to <code>rust-greeter</code>.</strong> <code>preview</code> and the call to it are a standalone demonstration; the exercise in Part 5 uses <code>Arc&lt;dyn Formatter&gt;</code> instead of this generic form.</p>
+      <pre class="large-code"><code>fn preview&lt;F: Formatter&gt;(formatter: &amp;F, name: &amp;str) -&gt; String {
+    formatter.format(name)
+}
+
+let text = preview(&amp;Plain, "Ferris");</code></pre>
+      <p><code>F</code> is a generic type parameter. <code>F: Formatter</code> is a <strong>trait bound</strong>: every accepted concrete type must implement <code>Formatter</code>. The compiler generates specialized machine code for each concrete <code>F</code> used, a process called <strong>monomorphization</strong>.</p>
+
+      <h3>Dynamic dispatch with a trait object</h3>
+      <p><strong>Illustrative excerpt — not added to <code>rust-greeter</code>.</strong> <code>choose_formatter</code> demonstrates <code>Box&lt;dyn Formatter&gt;</code> in isolation; Part 5 builds the equivalent runtime selection directly in <code>main</code> using <code>Arc&lt;dyn Formatter&gt;</code> instead.</p>
+      <pre class="large-code"><code>fn choose_formatter(loud: bool) -&gt; Box&lt;dyn Formatter&gt; {
+    if loud {
+        Box::new(Loud)
+    } else {
+        Box::new(Plain)
+    }
+}
+
+let formatter = choose_formatter(true);
+let text = formatter.format("Ferris");</code></pre>
+      <p><code>dyn Formatter</code> means a concrete formatter type selected at runtime. A trait-object pointer carries a data pointer plus dispatch metadata, commonly described as a vtable. <code>Box</code> gives the differently sized concrete values one fixed-size owning handle and one return type.</p>
+
+      <table class="comparison-table">
+        <thead><tr><th>Question</th><th>Generic <code>F: Formatter</code></th><th><code>dyn Formatter</code></th></tr></thead>
+        <tbody>
+          <tr><td>When is the concrete type chosen?</td><td>Compile time</td><td>Runtime</td></tr>
+          <tr><td>Dispatch</td><td>Direct after monomorphization; often inlineable</td><td>Indirect through trait-object metadata</td></tr>
+          <tr><td>C++ analogy</td><td>Template constrained by a concept</td><td>Virtual interface through an owning pointer or reference</td></tr>
+          <tr><td>Best fit</td><td>Hot paths and APIs where callers know the type</td><td>Runtime selection and heterogeneous collections</td></tr>
+          <tr><td>Tradeoff</td><td>More generated code for many concrete types</td><td>Indirection and only object-safe trait methods</td></tr>
+        </tbody>
+      </table>
+
+      <figure class="course-figure">
+        <img src="assets/traits-lifetimes-shared-ownership.svg" alt="Diagram comparing static trait dispatch to dynamic trait-object dispatch, then showing an Arc-owned formatter cloned into scoped worker threads while borrowed names remain tied to the scope.">
+        <figcaption>Traits define one contract. The call site chooses compile-time specialization or runtime indirection; ownership and thread bounds remain explicit.</figcaption>
+      </figure>
+      <p><a href="assets/traits-lifetimes-shared-ownership.excalidraw">Download the editable Excalidraw source</a>.</p>
+
+      <h2>Part 3: lifetime annotations state a borrowing relationship</h2>
+      <p>Most lifetimes are inferred. You write one when the compiler needs help relating multiple borrows, especially when a struct stores a reference.</p>
+      <p><strong>File: <code>src/main.rs</code></strong> — add above <code>fn main</code>. This struct and function are used later in Part 5's exercise.</p>
+      <pre class="large-code"><code>struct Greeting&lt;'a&gt; {
+    name: &amp;'a str,
+    text: String,
+}
+
+fn build_greeting&lt;'a&gt;(
+    formatter: &amp;dyn Formatter,
+    name: &amp;'a str,
+) -&gt; Greeting&lt;'a&gt; {
+    Greeting {
+        name,
+        text: formatter.format(name),
+    }
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>Lifetime syntax</th><th>How to read it</th></tr></thead>
+        <tbody>
+          <tr><td><code>'a</code></td><td>A lifetime parameter label, pronounced “lifetime a.” It is not an elapsed duration and does not keep anything alive.</td></tr>
+          <tr><td><code>Greeting&lt;'a&gt;</code></td><td>This value contains at least one reference whose validity is described by <code>'a</code>.</td></tr>
+          <tr><td><code>name: &amp;'a str</code></td><td>The stored view cannot outlive the source string associated with <code>'a</code>.</td></tr>
+          <tr><td><code>-&gt; Greeting&lt;'a&gt;</code></td><td>The returned struct remains tied to the input <code>name</code> borrow. The annotation describes that relationship; it does not extend the borrow.</td></tr>
+          <tr><td><code>formatter: &amp;dyn Formatter</code></td><td>The formatter borrow is used only during the call and is not stored, so the result does not need to carry its lifetime.</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>Illustrative excerpt — not added to <code>rust-greeter</code>.</strong> Both sides below are a standalone comparison of a compile-time rejection versus a working pattern; do not paste either into <code>src/main.rs</code>.</p>
+      <div class="code-compare">
+        <div>
+          <div class="code-label bad">Rejected dangling result</div>
+          <pre><code>let greeting = {
+    let local = String::from("Ada");
+    build_greeting(&amp;Plain, &amp;local)
+};
+println!("{}", greeting.name);</code></pre>
+        </div>
+        <div>
+          <div class="code-label good">Owner outlives the borrow</div>
+          <pre><code>let owner = String::from("Ada");
+let greeting =
+    build_greeting(&amp;Plain, &amp;owner);
+println!("{}", greeting.name);</code></pre>
+        </div>
+      </div>
+      <p>The first form fails at compile time because <code>Greeting</code> would retain a view of <code>local</code> after <code>local</code> is dropped. This is the reference-member lifetime hazard C++ leaves largely to design discipline.</p>
+
+      <h2>Part 4: choose the ownership wrapper that states the truth</h2>
+      <table class="comparison-table">
+        <thead><tr><th>Type</th><th>Ownership and mutation model</th><th>C++ bridge</th><th>Threads?</th></tr></thead>
+        <tbody>
+          <tr><td><code>Box&lt;T&gt;</code></td><td>One owner of heap-allocated <code>T</code></td><td><code>std::unique_ptr&lt;T&gt;</code></td><td>If <code>T</code> is safe to send</td></tr>
+          <tr><td><code>Rc&lt;T&gt;</code></td><td>Reference-counted shared ownership; non-atomic count</td><td>Single-threaded <code>shared_ptr</code>-like handle</td><td>No</td></tr>
+          <tr><td><code>Arc&lt;T&gt;</code></td><td>Atomically reference-counted shared ownership</td><td><code>std::shared_ptr&lt;T&gt;</code> with atomic ownership count</td><td>Only if <code>T</code> is thread-safe</td></tr>
+          <tr><td><code>RefCell&lt;T&gt;</code></td><td>Single-threaded interior mutation with borrow rules checked at runtime</td><td>No direct equivalent; think checked dynamic aliasing</td><td>No</td></tr>
+          <tr><td><code>Mutex&lt;T&gt;</code></td><td>Exclusive mutable access through a lock guard</td><td><code>std::mutex</code> protecting a value, with RAII guard</td><td>Yes, when <code>T: Send</code></td></tr>
+        </tbody>
+      </table>
+
+      <p><code>Send</code> and <code>Sync</code> are marker traits the compiler usually derives from a type's fields:</p>
+      <ul>
+        <li><code>Send</code>: ownership of a value may move to another thread.</li>
+        <li><code>Sync</code>: shared references, <code>&amp;T</code>, may be used from multiple threads.</li>
+      </ul>
+      <p><code>Arc</code> makes sharing its ownership count thread-safe; it does not make an unsafe inner value safe. That is why <code>Arc&lt;RefCell&lt;T&gt;&gt;</code> is not a cross-thread substitute for <code>Arc&lt;Mutex&lt;T&gt;&gt;</code>.</p>
+
+      <h2>Part 5: exercise—share one formatter across workers</h2>
+      <p><strong>File: <code>src/main.rs</code></strong> — replace the <code>trait Formatter { ... }</code> line from Part 1 with this version, which requires every implementation to support the thread operations our renderer needs:</p>
+      <pre class="large-code"><code>trait Formatter: Send + Sync {
+    fn format(&amp;self, name: &amp;str) -&gt; String;
+}</code></pre>
+      <p>The colon lists <strong>supertraits</strong>. Any <code>Formatter</code> must also be <code>Send</code> and <code>Sync</code>. <code>Plain</code> and <code>Loud</code> satisfy both automatically because they contain no non-thread-safe fields.</p>
+
+      <p><strong>File: <code>src/main.rs</code></strong> — add <code>use std::sync::Arc;</code> as a new import line near the top (alongside the existing <code>use std::{...}</code> group), then replace Lesson 5's <code>render_all(names: &amp;[String], style: GreetingStyle)</code> function entirely with the <code>render_all_with</code> function below. <code>GreetingStyle</code> itself is not removed — it still drives the CLI's <code>--style</code> flag in <code>Args</code>; only the internal renderer changes from a <code>bool</code> flag to a shared trait object:</p>
+      <pre class="large-code"><code>use std::sync::Arc;
+
+fn render_all_with&lt;'a&gt;(
+    names: &amp;'a [String],
+    formatter: Arc&lt;dyn Formatter&gt;,
+) -&gt; Vec&lt;Result&lt;Greeting&lt;'a&gt;, NameError&gt;&gt; {
+    thread::scope(|scope| {
+        let handles = names
+            .iter()
+            .map(|name| {
+                let formatter = Arc::clone(&amp;formatter);
+                scope.spawn(move || {
+                    validate_name(name).map(|valid| build_greeting(formatter.as_ref(), valid))
+                })
+            })
+            .collect::&lt;Vec&lt;_&gt;&gt;();
+
+        handles
+            .into_iter()
+            .map(|handle| handle.join().expect("worker panicked"))
+            .collect()
+    })
+}</code></pre>
+
+      <table class="comparison-table">
+        <thead><tr><th>New line</th><th>Why it exists</th></tr></thead>
+        <tbody>
+          <tr><td><code>&lt;'a&gt;</code> and <code>Greeting&lt;'a&gt;</code></td><td>The returned greetings may borrow names from the input slice, so the output carries the same checked lifetime relationship.</td></tr>
+          <tr><td><code>Arc&lt;dyn Formatter&gt;</code></td><td>One runtime-selected concrete formatter has shared ownership through a fixed-size trait-object handle.</td></tr>
+          <tr><td><code>Arc::clone(&amp;formatter)</code></td><td>Creates another owning handle and increments the atomic count; it does not deep-copy the formatter.</td></tr>
+          <tr><td><code>move ||</code></td><td>Moves that cloned <code>Arc</code> handle into the worker closure. The borrowed <code>name</code> reference is copied into the scoped closure.</td></tr>
+          <tr><td><code>.map(|valid| build_greeting(...))</code></td><td>Builds a borrowing <code>Greeting&lt;'a&gt;</code> only for a validated <code>Ok</code> name and passes any <code>NameError</code> through unchanged.</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>File: <code>src/main.rs</code></strong> — this snippet replaces one region inside <code>fn main</code>; <code>Args</code> itself does not change (it already has <code>style: GreetingStyle</code> from Lesson 4):</p>
+      <ol>
+        <li>Inside <code>fn main</code>, after the <code>let names = ...</code> block, insert the <code>formatter</code> selection shown below, which maps the existing <code>args.style</code> to a concrete formatter — no new CLI flag is added. Then replace the existing <code>for result in render_all(&amp;names, args.style) { ... }</code> loop (from Lesson 5) with the loop over <code>render_all_with</code> shown below, whose <code>Ok</code> arm now matches <code>greeting</code> instead of <code>message</code>.</li>
+      </ol>
+      <pre class="large-code"><code>// After names are loaded in main:
+let formatter: Arc&lt;dyn Formatter&gt; = match args.style {
+    GreetingStyle::Formal =&gt; Arc::new(Loud),
+    GreetingStyle::Casual =&gt; Arc::new(Plain),
+};
+
+for result in render_all_with(&amp;names, formatter) {
+    match result {
+        Ok(greeting) =&gt; {
+            debug_assert!(!greeting.name.is_empty());
+            for _ in 0..args.count {
+                println!("{}", greeting.text);
+            }
+        }
+        Err(NameError::Empty) =&gt; eprintln!("skipped an empty name"),
+        Err(NameError::TooLong(n)) =&gt; {
+            eprintln!("skipped a name with {n} bytes; maximum is 40")
+        }
+    }
+}</code></pre>
+      <p>The explicit <code>Arc&lt;dyn Formatter&gt;</code> type lets both <code>match</code> arms coerce their different concrete types to the same trait-object type. Reusing <code>args.style</code> here — instead of adding a new field — means the CLI's <code>--style casual|formal</code> flag behaves exactly as it did in Lessons 4 and 5; only the code path that turns the flag into rendered text changed, from <code>shout_line(&amp;text, should_shout)</code> to a chosen <code>Formatter</code>.</p>
+      <p><code>debug_assert!</code> checks the validated-name invariant in debug builds and is disabled in optimized release builds. It also demonstrates that the returned <code>Greeting&lt;'a&gt;</code> still carries a usable borrow of the original name.</p>
+
+      <p><strong>File: <code>src/main.rs</code></strong> — Lesson 5's <code>render_all_applies_style_and_skips_invalid_names</code> test, inside the existing <code>#[cfg(test)] mod tests { ... }</code> block, calls the now-removed <code>render_all</code> function directly. Replace that one test with the version below, which exercises <code>render_all_with</code> instead; every other Lesson 1–5 test is untouched:</p>
+      <pre class="large-code"><code>    #[test]
+    fn render_all_with_applies_style_and_skips_invalid_names() {
+        let names = vec![String::from("Ada"), String::from("   ")];
+
+        let casual = render_all_with(&amp;names, Arc::new(Plain));
+        assert!(matches!(
+            casual[0].as_ref().map(|g| g.text.as_str()),
+            Ok("Hello, Ada!")
+        ));
+        assert!(matches!(&amp;casual[1], Err(NameError::Empty)));
+
+        let formal = render_all_with(&amp;names, Arc::new(Loud));
+        assert!(matches!(
+            formal[0].as_ref().map(|g| g.text.as_str()),
+            Ok("HELLO, ADA!")
+        ));
+    }</code></pre>
+      <p>Total test count is unchanged at 15: this replaces one Lesson 5 test in place rather than adding or removing one.</p>
+
+      <p>Run these from the <code>rust-greeter</code> package root (reusing <code>names.txt</code> created in Lesson 5):</p>
+      <pre class="large-code"><code>cargo fmt --check
+cargo test
+cargo run -- --file names.txt
+cargo run -- --file names.txt --style formal</code></pre>
+      <p>Expected evidence: <code>cargo fmt --check</code> prints nothing; <code>cargo test</code> reports <code>test result: ok. 15 passed</code>. The first <code>cargo run</code> (default <code>--style casual</code>) prints plain greetings for <code>Ada</code> and <code>Bjarne</code> (<code>Hello, Ada!</code> / <code>Hello, Bjarne!</code>, using <code>Plain</code>) plus one <code>skipped an empty name</code> line on stderr; the second (<code>--style formal</code>) prints the same two names shouted (<code>HELLO, ADA!</code> / <code>HELLO, BJARNE!</code>, using <code>Loud</code>) plus the same stderr line — identical output to Lesson 5's <code>--style</code> flag, now produced by a shared <code>Arc&lt;dyn Formatter&gt;</code> across scoped workers instead of a <code>bool</code> branch.</p>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/traits-33-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">3:44 · BEGINNER</span><h3>Traits [33 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Introduces shared behavior through traits.</p></div>
+        </a>
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/demo-traits-34-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">5:20 · BEGINNER</span><h3>Demo: Traits [34 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Demonstrates defining and implementing a trait.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the traits overview video, read <a href="https://doc.rust-lang.org/book/ch10-02-traits.html">Defining Shared Behavior with Traits</a>.</li>
+        <li>Instead of the traits demo, work through the <code>Formatter</code> implementations in Part 1 and the <a href="https://doc.rust-lang.org/book/ch18-02-trait-objects.html">trait objects</a> comparison in Part 2.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. When should you prefer <code>F: Formatter</code> over <code>dyn Formatter</code>?</summary><p><strong>Answer:</strong> Prefer the generic bound when the concrete type is known at compile time and specialization or inlining matters. Use a trait object when runtime selection or heterogeneous storage is the requirement.</p></details>
+      <details class="quiz"><summary>2. Does adding <code>'a</code> make the referenced string live longer?</summary><p><strong>Answer:</strong> No. It states a relationship the compiler checks: the returned <code>Greeting</code> cannot outlive the borrowed name.</p></details>
+      <details class="quiz"><summary>3. Why is <code>Arc&lt;RefCell&lt;T&gt;&gt;</code> not automatically safe across threads?</summary><p><strong>Answer:</strong> <code>Arc</code> protects only its reference count. <code>RefCell</code> uses non-atomic runtime borrow state and is not <code>Sync</code>; use an appropriate synchronization primitive such as <code>Mutex</code>.</p></details>
+      <details class="quiz"><summary>4. What does <code>move</code> move into each worker in this exercise?</summary><p><strong>Answer:</strong> It moves that worker's cloned <code>Arc</code> handle into the closure. It does not deep-copy the formatter; all handles share one allocation.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Shared behavior?                 Define a trait
+Concrete type known now?         Use a generic trait bound
+Concrete type chosen at runtime? Use &amp;dyn Trait, Box&lt;dyn Trait&gt;, or Arc&lt;dyn Trait&gt;
+Struct stores a reference?       State the lifetime relationship
+One heap owner?                  Box&lt;T&gt;
+Shared on one thread?            Rc&lt;T&gt;, optionally with RefCell&lt;T&gt;
+Shared across threads?           Arc&lt;T&gt;; add Mutex/RwLock only for mutation
+Crossing a thread boundary?      Check Send and Sync</code></pre>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/book/ch10-02-traits.html">Defining Shared Behavior with Traits</a>, <em>The Rust Programming Language</em>, Rust Project. Traits, implementations, bounds, and coherence. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch18-02-trait-objects.html">Using Trait Objects to Abstract over Shared Behavior</a>, <em>The Rust Programming Language</em>, Rust Project. Dynamic dispatch and trait objects. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html">Validating References with Lifetimes</a>, <em>The Rust Programming Language</em>, Rust Project. Lifetime relationships in functions and structs. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/sync/struct.Arc.html">Arc</a>, Rust standard library documentation, Rust Project. Atomic shared ownership and thread-safety constraints. Accessed September 17, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch16-04-extensible-concurrency-sync-and-send.html">Extensible Concurrency with Send and Sync</a>, <em>The Rust Programming Language</em>, Rust Project. Compiler-enforced thread-safety marker traits. Accessed September 17, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/traits-33-of-35--beginners-series-to-rust">Traits [33 of 35]</a>, Microsoft Developer (Microsoft Learn), 3:44. Accessed September 17, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/demo-traits-34-of-35--beginners-series-to-rust">Demo: Traits [34 of 35]</a>, Microsoft Developer (Microsoft Learn), 5:20. Accessed September 17, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="05-ownership-errors-concurrency.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 5: Ownership to Concurrency</span></a>
+        <a href="07-production-workspaces-modules-api-design.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 7: Production Workspaces &amp; APIs</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="assets/training.js"></script>
+</body>
+</html>

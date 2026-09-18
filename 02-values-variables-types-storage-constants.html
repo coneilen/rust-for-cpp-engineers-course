@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Values, Variables, Scalar Types, Storage, and Constants — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html" class="active"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 2 · 30 minutes</span>
+      <h1>Values, Variables, Scalar Types, Storage, and Constants</h1>
+      <p class="lesson-subtitle">Bind values with <code>let</code>, choose scalar types on purpose, understand what Rust actually promises about stack and heap storage, and add compile-time constants to <code>rust-greeter</code> — without introducing a struct yet.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can explain immutability-by-default versus <code>mut</code>, pick an appropriate scalar type and catch a truncating cast, describe what <code>String</code>/<code>&amp;str</code> actually own versus borrow, and add <code>const</code>/<code>static</code> values that <code>rust-greeter</code> checks at compile time.
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">📁</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p><strong>Starting state:</strong> the Lesson 1 <code>rust-greeter</code> package exactly as it ended — <code>Cargo.toml</code> with the <code>clap</code> dependency, and <code>src/main.rs</code> with <code>use clap::Parser</code>, <code>struct Args</code> (<code>name</code>, <code>count</code>), <code>fn greeting</code>, <code>fn main</code>, and the <code>tests</code> module. <strong>Working directory:</strong> <code>cd path/to/rust-greeter</code> — <code>path/to</code> is a placeholder for the parent folder you used in Lesson 1; replace it with your actual path (for example <code>~/dev/rust-greeter</code>), it is not a literal folder to create. <strong>Default file:</strong> every unqualified code snippet below targets <code>src/main.rs</code>, and each pass states whether it adds to the file, replaces part of it, or is an illustrative excerpt that is not added to the file.</p>
+        </div>
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="4"><td>4 min</td><td><code>let</code>, immutability-by-default, <code>mut</code>, and shadowing vs. mutation</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Scalar types, numeric literals, and checked vs. truncating conversions</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Tuples, arrays, <code>Copy</code> vs. move, and the C++ "POD" question</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Storage: locals, <code>String</code>/<code>Vec</code>/<code>Box</code> heap ownership, <code>&amp;str</code>, and <code>'static</code></td></tr>
+          <tr data-minutes="4"><td>4 min</td><td><code>const</code>, <code>static</code>, the <code>static mut</code> warning, and <code>const fn</code></td></tr>
+          <tr data-minutes="6"><td>6 min</td><td>Grow <code>rust-greeter</code> with constants and a GreeterConfig-style tuple</td></tr>
+          <tr data-minutes="2"><td>2 min</td><td>Knowledge check and recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: <code>let</code>, immutability, <code>mut</code>, and shadowing</h2>
+      <p>A C++ local is mutable unless you write <code>const</code>. Rust inverts the default: <code>let</code> bindings are immutable unless you write <code>mut</code>.</p>
+      <div class="code-compare">
+        <div>
+          <div class="code-label bad">Rust: rejected without <code>mut</code></div>
+          <pre><code>let count = 1;
+count = 2; // error[E0384]: cannot assign
+           // twice to immutable variable</code></pre>
+        </div>
+        <div>
+          <div class="code-label good">Rust: works with <code>mut</code></div>
+          <pre><code>let mut count = 1;
+count = 2; // fine: `count` opted into mutation</code></pre>
+        </div>
+      </div>
+      <p><strong>Shadowing is not mutation.</strong> A second <code>let</code> with the same name introduces a brand-new binding — it can even change type — and the old binding is simply no longer reachable by that name. This differs from re-declaring a C++ variable in an inner scope, because shadowing can happen in the very same scope:</p>
+      <pre><code>let count = "3";          // count: &amp;str
+let count: u8 = count.parse().unwrap(); // count: u8 — a new binding, same name
+let count = count * 2;    // count: u8 — another new binding</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>C++ instinct</th><th>Rust reality</th></tr></thead>
+        <tbody>
+          <tr><td><code>const auto x = ...;</code> is the careful default</td><td><code>let x = ...;</code> <em>is</em> the default; <code>mut</code> is the deliberate opt-in</td></tr>
+          <tr><td>Re-declaring <code>x</code> in the same scope is an error</td><td>Shadowing lets a new <code>let x</code> reuse the name and even change the type</td></tr>
+          <tr><td>Mutating a variable keeps its address and type</td><td>Shadowing may produce a differently typed value with no relation to the old storage</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 2: scalar types, literals, and checked conversions</h2>
+      <p>Rust's scalar primitives are explicit about width and signedness. There is no implicit widening or narrowing between numeric types the way C++ allows between <code>int</code>, <code>long</code>, and <code>double</code>.</p>
+      <table class="comparison-table">
+        <thead><tr><th>Category</th><th>Rust types</th><th>C++ bridge</th></tr></thead>
+        <tbody>
+          <tr><td>Signed integers</td><td><code>i8 i16 i32 i64 i128</code></td><td><code>int8_t</code> … <code>int64_t</code>, plus a 128-bit type C++ lacks natively</td></tr>
+          <tr><td>Unsigned integers</td><td><code>u8 u16 u32 u64 u128</code></td><td><code>uint8_t</code> … <code>uint64_t</code>, plus 128-bit</td></tr>
+          <tr><td>Pointer-sized</td><td><code>isize</code> / <code>usize</code></td><td><code>ptrdiff_t</code> / <code>size_t</code> — sized to address the machine, used for indices and lengths</td></tr>
+          <tr><td>Floating point</td><td><code>f32</code> / <code>f64</code></td><td><code>float</code> / <code>double</code></td></tr>
+          <tr><td>Boolean</td><td><code>bool</code></td><td><code>bool</code>; exactly one byte, only <code>true</code>/<code>false</code></td></tr>
+          <tr><td>Character</td><td><code>char</code></td><td>No exact match: always a 4-byte Unicode <strong>scalar value</strong>, not one byte and not always one printed "character" (a display grapheme can be several <code>char</code>s)</td></tr>
+        </tbody>
+      </table>
+      <p>Literals can carry an explicit suffix, or let the compiler infer from context: <code>let repeats = 3u8;</code> and <code>let repeats: u8 = 3;</code> declare the same value. Underscores are just readability separators: <code>1_000_000i64</code>.</p>
+      <p>An <strong>integer-to-integer</strong> cast with <code>as</code> is a blunt tool: it always produces a value, silently truncating and wrapping (two's-complement, modulo the target width) when the target type cannot represent the input. A <strong>float-to-integer</strong> <code>as</code> cast behaves differently — since Rust 1.45 it <em>saturates</em> instead of wrapping: a value too large becomes the target type's maximum, a value too negative becomes its minimum, and <code>NaN</code> becomes <code>0</code>. <code>TryFrom</code> (used through <code>u8::try_from</code>) checks an integer-to-integer conversion and returns a <code>Result</code> instead of guessing; the standard library does <em>not</em> provide a <code>TryFrom</code> for float-to-integer conversions, so a checked float-to-integer conversion still needs a manual range/<code>NaN</code> check (or a crate such as <code>num-traits</code>). <strong>File: <code>src/main.rs</code></strong> — add below <code>fn greeting</code>:</p>
+      <pre class="large-code"><code>fn describe_cast(value: i32) -&gt; String {
+    let truncated = value as u8;
+    match u8::try_from(value) {
+        Ok(exact) =&gt; format!("{value} as u8 = {truncated}; try_from = {exact}"),
+        Err(_) =&gt; format!("{value} as u8 = {truncated} (truncated); try_from does not fit"),
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Call</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td><code>describe_cast(200)</code></td><td><code>"200 as u8 = 200; try_from = 200"</code> — 200 fits in a <code>u8</code>, so both paths agree.</td></tr>
+          <tr><td><code>describe_cast(1000)</code></td><td><code>"1000 as u8 = 232 (truncated); try_from does not fit"</code> — <code>1000 as u8</code> silently wraps modulo 256 because this is an integer-to-integer cast; <code>u8::try_from(1000)</code> reports <code>Err</code> instead of guessing. (A float-to-integer <code>as</code> cast, e.g. <code>1000.0f64 as u8</code>, would instead <em>saturate</em> to <code>255</code> — it does not wrap.)</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warning">
+        <span class="callout-icon">🛑</span>
+        <div class="callout-content">
+          <strong><code>as</code> never panics, and that is the danger</strong>
+          <p>A C++ narrowing conversion is often a compiler warning you can miss. Rust's <code>as</code> is intentionally silent about range for both cases — wrapping on integer-to-integer casts, saturating on float-to-integer casts — which is why any cast whose input range you cannot fully guarantee should prefer a checked path (<code>TryFrom</code>/<code>TryInto</code> for integer-to-integer, or an explicit range/<code>NaN</code> check for float-to-integer) and handle the failure case, rather than reaching for <code>as</code>.</p>
+        </div>
+      </div>
+
+      <h2>Part 3: tuples, arrays, <code>Copy</code> vs. move, and "POD"</h2>
+      <p>A <strong>tuple</strong> groups a fixed, possibly heterogeneous set of values by position; an <strong>array</strong> holds a fixed number of same-typed values. Both live inline, with no heap allocation of their own:</p>
+      <pre><code>let point: (i32, i32) = (3, 4);
+let first = point.0;              // access by position
+let scores: [u32; 3] = [10, 20, 30];
+let second_score = scores[1];      // access by index, bounds-checked</code></pre>
+      <p>Rust has no official "plain old data" category the way C++ does. Instead, the compiler tracks a specific trait, <code>Copy</code>: a type is <code>Copy</code> only if copying its bytes is always correct and cheap, and only if every field is also <code>Copy</code>. All scalar primitives are <code>Copy</code>; a tuple or array of <code>Copy</code> elements is <code>Copy</code> too. A type that owns a heap allocation, such as <code>String</code>, is never <code>Copy</code> — assigning it <strong>moves</strong> it instead of duplicating the buffer, and the source binding stops being usable.</p>
+      <table class="comparison-table">
+        <thead><tr><th>C++ "POD" instinct</th><th>Rust reality</th></tr></thead>
+        <tbody>
+          <tr><td>"POD" implies bitwise copy is safe</td><td>Rust calls that property <code>Copy</code>; it is a trait the compiler derives or verifies, not a language keyword</td></tr>
+          <tr><td>"POD" often also implies a stable, C-compatible byte layout</td><td><code>Copy</code> says nothing about layout. Rust's default struct layout may reorder fields; stable byte layout for FFI needs an explicit <code>#[repr(C)]</code> (Lesson 19), which is a separate, stronger guarantee</td></tr>
+          <tr><td>Assigning a struct always copies it</td><td>Assigning a non-<code>Copy</code> struct <strong>moves</strong> it: the source binding is invalidated by the compiler, not merely discouraged by convention</td></tr>
+        </tbody>
+      </table>
+      <p>A move is a beginner-visible example of ownership, which Lesson 5 covers in depth. For now: passing or assigning a <code>String</code> transfers ownership, while passing or assigning a <code>u8</code> or a tuple of <code>u8</code>s simply copies cheap bytes and both bindings stay valid.</p>
+
+      <h2>Part 4: what "storage" means in Rust</h2>
+      <p>C++ trains you to reason about stack versus heap by variable declaration. Rust asks a related but different question: <strong>who owns this value, and does that owner's type own a heap allocation?</strong></p>
+      <table class="comparison-table">
+        <thead><tr><th>Value or type</th><th>What actually happens</th></tr></thead>
+        <tbody>
+          <tr><td>A local <code>let x = 5u8;</code></td><td>Conceptually a local variable. The compiler is free to keep it in a register or optimize it away entirely — "stack vs. heap" for locals is an implementation detail, not a language guarantee.</td></tr>
+          <tr><td><code>String</code>, <code>Vec&lt;T&gt;</code></td><td>Each is a three-word <em>handle</em> (pointer, length, capacity) that <em>may</em> own a heap allocation once it needs one. <code>String::new()</code>/<code>Vec::new()</code> start at capacity zero and allocate nothing until data is pushed in; once they do allocate, the bytes live on the heap and are freed when the owning handle is dropped.</td></tr>
+          <tr><td><code>Box&lt;T&gt;</code></td><td>A single pointer-like owning handle for one heap-allocated <code>T</code> — unlike a plain reference, dropping the <code>Box</code> frees the value. A <code>Box</code> of a zero-sized type is the exception: there are no bytes to store, so it requires no actual heap allocation.</td></tr>
+          <tr><td><code>&amp;str</code></td><td>A borrowed <em>view</em> into UTF-8 bytes owned elsewhere — a pointer plus a length, not an owner. It never allocates or frees anything itself.</td></tr>
+          <tr><td>A string literal, e.g. <code>"casual"</code></td><td>Baked into the compiled binary and valid for the entire program. Its type is <code>&amp;'static str</code>: a borrowed view whose data needs no owner because the program itself outlives it.</td></tr>
+        </tbody>
+      </table>
+      <p>This is why <code>fn greeting(name: &amp;str) -&gt; String</code> from Lesson 1 reads correctly once you separate "local variable" from "heap owner": <code>name</code> is a local binding holding a borrowed view, regardless of whether the string it views is a heap-owned <code>String</code> or a <code>'static</code> literal; the return type <code>String</code> is a new, owned heap allocation the caller now owns.</p>
+
+      <h2>Part 5: <code>const</code>, <code>static</code>, and <code>const fn</code></h2>
+      <p><code>const</code> and <code>static</code> both require a value known at compile time, but they are not interchangeable:</p>
+      <table class="comparison-table">
+        <thead><tr><th>Declaration</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>const NAME: T = value;</code></td><td>Inlined at every use site, like a C++ <code>constexpr</code>. It has no fixed address and cannot be mutated.</td></tr>
+          <tr><td><code>static NAME: T = value;</code></td><td>One fixed memory location for the whole program, closer to a C++ file-scope <code>static const</code>. Still immutable by default.</td></tr>
+          <tr><td><code>const fn name(...) -&gt; T</code></td><td>An ordinary function that the compiler can also evaluate at compile time when its inputs are constant — used below to compute <code>CLAMPED_DEFAULT</code> before the program even starts.</td></tr>
+        </tbody>
+      </table>
+      <p><strong>File: <code>src/main.rs</code></strong> — add above <code>fn greeting</code> (order does not matter for items, but keeping related pieces together helps readability):</p>
+      <pre class="large-code"><code>const MAX_REPEATS: u8 = 9;
+static APP_NAME: &amp;str = "rust-greeter";
+
+const fn clamp_repeats(requested: u8) -&gt; u8 {
+    if requested &gt; MAX_REPEATS {
+        MAX_REPEATS
+    } else {
+        requested
+    }
+}
+
+const CLAMPED_DEFAULT: u8 = clamp_repeats(20);</code></pre>
+      <p><code>CLAMPED_DEFAULT</code> is computed by the compiler, not at runtime: <code>clamp_repeats(20)</code> is evaluated during compilation because <code>clamp_repeats</code> is a <code>const fn</code> and <code>20</code> is a literal, so the binary already contains the answer, <code>9</code>.</p>
+      <div class="callout warning">
+        <span class="callout-icon">🛑</span>
+        <div class="callout-content">
+          <strong><code>static mut</code> is a real warning sign, not a stylistic one</strong>
+          <p>Rust allows <code>static mut COUNTER: u32 = 0;</code>, but every read or write requires an <code>unsafe</code> block, and even that is not automatically sound. A shared reference into a mutable static is undefined behavior if the static is ever mutated while that reference is alive, so recent Rust editions reject the most common naive pattern outright:</p>
+        </div>
+      </div>
+      <p><strong>Illustrative excerpt — not added to <code>rust-greeter</code>.</strong> This shows the exact compiler rejection so you recognize it if you see it, and the safe alternative you should reach for instead:</p>
+      <div class="code-compare">
+        <div>
+          <div class="code-label bad">Rejected: shared reference to a mutable static</div>
+          <pre><code>static mut COUNTER: u32 = 0;
+
+fn main() {
+    unsafe {
+        COUNTER += 1;
+        println!("{}", COUNTER); // error: creating a shared
+    }                            // reference to mutable static
+}</code></pre>
+        </div>
+        <div>
+          <div class="code-label good">Safe: an atomic instead of <code>static mut</code></div>
+          <pre><code>use std::sync::atomic::{AtomicU32, Ordering};
+
+static COUNTER: AtomicU32 = AtomicU32::new(0);
+
+fn main() {
+    COUNTER.fetch_add(1, Ordering::Relaxed);
+    println!("{}", COUNTER.load(Ordering::Relaxed));
+}</code></pre>
+        </div>
+      </div>
+      <p>The right-hand version compiles and prints <code>1</code> today. Lesson 10 covers <code>Ordering</code> and atomics properly; for now, the rule is simple: prefer an owned local, or a safe wrapper like an atomic, over <code>static mut</code>.</p>
+
+      <h2>Part 6: grow <code>rust-greeter</code> with a GreeterConfig-style grouping</h2>
+      <p>Lesson 3 introduces a real <code>GreeterConfig</code> struct. Before structs exist in this course, a plain tuple can still group related values — which is itself a preview of what a struct buys you (names instead of positions). <strong>File: <code>src/main.rs</code></strong> — replace the existing <code>fn main</code> from Lesson 1 with:</p>
+      <pre class="large-code"><code>fn main() {
+    let args = Args::parse();
+
+    // Shadowing: each `let count` introduces a new binding; this is not mutation.
+    let count = args.count;
+    let count = clamp_repeats(count);
+
+    // A GreeterConfig-style grouping, expressed as a tuple before Lesson 3 introduces a struct.
+    let greeter_tuple: (String, bool, &amp;str) =
+        (args.name.clone(), args.name.contains(' '), "casual");
+    let (name, is_team, style) = &amp;greeter_tuple;
+
+    println!("{APP_NAME} greeter tuple -&gt; name={name}, is_team={is_team}, style={style}");
+    println!(
+        "cast demo: {}; compile-time clamped default: {CLAMPED_DEFAULT}",
+        describe_cast(1000)
+    );
+
+    let mut greeted = 0u32;
+    for _ in 0..count {
+        println!("{}", greeting(name));
+        greeted += 1;
+    }
+    println!("greeted {greeted} time(s)");
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Rust syntax</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>args.name.clone()</code></td><td>An explicit, visible copy of the heap buffer. Required because <code>String</code> is not <code>Copy</code> — <code>args.name</code> is still needed later for <code>.contains(' ')</code>, so it must not be moved out.</td></tr>
+          <tr><td><code>args.name.contains(' ')</code></td><td>A borrowing method call on <code>&amp;str</code>/<code>String</code> that returns <code>bool</code> — a <code>Copy</code> type, so using it later is never a move.</td></tr>
+          <tr><td><code>(String, bool, &amp;str)</code></td><td>A 3-element tuple type. Unlike a struct, its fields are accessed by position (<code>.0</code>, <code>.1</code>, <code>.2</code>) rather than by name.</td></tr>
+          <tr><td><code>let (name, is_team, style) = &amp;greeter_tuple;</code></td><td>Destructures a borrow of the tuple into three named bindings in one step, instead of three separate <code>.0</code>/<code>.1</code>/<code>.2</code> accesses.</td></tr>
+          <tr><td><code>let mut greeted = 0u32;</code></td><td>An explicit, deliberately mutable local counter — the only mutable binding in this file so far.</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>File: <code>src/main.rs</code></strong> — add inside the existing <code>#[cfg(test)] mod tests { ... }</code> block from Lesson 1, alongside <code>formats_a_borrowed_name</code>:</p>
+      <pre class="large-code"><code>    #[test]
+    fn clamps_large_repeat_counts() {
+        assert_eq!(clamp_repeats(20), MAX_REPEATS);
+        assert_eq!(clamp_repeats(3), 3);
+        assert_eq!(CLAMPED_DEFAULT, MAX_REPEATS);
+    }
+
+    #[test]
+    fn casts_show_truncation_and_checked_conversion() {
+        assert_eq!(
+            describe_cast(1000),
+            "1000 as u8 = 232 (truncated); try_from does not fit"
+        );
+        assert_eq!(describe_cast(200), "200 as u8 = 200; try_from = 200");
+    }</code></pre>
+
+      <h2>Active exercise: verify the constants and the tuple grouping</h2>
+      <p>Run each command from the <code>rust-greeter</code> package root:</p>
+      <pre class="large-code"><code>cargo fmt --check
+cargo test
+cargo run -- --name "C++ engineer" --count 2</code></pre>
+      <p>Expected evidence: <code>cargo fmt --check</code> prints nothing; <code>cargo test</code> reports <code>test result: ok. 3 passed</code>; <code>cargo run -- --name "C++ engineer" --count 2</code> prints:</p>
+      <pre class="large-code"><code>rust-greeter greeter tuple -&gt; name=C++ engineer, is_team=true, style=casual
+cast demo: 1000 as u8 = 232 (truncated); try_from does not fit; compile-time clamped default: 9
+Hello, C++ engineer!
+Hello, C++ engineer!
+greeted 2 time(s)</code></pre>
+      <div class="callout tip">
+        <span class="callout-icon">💡</span>
+        <div class="callout-content">
+          <strong>Notice <code>is_team=true</code></strong>
+          <p>"C++ engineer" contains a space, so <code>args.name.contains(' ')</code> is <code>true</code>. Lesson 3 turns this same idea into a real <code>Audience</code> enum instead of a bare <code>bool</code>.</p>
+        </div>
+      </div>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/demo-using-cargo-7-of-36--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">4:01 · BEGINNER</span><h3>Learn about variables [7 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Reinforces <code>let</code>, immutability by default, and <code>mut</code>.</p></div>
+        </a>
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/learn-about-scalar-data-types-9-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">3:28 · BEGINNER</span><h3>Learn about scalar data types [9 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Tours integers, floats, <code>bool</code>, and <code>char</code>.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the variables video, read <a href="https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html">Variables and Mutability</a> in <em>The Rust Programming Language</em>.</li>
+        <li>Instead of the scalar types video, read <a href="https://doc.rust-lang.org/book/ch03-02-data-types.html">Data Types</a> in <em>The Rust Programming Language</em>.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why does the second <code>let count = clamp_repeats(count);</code> not need <code>mut</code>?</summary><p><strong>Answer:</strong> It is shadowing, not mutation. Each <code>let</code> introduces a distinct new binding named <code>count</code>; the old one is no longer reachable by that name, so no in-place mutation occurs.</p></details>
+      <details class="quiz"><summary>2. Why does <code>describe_cast(1000)</code> report a truncated value from <code>as</code> but an error from <code>try_from</code>?</summary><p><strong>Answer:</strong> <code>as</code> always produces a <code>u8</code> by wrapping modulo 256 and never fails, silently losing information. <code>u8::try_from</code> checks the range first and returns <code>Err</code> when the value does not fit, so callers must handle the failure explicitly.</p></details>
+      <details class="quiz"><summary>3. Is a <code>String</code> ever <code>Copy</code>? What happens when you assign one to a new binding?</summary><p><strong>Answer:</strong> No. <code>String</code> owns a heap allocation, so it can never be <code>Copy</code>. Assigning it moves ownership to the new binding, and the old binding can no longer be used — which is why the exercise calls <code>args.name.clone()</code> before also calling <code>args.name.contains(' ')</code>.</p></details>
+      <details class="quiz"><summary>4. Does Rust guarantee that a plain local <code>let x = 5u8;</code> lives on the stack?</summary><p><strong>Answer:</strong> No. That is an implementation detail the compiler may optimize freely, including keeping it in a register. Rust's real storage guarantees are about ownership: heap-owning types like <code>String</code> free their allocation when the owning binding is dropped, and borrowed views like <code>&amp;str</code> can never outlive the data they view.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Value should never change here?      Use `let` (the default)
+Value must be reassigned in place?   Use `let mut`
+Want a new binding, maybe new type?  Shadow with another `let`
+Range of a numeric input is proven?  `as` is acceptable
+Range of a numeric input is not?     Prefer `TryFrom`/`TryInto` and handle `Err`
+Known at compile time, no address?   `const`
+Known at compile time, one address?  `static` (never `static mut`; prefer an atomic)
+Need to read text without owning it? `&amp;str`
+Need to own and possibly grow text?  `String`</code></pre>
+      <p>You did not just memorize syntax: you separated "is this a new binding?" from "did I mutate a value?", separated "will this compile-time value have an address?", and separated "who owns this data?" from "where might the compiler happen to put it?". Lesson 3 replaces today's bare tuple and <code>bool</code>/<code>&amp;str</code> stand-ins with a real <code>GreeterConfig</code> struct and named <code>Audience</code>/<code>GreetingStyle</code> enums.</p>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html">Variables and Mutability</a>, <em>The Rust Programming Language</em>, Rust Project. <code>let</code>, <code>mut</code>, shadowing, and constants. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch03-02-data-types.html">Data Types</a>, <em>The Rust Programming Language</em>, Rust Project. Scalar and compound types, numeric literals. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/reference/expressions/operator-expr.html#type-cast-expressions">Type cast expressions</a>, The Rust Reference, Rust Project. Exact semantics of numeric <code>as</code> casts, including truncation. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/convert/trait.TryFrom.html">TryFrom</a>, Rust standard library documentation, Rust Project. Fallible, checked conversions. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/marker/trait.Copy.html">Copy</a>, Rust standard library documentation, Rust Project. Which types may be duplicated by copying bytes. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/reference/type-layout.html#the-c-representation">Type layout: the C representation</a>, The Rust Reference, Rust Project. Why stable, FFI-compatible layout needs an explicit <code>#[repr(C)]</code>. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch04-03-slices.html">The Slice Type</a>, <em>The Rust Programming Language</em>, Rust Project. <code>&amp;str</code> as a borrowed view over string data. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/reference/items/static-items.html">Static items</a>, The Rust Reference, Rust Project. <code>static</code> semantics and the safety rules around <code>static mut</code>. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/reference/const_eval.html#const-functions">Const functions</a>, The Rust Reference, Rust Project. What <code>const fn</code> guarantees about compile-time evaluation. Accessed September 18, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/demo-using-cargo-7-of-36--beginners-series-to-rust">Learn about variables [7 of 35]</a>, Microsoft Developer (Microsoft Learn), 4:01. Accessed September 18, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/learn-about-scalar-data-types-9-of-35--beginners-series-to-rust">Learn about scalar data types [9 of 35]</a>, Microsoft Developer (Microsoft Learn), 3:28. Accessed September 18, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="01-from-toolchain-to-binary.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 1: Toolchain to Binary</span></a>
+        <a href="03-structs-enums-immutable-data-modeling.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 3: Structs, Enums &amp; Data Modeling</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

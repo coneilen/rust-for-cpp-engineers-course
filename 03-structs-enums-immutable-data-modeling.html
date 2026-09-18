@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Structs, Enums, Methods, and Immutable Data Modeling — Learning Rust for C++ Engineers</title>
+  <link rel="stylesheet" href="assets/training.css">
+  <link rel="stylesheet" href="course.css?v=2">
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+  </style>
+</head>
+<body>
+<div class="training-layout">
+  <nav class="sidebar" aria-label="Course navigation">
+    <div class="sidebar-header">
+      <a href="./" class="brand"><span class="brand-icon">🦀</span><span>Rust for C++ Engineers</span></a>
+      <div class="class-title">Private team course</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-label">Course</div>
+      <a href="./"><span class="lesson-num">🏠</span> Course Overview</a>
+      <a href="01-from-toolchain-to-binary.html"><span class="lesson-num">1</span> Toolchain to Binary</a>
+      <a href="02-values-variables-types-storage-constants.html"><span class="lesson-num">2</span> Values, Variables, Types &amp; Storage</a>
+      <a href="03-structs-enums-immutable-data-modeling.html" class="active"><span class="lesson-num">3</span> Structs, Enums &amp; Data Modeling</a>
+      <a href="04-control-flow-functions-closures-macros.html"><span class="lesson-num">4</span> Control Flow, Functions &amp; Macros</a>
+      <a href="05-ownership-errors-concurrency.html"><span class="lesson-num">5</span> Ownership to Concurrency</a>
+      <a href="06-traits-lifetimes-shared-ownership.html"><span class="lesson-num">6</span> Traits to Shared Ownership</a>
+      <a href="07-production-workspaces-modules-api-design.html"><span class="lesson-num">7</span> Production Workspaces &amp; APIs</a>
+      <a href="08-smart-pointers-interior-mutability-unsafe.html"><span class="lesson-num">8</span> Pointers, Mutability &amp; Unsafe</a>
+      <a href="09-native-threads-channels.html"><span class="lesson-num">9</span> Native Threads &amp; Channels</a>
+      <a href="10-locks-atomics-deadlocks-data-parallelism.html"><span class="lesson-num">10</span> Locks, Atomics &amp; Parallelism</a>
+      <a href="11-blocking-tcp-networking.html"><span class="lesson-num">11</span> Blocking TCP Networking</a>
+      <a href="12-async-rust-tokio.html"><span class="lesson-num">12</span> Async Rust &amp; Tokio</a>
+      <a href="13-http-client-axum-service.html"><span class="lesson-num">13</span> HTTP Client &amp; Axum</a>
+      <a href="14-sqlite-rusqlite.html"><span class="lesson-num">14</span> SQLite with rusqlite</a>
+      <a href="15-production-service-sqlx.html"><span class="lesson-num">15</span> Production Service with SQLx</a>
+      <a href="16-testing-quality-gates.html"><span class="lesson-num">16</span> Testing &amp; Quality Gates</a>
+      <a href="17-debugging-observability.html"><span class="lesson-num">17</span> Debugging &amp; Observability</a>
+      <a href="18-performance-profiling-unsafe-verification.html"><span class="lesson-num">18</span> Performance &amp; Unsafe Verification</a>
+      <a href="19-migration-playbook-raw-c-abi.html"><span class="lesson-num">19</span> Migration &amp; Raw C ABI</a>
+      <a href="20-advanced-cpp-interop.html"><span class="lesson-num">20</span> Advanced C++ Interop</a>
+      <a href="21-kotlin-java-bindings.html"><span class="lesson-num">21</span> Kotlin &amp; Java Bindings</a>
+      <a href="22-swift-bindings-apple-packaging.html"><span class="lesson-num">22</span> Swift &amp; Apple Packaging</a>
+    </div>
+    <div class="sidebar-footer"><a href="./">← Course overview</a></div>
+  </nav>
+  <div class="sidebar-overlay"></div>
+  <button class="mobile-menu-btn" aria-label="Open menu">☰</button>
+  <main class="content-area">
+    <div class="content-wrapper">
+      <span class="lesson-badge">Lesson 3 · 30 minutes</span>
+      <h1>Structs, Enums, Methods, and Immutable Data Modeling</h1>
+      <p class="lesson-subtitle">Rust has no <code>class</code> keyword and no <code>record</code> type. Data lives in structs and enums; behavior lives in <code>impl</code> blocks. Build a real <code>GreeterConfig</code> for <code>rust-greeter</code> using exactly that shape.</p>
+
+      <div class="timebox">
+        <strong>By the end:</strong> You can state plainly why Rust has no classes or records, define named/tuple/unit structs and methods, model a closed set of alternatives with an enum, and explain the idiomatic way to get record-like, invariant-protecting data without a dedicated "readonly" type.
+      </div>
+
+      <div class="callout note">
+        <span class="callout-icon">📁</span>
+        <div class="callout-content">
+          <strong>Follow-along setup</strong>
+          <p><strong>Starting state:</strong> the Lesson 2 <code>rust-greeter</code> package — <code>Args</code>/<code>greeting</code> unchanged since Lesson 1, plus <code>MAX_REPEATS</code>, <code>APP_NAME</code>, <code>clamp_repeats</code>, <code>CLAMPED_DEFAULT</code>, <code>describe_cast</code>, and a tuple-based <code>fn main</code>. <strong>Working directory:</strong> <code>cd path/to/rust-greeter</code> — <code>path/to</code> is a placeholder for wherever you keep the project (for example <code>~/dev/rust-greeter</code>); it is not a literal folder. <strong>Default file:</strong> every unqualified snippet below targets <code>src/main.rs</code>, and each pass states whether it adds to the file, replaces part of it, or is an illustrative excerpt not added to the file.</p>
+        </div>
+      </div>
+
+      <h2>30-minute core path</h2>
+      <table class="comparison-table" data-duration-minutes="30">
+        <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+        <tbody>
+          <tr data-minutes="3"><td>3 min</td><td>No classes, no <code>record</code>: structs/enums hold data, <code>impl</code> holds behavior</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Named, tuple, and unit structs; field init shorthand; struct update syntax and moves</td></tr>
+          <tr data-minutes="4"><td>4 min</td><td>Methods: <code>&amp;self</code>, <code>&amp;mut self</code>, <code>self</code>, and associated functions</td></tr>
+          <tr data-minutes="3"><td>3 min</td><td>Visibility, derives, and the idiomatic "immutable record" pattern</td></tr>
+          <tr data-minutes="5"><td>5 min</td><td>Enums as tagged unions, <code>Option&lt;T&gt;</code>, a <code>Result&lt;T, E&gt;</code> preview, and pattern matching preview</td></tr>
+          <tr data-minutes="8"><td>8 min</td><td>Evolve <code>rust-greeter</code> to <code>GreeterConfig</code>, <code>Audience</code>, <code>GreetingStyle</code></td></tr>
+          <tr data-minutes="2"><td>2 min</td><td>Knowledge check and recap</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 1: no classes, no <code>record</code></h2>
+      <p>This needs to be said directly, because looking for the familiar keyword wastes time: <strong>Rust has no <code>class</code> keyword and no <code>record</code> keyword or type.</strong> There is no built-in inheritance-based type either. Instead, Rust splits the two things a C++ <code>class</code> bundles together:</p>
+      <table class="comparison-table">
+        <thead><tr><th>C++ concept</th><th>Rust equivalent</th></tr></thead>
+        <tbody>
+          <tr><td><code>class</code>/<code>struct</code> — data and member functions together</td><td><code>struct</code> or <code>enum</code> for data; a separate <code>impl</code> block for its methods and associated functions</td></tr>
+          <tr><td><code>record</code>-style value type with generated equality/copying</td><td>A plain struct plus <code>#[derive(...)]</code> for the specific behaviors you want (Part 3)</td></tr>
+          <tr><td>Interfaces / abstract base classes</td><td>Traits — covered in depth in Lesson 6, previewed briefly here through <code>#[derive(Debug)]</code></td></tr>
+          <tr><td>Class hierarchy / <code>virtual</code> dispatch</td><td>No inheritance between structs at all; shared behavior comes from traits, and enums model closed sets of variants (Part 5)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Part 2: named, tuple, and unit structs</h2>
+      <p>A <strong>named struct</strong> has labeled fields, closest to a C++ struct or class's data members. It carries <code>#[derive(Clone)]</code> here so the struct-update-syntax example below it can call <code>.clone()</code> explicitly — derives themselves are covered in Part 3:</p>
+      <pre><code>struct RepeatCount(u8); // tuple struct — see below
+
+#[derive(Clone)]
+struct GreeterConfigPreview {
+    name: String,
+    greeting_count: u8,
+}
+
+fn build() {
+    let count = 3;
+    let config = GreeterConfigPreview {
+        name: String::from("Ada"),
+        greeting_count: count, // field init shorthand needs `greeting_count: count`
+    };
+    println!("{} x{}", config.name, config.greeting_count);
+}</code></pre>
+      <p>When a local variable's name exactly matches a field's name, you can drop the repetition — <strong>field init shorthand</strong>:</p>
+      <pre><code>let greeting_count = 3;
+let config = GreeterConfigPreview { name: String::from("Ada"), greeting_count };
+//                                                              ^^^^^^^^^^^^^^ shorthand for `greeting_count: greeting_count`</code></pre>
+      <p>A <strong>tuple struct</strong> like <code>struct RepeatCount(u8);</code> above wraps a single value in a distinct named type — a "newtype" — so a <code>RepeatCount</code> can never be confused with an unrelated <code>u8</code> at a function boundary, even though both are plain numbers underneath. A <strong>unit struct</strong> like <code>struct Marker;</code> carries no data at all; it exists purely as a distinct type, often to implement a trait against.</p>
+      <p><strong>Struct update syntax</strong> (<code>..base</code>) copies any fields you did not explicitly override from an existing value — but for non-<code>Copy</code> fields, this <em>moves</em> them out of <code>base</code>, just like Lesson 2's tuple assignment:</p>
+      <div class="code-compare">
+        <div>
+          <div class="code-label bad">Rejected: <code>base</code> reused after its <code>name</code> moved</div>
+          <pre><code>let base = GreeterConfigPreview { name: String::from("Ada"), greeting_count: 1 };
+let formal = GreeterConfigPreview { greeting_count: 2, ..base };
+println!("{}", base.name); // error[E0382]: borrow of
+                            // partially moved value: `base`</code></pre>
+        </div>
+        <div>
+          <div class="code-label good">Works: clone first if you still need <code>base</code></div>
+          <pre><code>let base = GreeterConfigPreview { name: String::from("Ada"), greeting_count: 1 };
+let formal = GreeterConfigPreview { greeting_count: 2, ..base.clone() };
+println!("{}", base.name); // fine — `base` was never moved from</code></pre>
+        </div>
+      </div>
+      <p>The left-hand error is real, exact compiler output: partially moving <code>base.name</code> (a <code>String</code>, not <code>Copy</code>) out through <code>..base</code> leaves <code>base</code> only partially usable, and reading <code>base.name</code> afterward is rejected at compile time — not a runtime surprise.</p>
+
+      <h2>Part 3: methods, associated functions, visibility, and derives</h2>
+      <p>Methods live in an <code>impl</code> block and take a form of <code>self</code> as their first parameter, which tells you exactly how they interact with the value — something a C++ member function's constness only partially expresses:</p>
+      <table class="comparison-table">
+        <thead><tr><th>Receiver</th><th>Meaning</th><th>Closest C++ analog</th></tr></thead>
+        <tbody>
+          <tr><td><code>&amp;self</code></td><td>Borrows the value to read it</td><td><code>const</code> member function</td></tr>
+          <tr><td><code>&amp;mut self</code></td><td>Borrows the value to mutate it in place</td><td>Non-<code>const</code> member function</td></tr>
+          <tr><td><code>self</code></td><td>Takes ownership — the method consumes the value; the caller's binding becomes unusable afterward</td><td>No exact analog; closest is a function taking an object by value and not giving it back</td></tr>
+        </tbody>
+      </table>
+      <p>An <strong>associated function</strong> has no <code>self</code> parameter at all and is called through the type name, such as <code>GreeterConfig::new(...)</code> — the idiomatic replacement for a C++ constructor:</p>
+      <pre><code>struct RepeatCount(u8);
+
+impl RepeatCount {
+    fn new(requested: u8) -&gt; Self {   // associated function — no `self`
+        Self(clamp_repeats(requested)) // `Self` refers to `RepeatCount`
+    }
+
+    fn get(&amp;self) -&gt; u8 {           // &amp;self — read-only method
+        self.0
+    }
+}</code></pre>
+      <p>Every field is private by default, visible only inside the same module unless marked <code>pub</code>. Combined with a constructor that enforces invariants (like <code>clamp_repeats</code> above), this is how Rust achieves encapsulation without a <code>private:</code> section — private-by-default is the baseline, not an opt-in.</p>
+      <p><code>#[derive(...)]</code> asks the compiler to generate specific trait implementations mechanically instead of hand-writing them — this is Rust's answer to a C++ "record" auto-generating equality and printing:</p>
+      <table class="comparison-table">
+        <thead><tr><th>Derive</th><th>What it generates</th></tr></thead>
+        <tbody>
+          <tr><td><code>Debug</code></td><td><code>{:?}</code>-formatting for diagnostics/tests</td></tr>
+          <tr><td><code>Clone</code></td><td>An explicit <code>.clone()</code> deep-copy method</td></tr>
+          <tr><td><code>Copy</code></td><td>Bitwise copy instead of move (only legal if every field is <code>Copy</code>, per Lesson 2)</td></tr>
+          <tr><td><code>PartialEq</code></td><td><code>==</code>/<code>!=</code> comparison, field by field</td></tr>
+        </tbody>
+      </table>
+      <div class="callout tip">
+        <span class="callout-icon">💡</span>
+        <div class="callout-content">
+          <strong>The idiomatic "record-like" value</strong>
+          <p>Rust has no distinct deep-readonly record type. The idiom is: private fields, an immutable <code>let config = GreeterConfig::new(...);</code> binding, a constructor that enforces invariants, and read-only accessor methods. Because Rust's owned values (like an owned <code>Vec</code> field) can still be mutated through a <code>&amp;mut</code> accessor if you choose to expose one, "deep immutability" is an API design choice you make by <em>not</em> exposing mutable access — not a property the type system hands you automatically.</p>
+        </div>
+      </div>
+
+      <h2>Part 4: enums as tagged unions</h2>
+      <p>A C++ <code>enum class</code> is a closed set of named integers with no payload. Rust enums are full <strong>algebraic data types</strong>: each variant can carry its own distinct payload, and the compiler tracks which variant is active — there is no way to read the wrong payload by accident, unlike a C-style tagged union.</p>
+      <pre><code>enum Audience {
+    Individual,
+    Team,
+}
+
+enum GreetingStyle {
+    Formal,
+    Casual,
+}</code></pre>
+      <p>Two standard-library enums replace patterns C++ handles with null pointers and exceptions:</p>
+      <table class="comparison-table">
+        <thead><tr><th>Type</th><th>Replaces</th></tr></thead>
+        <tbody>
+          <tr><td><code>Option&lt;T&gt;</code> — <code>Some(T)</code> or <code>None</code></td><td>A nullable pointer/value, but the compiler forces you to handle the absent case; there is no way to dereference a "null" <code>T</code> by mistake.</td></tr>
+          <tr><td><code>Result&lt;T, E&gt;</code> — <code>Ok(T)</code> or <code>Err(E)</code> (preview only; Lesson 5 covers this in depth)</td><td>Exceptions for recoverable failure. A function that can fail returns <code>Result</code> instead of throwing, and callers must acknowledge the <code>Err</code> case.</td></tr>
+        </tbody>
+      </table>
+      <p><code>match</code> is how you read an enum's active variant, and it is exhaustive: every variant must be handled, or the compiler rejects the code — a preview of Lesson 4's deeper coverage:</p>
+      <pre><code>fn lookup_style(label: &amp;str) -&gt; Option&lt;GreetingStyle&gt; {
+    match label {
+        "formal" =&gt; Some(GreetingStyle::Formal),
+        "casual" =&gt; Some(GreetingStyle::Casual),
+        _ =&gt; None, // required: match must cover every possibility
+    }
+}</code></pre>
+
+      <h2>Part 5: evolve <code>rust-greeter</code> to <code>GreeterConfig</code>, <code>Audience</code>, <code>GreetingStyle</code></h2>
+      <p><strong>File: <code>src/main.rs</code></strong> — add below <code>describe_cast</code> (keep <code>Args</code>, <code>greeting</code>, <code>MAX_REPEATS</code>, <code>APP_NAME</code>, <code>clamp_repeats</code>, and <code>CLAMPED_DEFAULT</code> from Lessons 1–2 unchanged):</p>
+      <pre class="large-code"><code>#[derive(Debug, Clone, Copy)]
+struct RepeatCount(u8);
+
+impl RepeatCount {
+    fn new(requested: u8) -&gt; Self {
+        Self(clamp_repeats(requested))
+    }
+
+    fn get(&amp;self) -&gt; u8 {
+        self.0
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Audience {
+    Individual,
+    Team,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum GreetingStyle {
+    Formal,
+    Casual,
+}
+
+fn lookup_style(label: &amp;str) -&gt; Option&lt;GreetingStyle&gt; {
+    match label {
+        "formal" =&gt; Some(GreetingStyle::Formal),
+        "casual" =&gt; Some(GreetingStyle::Casual),
+        _ =&gt; None,
+    }
+}
+
+#[derive(Debug, Clone)]
+struct GreeterConfig {
+    name: String,
+    audience: Audience,
+    style: GreetingStyle,
+    repeats: RepeatCount,
+}
+
+impl GreeterConfig {
+    fn new(name: String, audience: Audience, style: GreetingStyle, requested_repeats: u8) -&gt; Self {
+        Self {
+            name,
+            audience,
+            style,
+            repeats: RepeatCount::new(requested_repeats),
+        }
+    }
+
+    fn name(&amp;self) -&gt; &amp;str {
+        &amp;self.name
+    }
+
+    fn describe(&amp;self) -&gt; String {
+        format!(
+            "{} ({:?}, {:?}, x{})",
+            self.name,
+            self.audience,
+            self.style,
+            self.repeats.get()
+        )
+    }
+
+    fn set_style(&amp;mut self, style: GreetingStyle) {
+        self.style = style;
+    }
+
+    fn into_name(self) -&gt; String {
+        self.name
+    }
+}</code></pre>
+      <p><strong>File: <code>src/main.rs</code></strong> — replace <code>fn main</code> from Lesson 2 with:</p>
+      <pre class="large-code"><code>fn main() {
+    let args = Args::parse();
+    let audience = if args.name.contains(' ') {
+        Audience::Team
+    } else {
+        Audience::Individual
+    };
+    let style = lookup_style("casual").unwrap_or(GreetingStyle::Casual);
+
+    let mut config = GreeterConfig::new(args.name.clone(), audience, style, args.count);
+    println!("{APP_NAME} config -&gt; {} [{}]", config.describe(), config.name());
+    println!(
+        "cast demo: {}; compile-time clamped default: {CLAMPED_DEFAULT}",
+        describe_cast(1000)
+    );
+
+    config.set_style(GreetingStyle::Formal);
+    println!("after set_style -&gt; {}", config.describe());
+
+    let repeats = config.repeats.get();
+    let owned_name = config.into_name(); // consumes `config`; `config` is unusable after this line
+    for _ in 0..repeats {
+        println!("{}", greeting(&amp;owned_name));
+    }
+}</code></pre>
+      <table class="comparison-table">
+        <thead><tr><th>Line</th><th>Why it is written this way</th></tr></thead>
+        <tbody>
+          <tr><td><code>let mut config = ...</code></td><td><code>mut</code> is required here because <code>set_style</code> takes <code>&amp;mut self</code> — the binding must opt into mutation, matching Lesson 2's rule.</td></tr>
+          <tr><td><code>config.into_name()</code></td><td>Takes <code>self</code> by value, so it consumes <code>config</code>. After this line, <code>config</code> can no longer be used — this is the "self" receiver's move-based contract, not a bug.</td></tr>
+          <tr><td><code>lookup_style("casual").unwrap_or(...)</code></td><td><code>unwrap_or</code> reads the <code>Some</code> case or falls back to a default for <code>None</code>, avoiding a panic while still using the <code>Option&lt;GreetingStyle&gt;</code> from Part 4 directly.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Active exercise: verify <code>GreeterConfig</code> end to end</h2>
+      <p><strong>File: <code>src/main.rs</code></strong> — add inside the existing <code>#[cfg(test)] mod tests { ... }</code> block, alongside the Lesson 2 tests:</p>
+      <pre class="large-code"><code>    #[test]
+    fn builds_and_describes_a_greeter_config() {
+        let config = GreeterConfig::new(
+            String::from("Ada"),
+            Audience::Individual,
+            GreetingStyle::Casual,
+            2,
+        );
+        assert_eq!(config.describe(), "Ada (Individual, Casual, x2)");
+    }
+
+    #[test]
+    fn repeat_count_clamps_through_the_newtype() {
+        assert_eq!(RepeatCount::new(20).get(), MAX_REPEATS);
+        assert_eq!(RepeatCount::new(3).get(), 3);
+    }
+
+    #[test]
+    fn lookup_style_returns_option() {
+        assert_eq!(lookup_style("formal"), Some(GreetingStyle::Formal));
+        assert_eq!(lookup_style("loud"), None);
+    }
+
+    #[test]
+    fn greeter_config_set_style_updates_style() {
+        let mut config = GreeterConfig::new(
+            String::from("Ada"),
+            Audience::Team,
+            GreetingStyle::Casual,
+            1,
+        );
+        config.set_style(GreetingStyle::Formal);
+        assert_eq!(config.describe(), "Ada (Team, Formal, x1)");
+    }
+
+    #[test]
+    fn greeter_config_into_name_returns_owned_string() {
+        let config = GreeterConfig::new(
+            String::from("Ada"),
+            Audience::Individual,
+            GreetingStyle::Casual,
+            1,
+        );
+        assert_eq!(config.into_name(), "Ada");
+    }</code></pre>
+      <p>Run each command from the <code>rust-greeter</code> package root:</p>
+      <pre class="large-code"><code>cargo fmt --check
+cargo test
+cargo run -- --name "Grace Hopper" --count 2</code></pre>
+      <p>Expected evidence: <code>cargo fmt --check</code> prints nothing; <code>cargo test</code> reports <code>test result: ok. 8 passed</code>; <code>cargo run -- --name "Grace Hopper" --count 2</code> prints:</p>
+      <pre class="large-code"><code>rust-greeter config -&gt; Grace Hopper (Team, Casual, x2) [Grace Hopper]
+cast demo: 1000 as u8 = 232 (truncated); try_from does not fit; compile-time clamped default: 9
+after set_style -&gt; Grace Hopper (Team, Formal, x2)
+Hello, Grace Hopper!
+Hello, Grace Hopper!</code></pre>
+      <div class="callout tip">
+        <span class="callout-icon">💡</span>
+        <div class="callout-content">
+          <strong>Why <code>describe_cast</code> and <code>CLAMPED_DEFAULT</code> reappear here</strong>
+          <p>They are still part of <code>rust-greeter</code> from Lesson 2 and would otherwise sit unused — printing them keeps the whole file warning-free under <code>cargo build</code>, the same standard every lesson in this course holds itself to.</p>
+        </div>
+      </div>
+
+      <h2>Optional videos</h2>
+      <p>These videos are optional and excluded from the 30-minute core path.</p>
+      <div class="video-grid">
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/structs-15-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">2:52 · BEGINNER</span><h3>Structs [15 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Reinforces named structs, methods, and <code>impl</code> blocks.</p></div>
+        </a>
+        <a class="video-card" href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/enums-17-of-35--beginners-series-to-rust">
+          <span class="video-icon">▶</span>
+          <div><span class="video-duration">3:02 · BEGINNER</span><h3>Enums [17 of 35]</h3><p>Microsoft Developer (Microsoft Learn). Reinforces enums as tagged unions and <code>match</code>.</p></div>
+        </a>
+      </div>
+      <h3>Text alternatives</h3>
+      <ul class="source-list">
+        <li>Instead of the structs video, read <a href="https://doc.rust-lang.org/book/ch05-00-structs.html">Using Structs to Structure Related Data</a> in <em>The Rust Programming Language</em>.</li>
+        <li>Instead of the enums video, read <a href="https://doc.rust-lang.org/book/ch06-00-enums.html">Enums and Pattern Matching</a> in <em>The Rust Programming Language</em>.</li>
+      </ul>
+
+      <h2>Knowledge check</h2>
+      <details class="quiz"><summary>1. Why can't you write a Rust <code>class</code>, and what replaces it?</summary><p><strong>Answer:</strong> Rust has no <code>class</code> keyword. Data lives in a <code>struct</code> or <code>enum</code>; its behavior lives in a separate <code>impl</code> block. Shared behavior across types comes from traits (Lesson 6), not inheritance.</p></details>
+      <details class="quiz"><summary>2. What is the difference between <code>&amp;self</code>, <code>&amp;mut self</code>, and <code>self</code> as a method receiver?</summary><p><strong>Answer:</strong> <code>&amp;self</code> borrows the value read-only; <code>&amp;mut self</code> borrows it to mutate in place (the binding must be declared <code>mut</code>); <code>self</code> takes ownership, consuming the value so the caller's binding can no longer be used afterward — as with <code>config.into_name()</code>.</p></details>
+      <details class="quiz"><summary>3. Why does reading <code>base.name</code> after <code>..base</code> in struct update syntax fail to compile?</summary><p><strong>Answer:</strong> Because <code>name</code> is a <code>String</code> (not <code>Copy</code>), <code>..base</code> moves it out of <code>base</code> into the new struct. <code>base</code> is left partially moved, and the compiler rejects any later read of the moved field with error <code>E0382</code>. Cloning <code>base</code> first avoids this.</p></details>
+      <details class="quiz"><summary>4. How does Rust get record-like, invariant-protecting data without a dedicated "readonly record" type?</summary><p><strong>Answer:</strong> By convention: private fields (the default), a constructor (an associated function like <code>GreeterConfig::new</code>) that enforces invariants such as clamping repeat counts, an immutable binding, and read-only <code>&amp;self</code> accessor methods. Nothing prevents deep mutation if you choose to expose a <code>&amp;mut</code> accessor — immutability is an API design choice, not an automatic guarantee.</p></details>
+
+      <h2>Recap and decision rules</h2>
+      <pre class="large-code"><code>Need to bundle related, named data?      Named struct, e.g. `GreeterConfig`
+Need a distinct type around one value?   Tuple struct / newtype, e.g. `RepeatCount(u8)`
+Need a marker type with no data?         Unit struct, e.g. `struct Marker;`
+Need one of several fixed alternatives?  Enum, e.g. `Audience`, `GreetingStyle`
+Need "no value" without null pointers?   `Option&lt;T&gt;`
+Need "failure" without exceptions?       `Result&lt;T, E&gt;` (deep dive in Lesson 5)
+Method only reads the value?             `&amp;self`
+Method mutates the value in place?       `&amp;mut self` (binding must be `mut`)
+Method should consume/transform once?    `self`</code></pre>
+      <p>You separated data (struct/enum) from behavior (<code>impl</code>), learned that visibility and constructors — not a special type — give you record-like immutability, and saw <code>match</code> force you to handle every enum variant. Lesson 4 uses this same <code>GreeterConfig</code> inside functions, closures, and macros to actually render greetings by style.</p>
+
+      <h2>Sources</h2>
+      <ul class="source-list">
+        <li><a href="https://doc.rust-lang.org/book/ch05-00-structs.html">Using Structs to Structure Related Data</a>, <em>The Rust Programming Language</em>, Rust Project. Named/tuple/unit structs, field init shorthand, struct update syntax. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch05-03-method-syntax.html">Method Syntax</a>, <em>The Rust Programming Language</em>, Rust Project. <code>&amp;self</code>/<code>&amp;mut self</code>/<code>self</code> and associated functions. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/book/ch06-00-enums.html">Enums and Pattern Matching</a>, <em>The Rust Programming Language</em>, Rust Project. Enums as tagged unions with per-variant payloads. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/option/enum.Option.html">Option</a>, Rust standard library documentation, Rust Project. Nullable-value replacement. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/std/result/enum.Result.html">Result</a>, Rust standard library documentation, Rust Project. Recoverable-error replacement for exceptions (previewed here; deep dive in Lesson 5). Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/reference/attributes/derive.html">Derive macros</a>, The Rust Reference, Rust Project. How <code>#[derive(...)]</code> generates trait implementations. Accessed September 18, 2026.</li>
+        <li><a href="https://doc.rust-lang.org/reference/visibility-and-privacy.html">Visibility and privacy</a>, The Rust Reference, Rust Project. Private-by-default fields. Accessed September 18, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/structs-15-of-35--beginners-series-to-rust">Structs [15 of 35]</a>, Microsoft Developer (Microsoft Learn), 2:52. Accessed September 18, 2026.</li>
+        <li><a href="https://learn.microsoft.com/en-us/shows/beginners-series-to-rust/enums-17-of-35--beginners-series-to-rust">Enums [17 of 35]</a>, Microsoft Developer (Microsoft Learn), 3:02. Accessed September 18, 2026.</li>
+      </ul>
+
+      <div class="lesson-nav">
+        <a href="02-values-variables-types-storage-constants.html" class="prev"><span class="nav-label">← Previous</span><span class="nav-title">Lesson 2: Values, Variables, Types &amp; Storage</span></a>
+        <a href="04-control-flow-functions-closures-macros.html" class="next"><span class="nav-label">Next →</span><span class="nav-title">Lesson 4: Control Flow, Functions &amp; Macros</span></a>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
